@@ -30,7 +30,7 @@ struct ArgPack
   FilterPack neg;
 };
 
-auto parse_for_shunting(std::string_view const& s) -> std::vector<std::string_view>;
+auto parse_for_shunting(std::string_view const& s) -> std::vector<std::string>;
 
 auto parse_args(int argc, const char **argv) -> std::tuple<FileNameOpt, FileNameOpt, FilterPack, FilterPack>;
 

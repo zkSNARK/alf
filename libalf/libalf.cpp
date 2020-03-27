@@ -11,8 +11,16 @@ namespace {
   auto is_quote(char c) -> bool {
     return c == '\'' or c == '"';
   }
+
   auto is_operator(char c) -> bool {
     return c == '&' or c == '|';
+  }
+
+  auto _push(std::vector<std::string> &v, std::string_view sv, bool last_is_substr) {
+    if (last_is_substr) {
+      v.emplace_back("&");
+    }
+    v.emplace_back(sv);
   }
 }
 
@@ -22,25 +30,23 @@ namespace {
  * @param s
  * @return
  */
-auto parse_for_shunting(std::string_view const& s) -> std::vector<std::string_view> {
+auto parse_for_shunting(std::string_view const &s) -> std::vector<std::string> {
 
   std::stack<char> paren_stk;
   std::stack<char> quote_stk;
   std::string_view const delims = " '\"&|{([])}";
-  std::vector<std::string_view> output;
+  std::vector<std::string> output;
   output.reserve(s.size() / 2);
 
+  bool last_is_substr = false;
   for (auto first = s.data(), second = s.data(), last = first + s.size();
        second != last && first != last; first = second + 1) {
+
     second = std::find_first_of(first, last, std::cbegin(delims), std::cend(delims));
 
     // if the current location is a delimiter other than a space
-    char c = *second;
-    if (is_opening_paren(c) or c == '\'' or c == '"' or c == '&' or c == '|' or is_closing_paren(c)) {
-      std::cout << "found special character : " << c << '\n';
-    }
-
     bool push_later = false;
+    char c = *second;
 
     if (is_quote(c)) {
       first = second + 1;
@@ -49,11 +55,11 @@ auto parse_for_shunting(std::string_view const& s) -> std::vector<std::string_vi
       if (second == last) {
         throw std::runtime_error("imperfect quotes");
       }
-    } else if (is_opening_paren(c)) {
+    }
+    if (is_opening_paren(c)) {
       paren_stk.push(c);
       if (second == s.data()) {
-        output.emplace_back(second, 1);
-        std::cout << "added " << output.back() << '\n';
+        _push(output, std::string_view(second, 1), last_is_substr);
       } else {
         push_later = true;
       }
@@ -61,24 +67,24 @@ auto parse_for_shunting(std::string_view const& s) -> std::vector<std::string_vi
 
     // common case -> regular words
     if (first != second) {
-      output.emplace_back(first, second - first);
-      std::cout << "added " << output.back() << '\n';
+      _push(output, std::string_view(first, second - first), last_is_substr);
+      last_is_substr = true;
     }
 
     if (push_later) {
-      output.emplace_back(second, 1);
-      std::cout << "added " << output.back() << '\n';
+      _push(output, std::string_view(second, 1), last_is_substr);
+      last_is_substr = false;
     }
     if (is_operator(c)) {
       output.emplace_back(second, 1);
-      std::cout << "added " << output.back() << '\n';
+      last_is_substr = false;
     }
     if (is_closing_paren(c)) {
       if (paren_stk.top() != companion_parenthesis(c)) {
         throw std::runtime_error("detected imbalanced or unmatched parenthesis during parsing");
       }
       output.emplace_back(second, 1);
-      std::cout << "added " << output.back() << '\n';
+      last_is_substr = false;
     }
   }
 
