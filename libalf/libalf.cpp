@@ -40,6 +40,8 @@ auto parse_for_shunting(std::string_view const& s) -> std::vector<std::string_vi
       std::cout << "found special character : " << c << '\n';
     }
 
+    bool push_later = false;
+
     if (is_quote(c)) {
       first = second + 1;
       std::string quote{c};
@@ -49,8 +51,12 @@ auto parse_for_shunting(std::string_view const& s) -> std::vector<std::string_vi
       }
     } else if (is_opening_paren(c)) {
       paren_stk.push(c);
-      output.emplace_back(second, 1);
-      std::cout << "added " << output.back() << '\n';
+      if (second == s.data()) {
+        output.emplace_back(second, 1);
+        std::cout << "added " << output.back() << '\n';
+      } else {
+        push_later = true;
+      }
     }
 
     // common case -> regular words
@@ -59,6 +65,10 @@ auto parse_for_shunting(std::string_view const& s) -> std::vector<std::string_vi
       std::cout << "added " << output.back() << '\n';
     }
 
+    if (push_later) {
+      output.emplace_back(second, 1);
+      std::cout << "added " << output.back() << '\n';
+    }
     if (is_operator(c)) {
       output.emplace_back(second, 1);
       std::cout << "added " << output.back() << '\n';

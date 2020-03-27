@@ -47,8 +47,6 @@ namespace {
 
 
   TEST(TestVecCompare, basic_all_positive_no) {
-    auto s = str_replace("bob went to market", "to", "TO");
-
     std::string e1 = "hello";
     std::string e2 = "world";
     std::string e3 = "whats";
@@ -323,23 +321,79 @@ namespace {
     ASSERT_THAT(e, testing::ElementsAreArray(pack));
   }
 
-//  TEST(TestVecCompare, complex2) {
+  TEST(TestVecCompare, complex1_no_space) {
+    std::string i1 = "(";
+    std::string i2 = "hello";
+    std::string i3 = "(";
+    std::string i4 = "world";
+    std::string i5 = "|";
+    std::string i6 = "meet";
+    std::string i7 = "universe";
+    std::string i8 = ")";
+    std::string i9 = ")";
+    std::vector<std::string_view> e = {i1, i2, i3, i4, i5, i6, i7, i8, i9};
+
+    // "(hello(world|meet universe))"
+    std::string input = i1 + i2 + i3 + i4 + i5 + i6 + " " + i7 + i8 + i9;
+    std::vector<std::string_view> pack{parse_for_shunting(input)};
+
+    std::cout << "expected ";
+    print_vec(e);
+    std::cout << "got ";
+    print_vec(pack);
+
+    ASSERT_THAT(e, testing::ElementsAreArray(pack));
+  }
+
+  TEST(TestVecCompare, complex1_all_operators_no_space) {
+    std::string i1 = "(";
+    std::string i2 = "hello";
+    std::string i3 = "&";
+    std::string i4 = "(";
+    std::string i5 = "world";
+    std::string i6 = "|";
+    std::string i7 = "meet";
+    std::string i8 = "&";
+    std::string i9 = "universe";
+    std::string i10 = ")";
+    std::string i11 = ")";
+    std::vector<std::string_view> e = {i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11};
+
+    // "(hello&(world|meet&universe))"
+    std::string input = i1 + i2 + i3 + i4 + i5 + i6 +  i7 + i8 + i9 + i10 + i11;
+    std::vector<std::string_view> pack{parse_for_shunting(input)};
+
+    std::cout << "expected ";
+    print_vec(e);
+    std::cout << "got ";
+    print_vec(pack);
+
+    ASSERT_THAT(e, testing::ElementsAreArray(pack));
+  }
+
+//  TEST(TestVecCompare, complex1_all_operators_no_space) {
 //    std::string i1 = "(";
 //    std::string i2 = "hello";
-//    auto i3 = "(";
-//    auto i4 = "world";
-//    auto i5 = "|";
-//    auto i6 = "meet";
-//    auto i7 = "universe";
-//    auto i8 = ")";
-//    auto i9 = ")";
-//    std::vector<std::string_view> e = {i1, i2, i3, i4, i5, i6, i7, i8, i9};
+//    std::string i3 = "&";
+//    std::string i4 = "(";
+//    std::string i5 = "world";
+//    std::string i6 = "|";
+//    std::string i7 = "meet";
+//    std::string i8 = "&";
+//    std::string i9 = "universe";
+//    std::string i10 = ")";
+//    std::string i11 = ")";
+//    std::vector<std::string_view> e = {i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11};
 //
-//    // "( hello ( world | meet universe ) )"
-//    std::string_view input = i1 + " " + i2 + " " + i3 + " " + i4 + " " + i5 + " " + i6 + " " + i7 + " " + i8 + " " + i9;
+//    // "(hello&(world|meet&universe))"
+//    std::string input = i1 + i2 + i3 + i4 + i5 + i6 +  i7 + i8 + i9 + i10 + i11;
 //    std::vector<std::string_view> pack{parse_for_shunting(input)};
+//
+//    std::cout << "expected ";
+//    print_vec(e);
+//    std::cout << "got ";
+//    print_vec(pack);
 //
 //    ASSERT_THAT(e, testing::ElementsAreArray(pack));
 //  }
-
 }  // anon namespace
