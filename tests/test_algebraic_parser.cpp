@@ -553,5 +553,4 @@ namespace {
     std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
     ASSERT_THAT(pack, testing::ElementsAreArray(expected));
   }
-
-}  // anon namespace//
+}  // anon test namespace

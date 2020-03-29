@@ -16,6 +16,11 @@ namespace {
            or type == alf::types::TYPE_TOKEN::BRACKET_CLOSE_SQUARE
            or type == alf::types::TYPE_TOKEN::BRACKET_CLOSE_PAREN;
   }
+  bool is_opening_bracket(alf::types::TYPE_TOKEN type) {
+    return type == alf::types::TYPE_TOKEN::BRACKET_OPEN_CURLY
+           or type == alf::types::TYPE_TOKEN::BRACKET_OPEN_SQUARE
+           or type == alf::types::TYPE_TOKEN::BRACKET_OPEN_PAREN;
+  }
 
   bool is_binary_operator(alf::types::TYPE_TOKEN type) {
     return type == alf::types::TYPE_TOKEN::OPERATOR_AND
@@ -38,7 +43,7 @@ namespace {
   }
 
 
-  auto _push(std::vector<std::string> &v, std::string_view sv, bool last_is_substr) {
+  auto _push(std::vector<std::string>& v, std::string_view sv, bool last_is_substr) {
     if (last_is_substr) {
       v.emplace_back("&");
     }
@@ -49,8 +54,7 @@ namespace {
   }
 
 
-  auto build_token(std::string_view token, bool& is_pos_req, std::vector<alf::types::TokenBase>& tokens)
-  {
+  auto build_token(std::string_view token, bool& is_pos_req, std::vector<alf::types::TokenBase>& tokens) {
     switch (token[0]) {
       case '|': {
         tokens.emplace_back(alf::types::operators::OR{});
@@ -105,68 +109,83 @@ namespace {
         is_pos_req = true;
         break;
       }
-      default:
-        tokens.emplace_back(alf::types::SubStr{token, is_pos_req});
+      default:tokens.emplace_back(alf::types::SubStr{ token, is_pos_req });
         is_pos_req = true;
         break;
     }
   }
 
 
-
-  auto handle_quote(char const*& first, char const*& second, char const*& last, std::vector<alf::types::TokenBase>& tokens, bool& is_pos_req) {
+  auto
+  handle_quote(char const*& first, char const*& second, char const*& last, std::vector<alf::types::TokenBase>& tokens,
+               bool& is_pos_req) {
     static std::string const single_quote = "'";
     static std::string const double_quote = "\"";
 
     first = second + 1;
     switch (*second) {
       case '\'': {
-          second = std::find_first_of(first, last, std::cbegin(single_quote), std::cend(single_quote));
-          if(second == last) {
-            throw std::runtime_error("imperfect quotes");
-          }
-
-          std::string_view sv(first, second - first);
-          tokens.emplace_back(alf::types::SubStr{sv, is_pos_req});
-          is_pos_req = true;
+        second = std::find_first_of(first, last, std::cbegin(single_quote), std::cend(single_quote));
+        if (second == last) {
+          throw std::runtime_error("imperfect quotes");
         }
+
+        std::string_view sv(first, second - first);
+        tokens.emplace_back(alf::types::SubStr{ sv, is_pos_req });
+        is_pos_req = true;
+      }
         break;
       case '"': {
-          second = std::find_first_of(first, last, std::cbegin(double_quote), std::cend(double_quote));
-          if(second == last) {
-            throw std::runtime_error("imperfect quotes");
-          }
-
-          std::string_view sv(first, second - first);
-          tokens.emplace_back(alf::types::SubStr{sv, is_pos_req});
-          is_pos_req = true;
+        second = std::find_first_of(first, last, std::cbegin(double_quote), std::cend(double_quote));
+        if (second == last) {
+          throw std::runtime_error("imperfect quotes");
         }
+
+        std::string_view sv(first, second - first);
+        tokens.emplace_back(alf::types::SubStr{ sv, is_pos_req });
+        is_pos_req = true;
+      }
         break;
     }
-  }
-
-
-  std::vector<alf::types::TokenBase> fill_in_missing_AND_symbols(std::vector<alf::types::TokenBase>&v) {
-    std::vector<alf::types::TokenBase> tokens;
-    tokens.reserve(v.size() * 2);
-
-    bool last_requires_binary_operator = false;
-    for (alf::types::TokenBase& t : v) {
-      if (last_requires_binary_operator && !is_binary_operator(t.type)) {
-        tokens.emplace_back(alf::types::operators::AND{});
-        last_requires_binary_operator = false;
-      }
-      if (t.type == alf::types::TYPE_TOKEN::SUBSTR or is_closing_bracket(t.type)) {
-        last_requires_binary_operator = true;
-      }
-      tokens.emplace_back(std::move(t));
-    }
-    return tokens;
   }
 }
 
 
 namespace alf {
+
+  /**
+   * Since the user is allowed to enter statements like 'a b' and then is supposed to mean
+   * require substr 'a' AND require substr 'b', but the postfix converter wants to see all
+   * binary operators in place, we need to fill in those operators.  We could do this inside
+   * of the parser for extra speed, but for now I am keeping this separate.  I believe this
+   * is the correct thing to do because the parsing and this fill in together are fast enough
+   * for expected input sizes that the 2 phase parsing and fill in will probably never be of
+   * concern compared to the actual search phase.  That could be wrong is someone comes up
+   * with some million token algebra for their requirements, but even then I don't think this
+   * would cost much time.
+   *
+   * Small state machine which scans the parsed tokens and fills in implied '&' tokens.
+   *
+   * @param v
+   * @return
+   */
+  std::vector<alf::types::TokenBase> fill_in_missing_AND_symbols(std::vector<alf::types::TokenBase>& v) {
+    std::vector<alf::types::TokenBase> tokens;
+    tokens.reserve(v.size() * 2);
+
+    alf::types::TYPE_TOKEN previous_type = alf::types::TYPE_TOKEN::OPERATOR_AND;
+    for (types::TokenBase& t : v) {
+      alf::types::TYPE_TOKEN cur_type = t.type;
+      if (cur_type == alf::types::TYPE_TOKEN::SUBSTR and (previous_type == alf::types::TYPE_TOKEN::SUBSTR or is_closing_bracket(previous_type))) {
+        tokens.emplace_back(alf::types::operators::AND{});
+      } else if (is_opening_bracket(cur_type) and (previous_type == alf::types::TYPE_TOKEN::SUBSTR or is_closing_bracket(previous_type))) {
+        tokens.emplace_back(alf::types::operators::AND{});
+      }
+      tokens.emplace_back(std::move(t));
+      previous_type = cur_type;
+    }
+    return tokens;
+  }
 
   /**
    * Parse the input args into a vector, splitting tokens out, and either prefixing
@@ -177,8 +196,7 @@ namespace alf {
    * @param s
    * @return
    */
-  auto parse_algebraic(std::string_view const& s) -> std::vector<alf::types::TokenBase>
-  {
+  auto parse_algebraic(std::string_view const& s) -> std::vector<alf::types::TokenBase> {
     static std::string_view const delims = " '\"&|{([])}-+";
     std::stack<char> paren_stk;
     std::vector<alf::types::TokenBase> tokens;
@@ -187,8 +205,7 @@ namespace alf {
     bool is_positive_req = true;
 
     for (auto first = s.data(), second = s.data(), last = first + s.size();
-         second != last && first != last; first = second + 1)
-    {
+         second != last && first != last; first = second + 1) {
       second = std::find_first_of(first, last, std::cbegin(delims), std::cend(delims));
 
       if (first != second) {
@@ -197,7 +214,7 @@ namespace alf {
       if (is_quote(*second)) {
         handle_quote(first, second, last, tokens, is_positive_req);
       } else if (*second != ' ' and second != last) {
-        build_token(std::string_view{second, 1}, is_positive_req, tokens);
+        build_token(std::string_view{ second, 1 }, is_positive_req, tokens);
       }
     }
 
@@ -211,14 +228,14 @@ namespace alf {
    * @param argv
    * @return
    */
-  auto parse_basic(int argc, const char **argv) -> std::tuple<FileNameOpt, FileNameOpt, FilterPack, FilterPack> {
+  auto parse_basic(int argc, const char**argv) -> std::tuple<FileNameOpt, FileNameOpt, FilterPack, FilterPack> {
     std::optional<std::string> infile;
     std::optional<std::string> outfile;
     FilterPack and_positive;
     FilterPack and_negative;
 
-    for (int i{1}; i < argc; ++i) {
-      std::string arg{argv[i]};
+    for (int i{ 1 }; i < argc; ++i) {
+      std::string arg{ argv[i] };
       if (arg == "-o" or arg == "--outfile") {
         if (i + 1 >= argc) {
           throw std::runtime_error("-o or --outfile must be followed by a valid file name");
@@ -272,14 +289,14 @@ namespace alf {
       }
     }
 
-    return {infile, outfile, and_positive, and_negative};
+    return { infile, outfile, and_positive, and_negative };
   }
 
 
-  auto passes_filters(FilterPack const &fp_pos, FilterPack const &fp_neg, std::string const &line) -> bool {
-    for (std::vector<std::string> const &or_pack : fp_pos) {
+  auto passes_filters(FilterPack const& fp_pos, FilterPack const& fp_neg, std::string const& line) -> bool {
+    for (std::vector<std::string> const& or_pack : fp_pos) {
       bool or_pack_satisfied = false;
-      for (std::string const &s : or_pack) {
+      for (std::string const& s : or_pack) {
         if (line.find(s) != std::string::npos) {
           or_pack_satisfied = true;
           break;
@@ -290,9 +307,9 @@ namespace alf {
       }
     }
 
-    for (std::vector<std::string> const &or_pack : fp_neg) {
+    for (std::vector<std::string> const& or_pack : fp_neg) {
       bool or_pack_satisfied = false;
-      for (std::string const &s : or_pack) {
+      for (std::string const& s : or_pack) {
         if (line.find(s) == std::string::npos) {
           or_pack_satisfied = true;
           break;
@@ -308,14 +325,14 @@ namespace alf {
 
 
   auto apply_filters(ArgPack p) -> void {
-    FILE *fi = p.infile ? fopen(p.infile->c_str(), "r") : stdin;
-    FILE *fo = p.outfile ? fopen(p.outfile->c_str(), "w+") : stdout;
+    FILE*fi = p.infile ? fopen(p.infile->c_str(), "r") : stdin;
+    FILE*fo = p.outfile ? fopen(p.outfile->c_str(), "w+") : stdout;
 
     if (fi == nullptr or fo == nullptr) {
       exit(EXIT_FAILURE);
     }
 
-    char *line = nullptr;
+    char*line = nullptr;
     size_t len = 0;
     while ((getline(&line, &len, fi)) != -1) {
       if (passes_filters(p.pos, p.neg, line)) {
