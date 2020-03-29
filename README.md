@@ -46,6 +46,7 @@ Alf works in 2 modes.
   - Accepts following special characters ...
 
   Type symbols 
+  
     * '(' : alf::types::brackets::BRACKET_OPEN_PAREN
     * '{' : alf::types::brackets::BRACKET_OPEN_CURLY
     * '[' : alf::types::brackets::BRACKET_OPEN_SQUARE
@@ -56,6 +57,7 @@ Alf works in 2 modes.
     * '|' : alf::types::operators::OR
     
    Other
+   
     * '+' : positive requirement
     * '-' : negative requirement (EG : require not found in this line)
     * '!' : negative requirement (EG : require not found in this line)
@@ -63,6 +65,7 @@ Alf works in 2 modes.
     * '"' : double quote
     
    - anything between quotes is considered a substr of type...
+   
     * alf::types::SUBSTR
    
    ... but otherwise, the above symbols are parsed specially regardless of whether there is a space between them or not.  So for example. '(hello)' is parsed the same as '( hello )', and both are parsed internally as vector with approximately the follong structure ...
