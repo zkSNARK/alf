@@ -12,6 +12,10 @@
 #include <utility>
 
 namespace alf::types {
+
+  /**
+   * A token enum containing all the possible token types that the parser can create.
+   */
   enum class TYPE_TOKEN
   {
     SUBSTR,
@@ -28,6 +32,23 @@ namespace alf::types {
     OPERATOR_XOR
   };
 
+  /**
+   * Tokens are not polymorphic, but there is a hierarchy.
+   * Sub categories are
+   *    - substrings
+   *    - binary operators (and, or, xor)
+   *    - brackets (parenthesis, square, curly)
+   *
+   *  NOTE: if the bool required is false, then that implies
+   *        that the user specifically instructed us to not
+   *        allow a token... it is a "negative requirement"
+   *
+   *        E.G. give me all the lines that do not contain
+   *        the substr "hello".
+   *
+   *        Most tokens will be positive requirements, but
+   *        all tokens have this field.
+   */
   struct TokenBase
   {
     std::string value;
@@ -39,13 +60,15 @@ namespace alf::types {
           value(std::move(value)),
           required(require) { }
 
-    virtual ~TokenBase() = default;
-
     auto operator==(const TokenBase& other) const {
       return type == other.type && value == other.value && required == other.required;
     }
   };
 
+  /**
+   * SubStr is the most common token type.  Represents something that a user
+   * will be requiring or requiring not to be there.
+   */
   struct SubStr
       : public TokenBase
   {
@@ -56,17 +79,18 @@ namespace alf::types {
         : TokenBase(TYPE_TOKEN::SUBSTR, std::string(value), require) { }
   };
 
-  struct Operator
-      : public TokenBase
-  {
-    Operator(TYPE_TOKEN type, std::string value, bool require)
-        : TokenBase(type, std::move(value), require) { }
-  };
-
   namespace operators {
+    struct Operator
+        : public TokenBase
+    {
+      Operator(TYPE_TOKEN type, std::string value, bool require)
+          : TokenBase(type, std::move(value), require) { }
+    };
+
     struct BinaryOperator
         : public Operator
     {
+    protected:
       explicit BinaryOperator(TYPE_TOKEN type, std::string value)
           : Operator(type, std::move(value), true) { }
     };
@@ -104,6 +128,7 @@ namespace alf::types {
     struct BracketOpen
         : public Bracket
     {
+    protected:
       explicit BracketOpen(TYPE_TOKEN type, std::string value)
           : Bracket(type, std::move(value)) { }
     };
