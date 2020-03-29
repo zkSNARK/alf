@@ -66,6 +66,7 @@ Alf works in 2 modes.
     * alf::types::SUBSTR
    
    ... but otherwise, the above symbols are parsed specially regardless of whether there is a space between them or not.  So for example. '(hello)' is parsed the same as '( hello )', and both are parsed internally as vector with approximately the follong structure ...
+   
   ```
   sequence : { 
     { 
@@ -78,8 +79,10 @@ Alf works in 2 modes.
       }
     },
     { 
-      alf::types::brackets::BRACKET_CLOSE_PAREN 
+      type : alf::types::brackets::BRACKET_CLOSE_PAREN 
     }
   }
   ```
+  
+ 
 ## Examples 
