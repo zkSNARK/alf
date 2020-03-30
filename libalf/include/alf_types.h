@@ -5,13 +5,14 @@
 //
 
 
-
 #pragma once
 
 #include <string>
 #include <utility>
+#include <vector>
 
-namespace alf::types {
+namespace alf::types
+{
 
   /**
    * A token enum containing all the possible token types that the parser can create.
@@ -60,7 +61,8 @@ namespace alf::types {
           value(std::move(value)),
           required(require) { }
 
-    auto operator==(const TokenBase& other) const {
+    auto operator==(const TokenBase& other) const
+    {
       return type == other.type && value == other.value && required == other.required;
     }
   };
@@ -69,117 +71,89 @@ namespace alf::types {
    * SubStr is the most common token type.  Represents something that a user
    * will be requiring or requiring not to be there.
    */
-  struct SubStr
-      : public TokenBase
+  struct SubStr : public TokenBase
   {
-    SubStr(std::string value, bool require)
-        : TokenBase(TYPE_TOKEN::SUBSTR, std::move(value), require) { }
+    SubStr(std::string value, bool require) : TokenBase(TYPE_TOKEN::SUBSTR, std::move(value), require) { }
 
     explicit SubStr(std::string_view value, bool require)
         : TokenBase(TYPE_TOKEN::SUBSTR, std::string(value), require) { }
   };
 
-  namespace operators {
-    struct Operator
-        : public TokenBase
+  namespace operators
+  {
+    struct Operator : public TokenBase
     {
-      Operator(TYPE_TOKEN type, std::string value, bool require)
-          : TokenBase(type, std::move(value), require) { }
+      Operator(TYPE_TOKEN type, std::string value, bool require) : TokenBase(type, std::move(value), require) { }
     };
 
-    struct BinaryOperator
-        : public Operator
+    struct BinaryOperator : public Operator
     {
     protected:
-      explicit BinaryOperator(TYPE_TOKEN type, std::string value)
-          : Operator(type, std::move(value), true) { }
+      explicit BinaryOperator(TYPE_TOKEN type, std::string value) : Operator(type, std::move(value), true) { }
     };
 
-    struct AND
-        : public BinaryOperator
+    struct AND : public BinaryOperator
     {
-      AND()
-          : BinaryOperator(TYPE_TOKEN::OPERATOR_AND, "&") { }
+      AND() : BinaryOperator(TYPE_TOKEN::OPERATOR_AND, "&") { }
     };
 
-    struct OR
-        : public BinaryOperator
+    struct OR : public BinaryOperator
     {
-      OR()
-          : BinaryOperator(TYPE_TOKEN::OPERATOR_OR, "|") { }
+      OR() : BinaryOperator(TYPE_TOKEN::OPERATOR_OR, "|") { }
     };
 
-    struct XOR
-        : public BinaryOperator
+    struct XOR : public BinaryOperator
     {
-      XOR()
-          : BinaryOperator(TYPE_TOKEN::OPERATOR_XOR, "^") { }
+      XOR() : BinaryOperator(TYPE_TOKEN::OPERATOR_XOR, "^") { }
     };
   } // end namespace operators
 
-  namespace brackets {
-    struct Bracket
-        : public TokenBase
+  namespace brackets
+  {
+    struct Bracket : public TokenBase
     {
-      explicit Bracket(TYPE_TOKEN type, std::string value)
-          : TokenBase(type, std::move(value), true) { }
+      explicit Bracket(TYPE_TOKEN type, std::string value) : TokenBase(type, std::move(value), true) { }
     };
 
-    struct BracketOpen
-        : public Bracket
+    struct BracketOpen : public Bracket
     {
     protected:
-      explicit BracketOpen(TYPE_TOKEN type, std::string value)
-          : Bracket(type, std::move(value)) { }
+      explicit BracketOpen(TYPE_TOKEN type, std::string value) : Bracket(type, std::move(value)) { }
     };
 
-    struct OpenParen
-        : public BracketOpen
+    struct OpenParen : public BracketOpen
     {
-      OpenParen()
-          : BracketOpen(TYPE_TOKEN::BRACKET_OPEN_PAREN, "(") { }
+      OpenParen() : BracketOpen(TYPE_TOKEN::BRACKET_OPEN_PAREN, "(") { }
     };
 
-    struct OpenSquareBracket
-        : public BracketOpen
+    struct OpenSquareBracket : public BracketOpen
     {
-      OpenSquareBracket()
-          : BracketOpen(TYPE_TOKEN::BRACKET_OPEN_SQUARE, "[") { }
+      OpenSquareBracket() : BracketOpen(TYPE_TOKEN::BRACKET_OPEN_SQUARE, "[") { }
     };
 
-    struct OpenCurlyBracket
-        : public BracketOpen
+    struct OpenCurlyBracket : public BracketOpen
     {
-      OpenCurlyBracket()
-          : BracketOpen(TYPE_TOKEN::BRACKET_OPEN_CURLY, "{") { }
+      OpenCurlyBracket() : BracketOpen(TYPE_TOKEN::BRACKET_OPEN_CURLY, "{") { }
     };
 
-    struct BracketClose
-        : public Bracket
+    struct BracketClose : public Bracket
     {
-      explicit BracketClose(TYPE_TOKEN type, std::string value)
-          : Bracket(type, std::move(value)) { }
+      explicit BracketClose(TYPE_TOKEN type, std::string value) : Bracket(type, std::move(value)) { }
     };
 
-    struct CloseParen
-        : public BracketClose
+    struct CloseParen : public BracketClose
     {
-      CloseParen()
-          : BracketClose(TYPE_TOKEN::BRACKET_CLOSE_PAREN, ")") { }
+      CloseParen() : BracketClose(TYPE_TOKEN::BRACKET_CLOSE_PAREN, ")") { }
     };
 
-    struct CloseSquareBracket
-        : public BracketClose
+    struct CloseSquareBracket : public BracketClose
     {
-      CloseSquareBracket()
-          : BracketClose(TYPE_TOKEN::BRACKET_CLOSE_SQUARE, "]") { }
+      CloseSquareBracket() : BracketClose(TYPE_TOKEN::BRACKET_CLOSE_SQUARE, "]") { }
     };
 
-    struct CloseCurlyBracket
-        : public BracketClose
+    struct CloseCurlyBracket : public BracketClose
     {
-      CloseCurlyBracket()
-          : BracketClose(TYPE_TOKEN::BRACKET_CLOSE_CURLY, "}") { }
+      CloseCurlyBracket() : BracketClose(TYPE_TOKEN::BRACKET_CLOSE_CURLY, "}") { }
     };
   } // end namespace brackets
 } // end namespace alf

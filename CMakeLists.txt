@@ -29,7 +29,7 @@ set_target_properties(gtest_main PROPERTIES FOLDER extern)
 set_target_properties(gmock PROPERTIES FOLDER extern)
 set_target_properties(gmock_main PROPERTIES FOLDER extern)
 
-add_executable(TestArgParser tests/test_arg_parser.cpp)
+add_executable(TestArgParser tests/test_argument_parser.cpp)
 target_link_libraries(TestArgParser gtest gmock gtest_main libalf)
 add_executable(TestArgParser2 tests/test_arg_parser_complex.cpp)
 target_link_libraries(TestArgParser2 gtest gmock gtest_main libalf)
