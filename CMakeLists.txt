@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(libalf)
 
-add_executable(sy tests/shuntingyard.cpp)
+add_executable(sy tests/test_shunting_yard.cpp)
 target_link_libraries(sy libalf)
 
 add_executable(alf src/alf.cpp)
