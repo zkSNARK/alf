@@ -11,7 +11,11 @@
 #include <string>
 #include <numeric>
 
+//#define VERBOSE
+
 namespace {
+  using namespace alf::types;
+
   auto print_vec(std::vector<alf::types::TokenBase>& v) {
     std::cout << "[";
     for (auto e = v.begin(); e != v.end(); ++e) {
@@ -21,41 +25,6 @@ namespace {
     }
     std::cout << "]\n";
   }
-
-  auto print_vec2(std::vector<std::string> const& v) {
-    std::cout << "{";
-    for (auto x = v.begin(); x != v.end(); ++x) {
-      std::cout << "\"" << *x << (x != v.end() - 1 ? "\", " : "\"");
-    }
-    std::cout << "}";
-    std::cout << '\n';
-  }
-
-  auto replace(std::string s, std::string const& target, std::string const& replacement) {
-    size_t pos = s.find(target);
-
-    while (pos != std::string::npos) {
-      s.replace(pos, target.size(), replacement);
-      pos = s.find(target, pos + replacement.size());
-    }
-    return std::move(s);
-  }
-
-  auto join_vec(std::vector<std::string> const& v) {
-    std::ostringstream vts;
-    if (!v.empty()) {
-      // Convert all but the last element to avoid a trailing ","
-      std::copy(v.begin(), v.end() - 1, std::ostream_iterator<std::string>(vts, " "));
-
-      // Now add the last element with no delimiter
-      vts << v.back();
-    }
-    return vts.str();
-  }
-}
-namespace {
-
-  using namespace alf::types;
 
   TEST(TestAddImpliedAnd, basic_all_positive_no_plus) {
     std::vector<TokenBase> input{
@@ -79,10 +48,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -109,10 +80,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -139,10 +112,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -169,10 +144,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -198,10 +175,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -228,10 +207,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -258,10 +239,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -291,10 +274,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -321,10 +306,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -352,10 +339,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -379,10 +368,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -406,10 +397,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -438,10 +431,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -469,10 +464,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -500,10 +497,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -523,10 +522,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -546,10 +547,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -569,10 +572,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -592,10 +597,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -615,10 +622,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -636,10 +645,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -657,10 +668,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -695,10 +708,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -717,10 +732,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -755,10 +772,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -777,10 +796,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -815,10 +836,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -842,10 +865,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -870,10 +895,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -908,10 +935,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -946,10 +975,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -987,10 +1018,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -1023,10 +1056,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
@@ -1056,10 +1091,12 @@ namespace {
         alf::fill_in_missing_AND_symbols(input)
     };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
-    print_vec(result);
+    print_vec(result.tokens);
+#endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 }  // anon namespace//

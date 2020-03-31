@@ -1,3 +1,7 @@
+//
+// Created by Christopher Goebel on 3/21/20.
+//
+
 #include "libalf.h"
 
 #include <gtest/gtest.h>
@@ -5,9 +9,11 @@
 
 #include <string>
 
+//#define VERBOSE
 
 namespace
 {
+  using namespace alf::types;
 
   auto print_vec(std::vector<alf::types::TokenBase>& v)
   {
@@ -20,33 +26,25 @@ namespace
     std::cout << "]\n";
   }
 
-  using namespace alf::types;
-
-  template<typename T, int size>
-  int array_size(T(&)[size])
-  {
-    return size;
-  }
-
 // Tests arg_parse
   TEST(FindInfile, infile_at_beginning)
   {
     const char* test_args[3] = { "dummy.exe", "-i", "tests/infile.txt" };
-    alf::ArgPack pack{ alf::parse_arguments(array_size(test_args), test_args) };
+    alf::ArgPack pack{ alf::parse_arguments(std::size(test_args), test_args) };
     ASSERT_EQ(pack.infile, "tests/infile.txt");
   }
 
   TEST(FindInfile, infile_in_middle)
   {
     const char* test_args[7] = { "dummy.exe", "-", "hello", "-i", "tests/infile.txt", "+", "world" };
-    alf::ArgPack pack{ alf::parse_arguments(array_size(test_args), test_args) };
+    alf::ArgPack pack{ alf::parse_arguments(std::size(test_args), test_args) };
     ASSERT_EQ(pack.infile, "tests/infile.txt");
   }
 
   TEST(FindInfile, infile_at_end)
   {
     const char* test_args[5] = { "dummy.exe", "-", "hello", "-i", "tests/infile.txt" };
-    alf::ArgPack pack{ alf::parse_arguments(array_size(test_args), test_args) };
+    alf::ArgPack pack{ alf::parse_arguments(std::size(test_args), test_args) };
     ASSERT_EQ(pack.infile, "tests/infile.txt");
   }
 
@@ -54,21 +52,21 @@ namespace
   TEST(FindOutfile, outfile_at_beginning)
   {
     const char* test_args[3] = { "dummy.exe", "-o", "tests/outfile.txt" };
-    alf::ArgPack pack{ alf::parse_arguments(array_size(test_args), test_args) };
+    alf::ArgPack pack{ alf::parse_arguments(std::size(test_args), test_args) };
     ASSERT_EQ(pack.outfile, "tests/outfile.txt");
   }
 
   TEST(FindOutfile, outfile_in_middle)
   {
     const char* test_args[7] = { "dummy.exe", "-", "hello", "-o", "tests/outfile.txt", "+", "world" };
-    alf::ArgPack pack{ alf::parse_arguments(array_size(test_args), test_args) };
+    alf::ArgPack pack{ alf::parse_arguments(std::size(test_args), test_args) };
     ASSERT_EQ(pack.outfile, "tests/outfile.txt");
   }
 
   TEST(FindOutfile, outfile_at_end)
   {
     const char* test_args[5] = { "dummy.exe", "-", "hello", "-o", "tests/outfile.txt" };
-    alf::ArgPack pack{ alf::parse_arguments(array_size(test_args), test_args) };
+    alf::ArgPack pack{ alf::parse_arguments(std::size(test_args), test_args) };
     ASSERT_EQ(pack.outfile, "tests/outfile.txt");
   }
 
@@ -100,10 +98,14 @@ namespace
 
     alf::ArgPack result{ alf::parse_arguments(input.size(), const_cast<const char**>(input.data())) };
 
+#ifdef VERBOSE
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
     print_vec(result.tokens);
+#endif
+#endif
     ASSERT_THAT(result.tokens, testing::ElementsAreArray(expected));
   }
 
@@ -131,10 +133,14 @@ namespace
 
     alf::ArgPack result{ alf::parse_arguments(input.size(), const_cast<const char**>(input.data())) };
 
+#ifdef VERBOSE
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
     print_vec(result.tokens);
+#endif
+#endif
     ASSERT_THAT(result.tokens, testing::ElementsAreArray(expected));
   }
 
@@ -162,10 +168,14 @@ namespace
 
     alf::ArgPack result{ alf::parse_arguments(input.size(), const_cast<const char**>(input.data())) };
 
+#ifdef VERBOSE
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
     print_vec(result.tokens);
+#endif
+#endif
     ASSERT_THAT(result.tokens, testing::ElementsAreArray(expected));
   }
 
@@ -191,10 +201,12 @@ namespace
 
     alf::ArgPack result{ alf::parse_arguments(input.size(), const_cast<const char**>(input.data())) };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
     print_vec(result.tokens);
+#endif
     ASSERT_THAT(result.tokens, testing::ElementsAreArray(expected));
   }
 
@@ -222,10 +234,12 @@ namespace
 
     alf::ArgPack result{ alf::parse_arguments(input.size(), const_cast<const char**>(input.data())) };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
     print_vec(result.tokens);
+#endif
     ASSERT_THAT(result.tokens, testing::ElementsAreArray(expected));
   }
 
@@ -256,10 +270,12 @@ namespace
 
     alf::ArgPack result{ alf::parse_arguments(input.size(), const_cast<const char**>(input.data())) };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
     print_vec(result.tokens);
+#endif
     ASSERT_THAT(result.tokens, testing::ElementsAreArray(expected));
   }
 
@@ -290,10 +306,12 @@ namespace
 
     alf::ArgPack result{ alf::parse_arguments(input.size(), const_cast<const char**>(input.data())) };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
     print_vec(result.tokens);
+#endif
     ASSERT_THAT(result.tokens, testing::ElementsAreArray(expected));
   }
 
@@ -322,10 +340,12 @@ namespace
 
     alf::ArgPack result{ alf::parse_arguments(input.size(), const_cast<const char**>(input.data())) };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
     print_vec(result.tokens);
+#endif
     ASSERT_THAT(result.tokens, testing::ElementsAreArray(expected));
   }
 
@@ -351,10 +371,12 @@ namespace
 
     alf::ArgPack result{ alf::parse_arguments(input.size(), const_cast<const char**>(input.data())) };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
     print_vec(result.tokens);
+#endif
     ASSERT_THAT(result.tokens, testing::ElementsAreArray(expected));
   }
 
@@ -382,10 +404,12 @@ namespace
 
     alf::ArgPack result{ alf::parse_arguments(input.size(), const_cast<const char**>(input.data())) };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
     print_vec(result.tokens);
+#endif
     ASSERT_THAT(result.tokens, testing::ElementsAreArray(expected));
   }
 
@@ -416,10 +440,12 @@ namespace
 
     alf::ArgPack result{ alf::parse_arguments(input.size(), const_cast<const char**>(input.data())) };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
     print_vec(result.tokens);
+#endif
     ASSERT_THAT(result.tokens, testing::ElementsAreArray(expected));
   }
 
@@ -450,10 +476,12 @@ namespace
 
     alf::ArgPack result{ alf::parse_arguments(input.size(), const_cast<const char**>(input.data())) };
 
+#ifdef VERBOSE
     std::cout << "expected  : ";
     print_vec(expected);
     std::cout << "actual    : ";
     print_vec(result.tokens);
+#endif
     ASSERT_THAT(result.tokens, testing::ElementsAreArray(expected));
   }
 }  // anon namespace

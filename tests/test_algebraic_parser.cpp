@@ -10,20 +10,22 @@
 
 #include <numeric>
 
-auto print_vec(std::vector<alf::types::TokenBase>& v)
-{
-  std::cout << "[";
-  for (auto e = v.begin(); e != v.end(); ++e) {
-    alf::types::TokenBase value = *e;
-    std::cout << (e->required ? '+' : '-') << "'" << e->value
-              << (e != v.end() - 1 ? "', " : "'");
-  }
-  std::cout << "]\n";
-}
+//#define VERBOSE
 
 namespace
 {
   using namespace alf::types;
+
+  auto print_vec(std::vector<alf::types::TokenBase>& v)
+  {
+    std::cout << "[";
+    for (auto e = v.begin(); e != v.end(); ++e) {
+      alf::types::TokenBase value = *e;
+      std::cout << (e->required ? '+' : '-') << "'" << e->value
+                << (e != v.end() - 1 ? "', " : "'");
+    }
+    std::cout << "]\n";
+  }
 
   TEST(TestAlgParserBasic, basic_all_positive_no_plus)
   {
@@ -35,8 +37,15 @@ namespace
       { SubStr{ std::string("up"), true }},
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserUnaryOperators, basic_all_positive_with_plus)
@@ -49,8 +58,15 @@ namespace
       { SubStr{ std::string("up"), true }},
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserUnaryOperators, basic_all_positive_with_plus_no_space)
@@ -63,8 +79,15 @@ namespace
       { SubStr{ std::string("up"), true }},
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserUnaryOperators, one_negative_3_implied_positive)
@@ -77,8 +100,15 @@ namespace
       { SubStr{ std::string("d"), false }},
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserUnaryOperators, one_negative_2_positive)
@@ -91,8 +121,15 @@ namespace
       { SubStr{ std::string("d"), false }},
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserUnaryOperators, basic_all_positive_with_plus_missing)
@@ -105,8 +142,15 @@ namespace
       { SubStr{ std::string("up"), true }},
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserBasic, basic_all_positive_half_plus_missing)
@@ -119,8 +163,15 @@ namespace
       { SubStr{ std::string("up"), true }},
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserBasic, basic_all_positive_half_plus_missing_explicit_and)
@@ -136,8 +187,15 @@ namespace
       { SubStr{ std::string("up"), true }},
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserBasic, basic_all_negative)
@@ -150,8 +208,15 @@ namespace
       { SubStr{ std::string("up"), false }},
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
 
@@ -166,9 +231,16 @@ namespace
       { SubStr{ std::string("up"), true }},
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
 
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserQuotes, quoted_string)
@@ -178,8 +250,15 @@ namespace
       { SubStr{ std::string("world whats"), true }}
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserQuotes, quoted_string_neg)
@@ -189,8 +268,15 @@ namespace
       { SubStr{ std::string("world whats"), false }}
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserBrackets, basic_parenthesis)
@@ -203,8 +289,15 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserBrackets, no_space_parenthesis)
@@ -217,8 +310,15 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserBrackets, no_space_right_parenthesis)
@@ -233,8 +333,15 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserBrackets, weird_space_parenthesis)
@@ -249,8 +356,15 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserBrackets, all_space_parenthesis)
@@ -265,8 +379,15 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserOperators, and_symbol)
@@ -278,8 +399,15 @@ namespace
       { SubStr{ std::string("world"), true }}
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserOperators, or_symbol)
@@ -291,8 +419,15 @@ namespace
       { SubStr{ std::string("world"), true }}
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserOperators, xor_symbol)
@@ -304,8 +439,15 @@ namespace
       { SubStr{ std::string("world"), true }}
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserOperators, and_symbol_no_space_left)
@@ -317,8 +459,15 @@ namespace
       { SubStr{ std::string("world"), true }}
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserOperators, and_symbol_no_space_right)
@@ -330,8 +479,15 @@ namespace
       { SubStr{ std::string("world"), true }}
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserBrackets, empty_parenthesis)
@@ -342,8 +498,15 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserBrackets, empty_parenthesis_w_spaces)
@@ -354,8 +517,15 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserBrackets, lots_of_parenthesis_no_spaces)
@@ -374,8 +544,15 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserBrackets, empty_squiggle_bracket_w_spaces)
@@ -386,8 +563,15 @@ namespace
       { brackets::CloseCurlyBracket{}}
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserBrackets, lots_of_squiggle_bracket_no_spaces)
@@ -406,8 +590,15 @@ namespace
       { brackets::CloseCurlyBracket{}}
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserBrackets, empty_square_bracket_w_spaces)
@@ -418,8 +609,15 @@ namespace
       { brackets::CloseSquareBracket{}}
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserBrackets, lots_of_square_bracket_no_spaces)
@@ -438,8 +636,15 @@ namespace
       { brackets::CloseSquareBracket{}}
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserBrackets, quotes_in_str_no_spaces)
@@ -452,8 +657,15 @@ namespace
       { SubStr{ std::string("b"), true }},
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserBrackets, quotes_in_str_no_spaces2)
@@ -466,8 +678,15 @@ namespace
       { SubStr{ std::string("b"), true }},
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserComplex, complex1)
@@ -485,8 +704,15 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserComplex, complex1_no_space)
@@ -504,8 +730,15 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserComplex, complex1_all_operators_no_space)
@@ -524,8 +757,15 @@ namespace
       { brackets::CloseParen{}},
       { brackets::CloseParen{}}
     };
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserComplex, some_quotes_and_paren)
@@ -541,8 +781,15 @@ namespace
       { brackets::CloseParen{}},
       { brackets::CloseParen{}}
     };
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 
   TEST(TestAlgParserComplex, some_quotes_and_negations)
@@ -555,7 +802,14 @@ namespace
       { SubStr{ std::string("f"), false }},
       { SubStr{ std::string("g"), true }}
     };
-    std::vector<alf::types::TokenBase> pack{ alf::parse_algebraic(input) };
-    ASSERT_THAT(pack, testing::ElementsAreArray(expected));
+    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
 }  // anon test namespace
