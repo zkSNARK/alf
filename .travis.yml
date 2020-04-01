@@ -1,0 +1,31 @@
+dist: xenial
+language:
+  - cpp
+  - python # python is only used to build docs
+
+python:
+  3.8
+
+before_script:
+
+install: 
+  - pip install --user -r requirements.txt
+  # - pip install .
+  - pip install --user sphinx sphinx_rtd_theme sphinxcontrib-bibtex
+
+script:
+  - make test
+  - cd docs && make html  # build doc
+
+before_deploy: touch build/html/.nojekyll
+
+deploy:
+  provider: pages
+  skip-cleanup: true
+  github-token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable in travis portal
+  keep-history: true
+  local-dir: docs/build/html
+  target-branch: gh-pages
+  on:
+    branch:
+      - master  # updates from this branch will trigger deploy
