@@ -9,7 +9,7 @@ python:
 before_script:
 
 install: 
-  - pip install --user -r requirements.txt
+#   - pip install --user -r requirements.txt
   # - pip install .
   - pip install --user sphinx sphinx_rtd_theme sphinxcontrib-bibtex
 
