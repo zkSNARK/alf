@@ -10,11 +10,11 @@ before_script:
 
 install: 
 #   - pip install --user -r requirements.txt
-  # - pip install .
-  - pip install --user sphinx sphinx_rtd_theme sphinxcontrib-bibtex
+#   - pip install .
+ - pip install --user sphinx sphinx_rtd_theme sphinxcontrib-bibtex
 
 script:
-  - make test
+#   - make test
   - cd docs && make html  # build doc
 
 before_deploy: touch build/html/.nojekyll
