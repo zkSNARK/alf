@@ -6,6 +6,10 @@ language:
 python:
   3.8
 
+compiler:
+  - clang
+  - gcc
+  
 before_script:
 
 install: 
@@ -13,7 +17,20 @@ install:
 #   - pip install .
  - pip install --user sphinx sphinx_rtd_theme sphinxcontrib-bibtex
 
+os: linux
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-7
+
 script:
+  - export CC=gcc-9
+  - export CXX=g++-9
+  - cmake --version
+  - cmake CMakeLists.txt
+  - cmake  --build . --target neat
 #   - make test
   - cd docs && make html  # build doc
 
