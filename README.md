@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.com/zkSNARK/alf.svg?branch=master)](https://travis-ci.com/zkSNARK/alf)
 
+https://zksnark.github.io/alf/
+
 # alf
 Algebraic Line Filter - alf is a command line tool which allows users to filter logs or other files by creating sets of requirements which can be specified in an algebraic form.
 
