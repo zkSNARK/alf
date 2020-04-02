@@ -36,13 +36,8 @@ script:
   - export CXX=g++-9
   - g++ -v
   - cmake --version
-  - mkdir build
-  - cd build
-  - cmake ..
-  - cmake  --build .
-  - ./tests/test
-  - cd ..
-  - ls
+  - cmake -S . -B build
+  - cmake --build build
 
 
 #install:
@@ -58,15 +53,6 @@ addons:
     packages:
       - g++-9
 
-#script:
-#  - export CC=gcc-9
-#  - export CXX=g++-9
-#  - cmake --version
-#  - cmake CMakeLists.txt
-#  - cmake  --build . --target test
-##   - make test
-#  - cd docs && make html  # build doc
-
 #before_deploy: touch build/html/.nojekyll
 
 deploy:
@@ -74,7 +60,6 @@ deploy:
   skip-cleanup: true
   github-token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable in travis portal
   keep-history: true
-#   local-dir: docs/build/html
   target-branch: gh-pages
   on:
     condition: "$CC = gcc-9"
