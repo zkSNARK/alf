@@ -4,11 +4,11 @@
 
 #include "libalf.h"
 
-#include <fcntl.h>
 #include <filesystem>
 #include <string>
 #include <vector>
 #include <stack>
+#include <cstring>
 
 namespace
 {
