@@ -74,7 +74,7 @@ deploy:
   skip-cleanup: true
   github-token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable in travis portal
   keep-history: true
-  local-dir: docs/build/html
+#   local-dir: docs/build/html
   target-branch: gh-pages
   on:
     condition: "$CC = gcc"
