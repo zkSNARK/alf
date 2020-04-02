@@ -39,11 +39,11 @@ before_script:
   # top-level CMakeLists.txt is located at '..'
   - cmake ..
 
-#script:
-#  # once CMake has done its job we just build using make as usual
-#  - make
-#  # if the project uses ctest we can run the tests like this
-#  - make test
+script:
+  # once CMake has done its job we just build using make as usual
+  - make
+  # if the project uses ctest we can run the tests like this
+  - ./tests/test
 
 #install:
 ##   - pip install --user -r requirements.txt
@@ -56,16 +56,16 @@ addons:
     sources:
       - ubuntu-toolchain-r-test
     packages:
-      - g++-7
+      - g++-9
 
-script:
-  - export CC=gcc-9
-  - export CXX=g++-9
-  - cmake --version
-  - cmake CMakeLists.txt
-  - cmake  --build . --target test
-#   - make test
-  - cd docs && make html  # build doc
+#script:
+#  - export CC=gcc-9
+#  - export CXX=g++-9
+#  - cmake --version
+#  - cmake CMakeLists.txt
+#  - cmake  --build . --target test
+##   - make test
+#  - cd docs && make html  # build doc
 
 before_deploy: touch build/html/.nojekyll
 
