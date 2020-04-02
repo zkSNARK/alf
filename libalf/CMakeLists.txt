@@ -10,6 +10,7 @@ target_sources(libalf
     PUBLIC include/libalf.h
     PUBLIC include/shunting_yard.h
     PRIVATE src/libalf.cpp
+    PRIVATE src/shunting_yard.cpp
 )
 
 target_include_directories(libalf
