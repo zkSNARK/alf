@@ -7,7 +7,7 @@ python:
   3.8
 
 compiler:
-  - clang
+#  - clang
   - gcc
   
 # the install step will take care of deploying a newer cmake version
@@ -77,6 +77,6 @@ deploy:
 #   local-dir: docs/build/html
   target-branch: gh-pages
   on:
-    condition: "$CC = gcc"
+    condition: "$CC = gcc-9"
     branch:
       - master  # updates from this branch will trigger deploy
