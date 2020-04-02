@@ -9,6 +9,7 @@
 #include <vector>
 #include <stack>
 #include <cstring>
+#include <stdexcept>
 
 namespace
 {
