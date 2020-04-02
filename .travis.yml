@@ -32,13 +32,14 @@ install:
 
 
 script:
-  - export CC=gcc-9
-  - export CXX=g++-9
+  - export CC=gcc-10
+  - export CXX=g++-10
   - g++ -v
   - cmake --version
   - cmake CMakeLists.txt
   - cmake  --build .
   - ./tests/test
+  - ls
 
 
 #install:
