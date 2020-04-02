@@ -64,7 +64,7 @@ addons:
 ##   - make test
 #  - cd docs && make html  # build doc
 
-before_deploy: touch build/html/.nojekyll
+#before_deploy: touch build/html/.nojekyll
 
 deploy:
   provider: pages
