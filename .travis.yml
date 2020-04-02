@@ -7,7 +7,7 @@ python:
   3.8
 
 compiler:
-  - clang
+#  - clang
   - gcc
   
 # the install step will take care of deploying a newer cmake version
