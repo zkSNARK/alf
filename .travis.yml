@@ -77,6 +77,6 @@ deploy:
 #   local-dir: docs/build/html
   target-branch: gh-pages
   on:
-    condition: "$CC = gcc"
+    condition: "$CC = g++"
     branch:
       - master  # updates from this branch will trigger deploy
