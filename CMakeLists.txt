@@ -12,7 +12,7 @@ add_executable(alf src/alf.cpp)
 
 target_link_libraries(alf
     PRIVATE libalf
-    )
+)
 target_include_directories(alf PUBLIC "${PROJECT_BINARY_DIR}")
 
 add_subdirectory(tests)
