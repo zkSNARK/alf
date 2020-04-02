@@ -30,21 +30,16 @@ install:
 
   - pip install --user sphinx sphinx_rtd_theme sphinxcontrib-bibtex
 
-before_script:
-  # create a build folder for the out-of-source build
-  - mkdir build
-  # switch to build directory
-  - cd build
-  # run cmake; here we assume that the project's
-  # top-level CMakeLists.txt is located at '..'
-  - cmake ..
 
 script:
+  - export CC=gcc-9
+  - export CXX=g++-9
   - g++ -v
-  # once CMake has done its job we just build using make as usual
-  - make
-  # if the project uses ctest we can run the tests like this
+  - cmake --version
+  - cmake CMakeLists.txt
+  - cmake  --build .
   - ./tests/test
+
 
 #install:
 ##   - pip install --user -r requirements.txt
