@@ -2,7 +2,7 @@
 // Created by Christopher Goebel on 3/21/20.
 //
 
-#include "libalf.h"
+#include "parser.h"
 
 #include <filesystem>
 #include <string>
@@ -13,29 +13,13 @@
 
 namespace
 {
-  bool is_closing_bracket(alf::types::TYPE_TOKEN type)
-  {
-    return type == alf::types::TYPE_TOKEN::BRACKET_CLOSE_CURLY
-           or type == alf::types::TYPE_TOKEN::BRACKET_CLOSE_SQUARE
-           or type == alf::types::TYPE_TOKEN::BRACKET_CLOSE_PAREN;
-  }
-
-
-  bool is_opening_bracket(alf::types::TYPE_TOKEN type)
-  {
-    return type == alf::types::TYPE_TOKEN::BRACKET_OPEN_CURLY
-           or type == alf::types::TYPE_TOKEN::BRACKET_OPEN_SQUARE
-           or type == alf::types::TYPE_TOKEN::BRACKET_OPEN_PAREN;
-  }
-
-
   auto is_quote(char c) -> bool
   {
     return c == '\'' or c == '"';
   }
 
 
-  auto build_token(std::string_view token, bool& is_pos_req, std::vector<alf::types::TokenBase>& tokens)
+  auto make_token(std::string_view token, bool& is_pos_req, std::vector<alf::types::TokenBase>& tokens)
   {
     switch (token[0]) {
       case '|': {
@@ -218,12 +202,12 @@ namespace alf
       second = std::find_first_of(first, last, std::cbegin(delims), std::cend(delims));
 
       if (first != second) {
-        build_token(std::string_view(first, second - first), is_positive_req, tokens);
+        make_token(std::string_view(first, second - first), is_positive_req, tokens);
       }
       if (is_quote(*second)) {
         handle_quote(first, second, last, tokens, is_positive_req);
       } else if (*second != ' ' and second != last) {
-        build_token(std::string_view{ second, 1 }, is_positive_req, tokens);
+        make_token(std::string_view{ second, 1 }, is_positive_req, tokens);
       }
     }
 
@@ -310,61 +294,4 @@ namespace alf
         std::move(infile), std::move(outfile), std::move(tokens)
       };
   }
-
-
-//  auto passes_filters(Filter const& fp_pos, Filter const& fp_neg, std::string const& line) -> bool
-//  {
-//    for (std::vector<std::string> const& or_pack : fp_pos) {
-//      bool or_pack_satisfied = false;
-//      for (std::string const& s : or_pack) {
-//        if (line.find(s) != std::string::npos) {
-//          or_pack_satisfied = true;
-//          break;
-//        }
-//      }
-//      if (!or_pack_satisfied) {
-//        return false;
-//      }
-//    }
-//
-//    for (std::vector<std::string> const& or_pack : fp_neg) {
-//      bool or_pack_satisfied = false;
-//      for (std::string const& s : or_pack) {
-//        if (line.find(s) == std::string::npos) {
-//          or_pack_satisfied = true;
-//          break;
-//        }
-//      }
-//      if (!or_pack_satisfied) {
-//        return false;
-//      }
-//    }
-//
-//    return true;
-//  }
-
-
-//  auto apply_filters(ArgPack p) -> void
-//  {
-//    FILE* fi = p.infile ? fopen(p.infile->c_str(), "r") : stdin;
-//    FILE* fo = p.outfile ? fopen(p.outfile->c_str(), "w+") : stdout;
-//
-//    if (fi == nullptr or fo == nullptr) {
-//      exit(EXIT_FAILURE);
-//    }
-//
-//    char* line = nullptr;
-//    size_t len = 0;
-//    while ((getline(&line, &len, fi)) != -1) {
-//      if (passes_filters(p.pos, p.neg, line)) {
-//        fputs(line, fo);
-//      }
-//    }
-//    fclose(fi);
-//    fclose(fo);
-//
-//    if (line) {
-//      free(line);
-//    }
-//  }
 } // end namespace alf

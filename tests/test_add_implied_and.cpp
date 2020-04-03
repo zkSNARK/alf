@@ -3,7 +3,7 @@
 //
 
 #include "alf_types.h"
-#include "libalf.h"
+#include "parser.h"
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>

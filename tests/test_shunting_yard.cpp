@@ -34,30 +34,30 @@ namespace
 
   TEST(NegativeGroup, find_neg_group_with_no_space_start)
   {
-    std::vector<std::string> v{"{", "re", "|", "abc", "}", "&", "(", "[", "par", "|", "m", "]", "&", "z", ")"};
-
-    std::queue<std::string> que {shunting_yard(std::move(v))};
-
-
-    while (!que.empty()) {
-      std::cout << " " << que.front();
-      que.pop();
-    }
-    std::cout << '\n';
-
-    char const* input[] = { "dummy.exe", "-hello", "world", "whats", "up", "-i", "tests/infile.txt" };
-
-    std::vector<TokenBase> expected{
-      { brackets::OpenParen{}},
-      { SubStr{ std::string("hello"), false }},
-      { operators::OR{}},
-      { SubStr{ std::string("world"), false }},
-      { operators::OR{}},
-      { SubStr{ std::string("whats"), false }},
-      { operators::OR{}},
-      { SubStr{ std::string("up"), false }},
-      { brackets::CloseParen{}}
-    };
+//    std::vector<std::string> v{"{", "re", "|", "abc", "}", "&", "(", "[", "par", "|", "m", "]", "&", "z", ")"};
+//
+//    std::queue<std::string> que {shunting_yard(std::move(v))};
+//
+//
+//    while (!que.empty()) {
+//      std::cout << " " << que.front();
+//      que.pop();
+//    }
+//    std::cout << '\n';
+//
+//    char const* input[] = { "dummy.exe", "-hello", "world", "whats", "up", "-i", "tests/infile.txt" };
+//
+//    std::vector<TokenBase> expected{
+//      { brackets::OpenParen{}},
+//      { SubStr{ std::string("hello"), false }},
+//      { operators::OR{}},
+//      { SubStr{ std::string("world"), false }},
+//      { operators::OR{}},
+//      { SubStr{ std::string("whats"), false }},
+//      { operators::OR{}},
+//      { SubStr{ std::string("up"), false }},
+//      { brackets::CloseParen{}}
+//    };
 
 //    alf::ArgPack result{ alf::parse_arguments(std::size(input), input) };
 
