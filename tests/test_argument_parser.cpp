@@ -2,7 +2,7 @@
 // Created by Christopher Goebel on 3/21/20.
 //
 
-#include "libalf.h"
+#include "parser.h"
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>

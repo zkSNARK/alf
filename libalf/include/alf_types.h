@@ -11,27 +11,56 @@
 #include <utility>
 #include <vector>
 
+
 namespace alf::types
 {
 
   /**
    * A token enum containing all the possible token types that the parser can create.
    */
-  enum class TYPE_TOKEN
+  enum class TYPE_TOKEN : char
   {
     SUBSTR,
+
+    OPERATOR_OR,
+    OPERATOR_XOR,
+    OPERATOR_AND,
 
     BRACKET_OPEN_CURLY,
     BRACKET_CLOSE_CURLY,
     BRACKET_OPEN_PAREN,
     BRACKET_CLOSE_PAREN,
     BRACKET_OPEN_SQUARE,
-    BRACKET_CLOSE_SQUARE,
-
-    OPERATOR_AND,
-    OPERATOR_OR,
-    OPERATOR_XOR
+    BRACKET_CLOSE_SQUARE
   };
+
+
+  inline auto type_token_to_string(TYPE_TOKEN tt) -> std::string
+  {
+    switch (tt) {
+      case TYPE_TOKEN::SUBSTR :
+        return "SUBSTR";
+      case TYPE_TOKEN::BRACKET_OPEN_CURLY:
+        return "BRACKET_OPEN_CURLY";
+      case TYPE_TOKEN::BRACKET_CLOSE_CURLY:
+        return "BRACKET_CLOSE_CURLY";
+      case TYPE_TOKEN::BRACKET_OPEN_PAREN:
+        return "BRACKET_OPEN_PAREN";
+      case TYPE_TOKEN::BRACKET_CLOSE_PAREN:
+        return "BRACKET_CLOSE_PAREN";
+      case TYPE_TOKEN::BRACKET_OPEN_SQUARE:
+        return "BRACKET_OPEN_SQUARE";
+      case TYPE_TOKEN::BRACKET_CLOSE_SQUARE:
+        return "BRACKET_CLOSE_SQUARE";
+      case TYPE_TOKEN::OPERATOR_AND:
+        return "OPERATOR_AND";
+      case TYPE_TOKEN::OPERATOR_OR:
+        return "OPERATOR_OR";
+      case TYPE_TOKEN::OPERATOR_XOR:
+        return "OPERATOR_XOR";
+    }
+  }
+
 
   /**
    * Tokens are not polymorphic, but there is a hierarchy.
@@ -57,15 +86,16 @@ namespace alf::types
     TYPE_TOKEN type;
 
     TokenBase(TYPE_TOKEN type, std::string value, bool require)
-        : type(type),
-          value(std::move(value)),
-          required(require) { }
+      : type(type),
+        value(std::move(value)),
+        required(require) { }
 
     auto operator==(const TokenBase& other) const
     {
       return type == other.type && value == other.value && required == other.required;
     }
   };
+
 
   /**
    * SubStr is the most common token type.  Represents something that a user
@@ -76,7 +106,7 @@ namespace alf::types
     SubStr(std::string value, bool require) : TokenBase(TYPE_TOKEN::SUBSTR, std::move(value), require) { }
 
     explicit SubStr(std::string_view value, bool require)
-        : TokenBase(TYPE_TOKEN::SUBSTR, std::string(value), require) { }
+      : TokenBase(TYPE_TOKEN::SUBSTR, std::string(value), require) { }
   };
 
   namespace operators
@@ -156,4 +186,25 @@ namespace alf::types
       CloseCurlyBracket() : BracketClose(TYPE_TOKEN::BRACKET_CLOSE_CURLY, "}") { }
     };
   } // end namespace brackets
+
+  inline auto is_operator(alf::types::TYPE_TOKEN const& t) -> bool
+  {
+    return t == TYPE_TOKEN::OPERATOR_AND
+           or t == TYPE_TOKEN::OPERATOR_OR
+           or t == TYPE_TOKEN::OPERATOR_XOR;
+  }
+
+  inline auto is_opening_bracket(alf::types::TYPE_TOKEN const& t) -> bool
+  {
+    return t == TYPE_TOKEN::BRACKET_OPEN_CURLY
+           or t == TYPE_TOKEN::BRACKET_OPEN_PAREN
+           or t == TYPE_TOKEN::BRACKET_OPEN_SQUARE;
+  }
+
+  inline auto is_closing_bracket(alf::types::TYPE_TOKEN const& t) -> bool
+  {
+    return t == TYPE_TOKEN::BRACKET_CLOSE_CURLY
+           or t == TYPE_TOKEN::BRACKET_CLOSE_SQUARE
+           or t == TYPE_TOKEN::BRACKET_CLOSE_PAREN;
+  }
 } // end namespace alf
