@@ -6,9 +6,8 @@
 #include <utility>
 #include <vector>
 #include <tuple>
-#include <optional>
 
-namespace alf
+namespace alf::parser
 {
   using FileNameOpt = std::optional<std::string>;
   using OptStr = std::optional<std::string>;
@@ -37,8 +36,4 @@ namespace alf
   auto parse_algebraic(std::string_view const& sv) -> std::vector<alf::types::TokenBase>;
 
   auto parse_arguments(int argc, const char** argv) -> ArgPack;
-
-//  auto passes_filters(std::vector<alf::types::TokenBase> tokens, const& fp_pos, std::vector<alf::types::TokenBase> tokens, const& fp_neg, std::string const& line) -> bool;
-//
-//  auto apply_filters(ArgPack p) -> void;
 }

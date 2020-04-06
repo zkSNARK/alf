@@ -2,12 +2,11 @@
 // Created by Christopher Goebel on 4/2/20.
 //
 
-#include "alf_types.h"
+#include "shunting_yard.h"
 
 #include <vector>
 #include <queue>
 #include <stack>
-#include <string>
 #include <stdexcept>
 
 
@@ -44,10 +43,11 @@ namespace
       case alf::types::TYPE_TOKEN::SUBSTR :
         return 0;
       case alf::types::TYPE_TOKEN::OPERATOR_OR:
-      case alf::types::TYPE_TOKEN::OPERATOR_XOR:
         return 10;
-      case alf::types::TYPE_TOKEN::OPERATOR_AND:
+      case alf::types::TYPE_TOKEN::OPERATOR_XOR:
         return 20;
+      case alf::types::TYPE_TOKEN::OPERATOR_AND:
+        return 30;
       case alf::types::TYPE_TOKEN::BRACKET_OPEN_CURLY:
       case alf::types::TYPE_TOKEN::BRACKET_CLOSE_CURLY:
       case alf::types::TYPE_TOKEN::BRACKET_OPEN_PAREN:
@@ -68,7 +68,7 @@ namespace
 
 }
 
-auto shunting_yard(std::vector<alf::types::TokenBase> v) -> std::queue<alf::types::TokenBase>
+auto alf::shunting_yard(std::vector<alf::types::TokenBase> v) -> std::queue<alf::types::TokenBase>
 {
   std::stack<alf::types::TokenBase> stk;
   std::queue<alf::types::TokenBase> que;

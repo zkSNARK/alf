@@ -4,12 +4,12 @@
 
 #pragma once
 
+#include "alf_types.h"
+
 #include <vector>
 #include <queue>
-#include <string>
 
-auto is_opening_paren(char c) -> bool;
-
-auto companion_parenthesis(char c) -> char;
-
-auto shunting_yard(std::vector<alf::types::TokenBase> v) -> std::queue<alf::types::TokenBase>;
+namespace alf
+{
+  auto shunting_yard(std::vector<alf::types::TokenBase> v) -> std::queue<alf::types::TokenBase>;
+}

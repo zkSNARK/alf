@@ -11,7 +11,7 @@ void handler(int) {
 int main(int argc, const char **argv) {
   signal(SIGPIPE, handler);
 
-  alf::ArgPack pack { alf::parse_arguments(argc, argv)};
+  alf::parser::ArgPack pack { alf::parser::parse_arguments(argc, argv)};
 //  apply_filters(std::move(arg_pack));
 
   return 0;

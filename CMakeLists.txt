@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(libalf)
 
-add_executable(alf src/alf.cpp)
+add_executable(alf src/line_filter.cpp)
 
 target_link_libraries(alf
     PRIVATE libalf
