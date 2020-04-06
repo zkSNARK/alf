@@ -139,7 +139,7 @@ namespace
 }
 
 
-namespace alf
+namespace alf::parser
 {
 
   /**
@@ -221,7 +221,7 @@ namespace alf
    * @param argv
    * @return
    */
-  auto parse_arguments(int argc, const char** argv) -> ArgPack
+  auto parse_arguments(int argc, const char** argv) -> parser::ArgPack
   {
     std::optional<std::string> infile;
     std::optional<std::string> outfile;

@@ -31,21 +31,21 @@ namespace
   TEST(FindInfile, infile_at_beginning)
   {
     char const* input[] = { "dummy.exe", "-i", "tests/infile.txt" };
-    alf::ArgPack pack{ alf::parse_arguments(std::size(input), input) };
+    alf::parser::ArgPack pack{ alf::parser::parse_arguments(std::size(input), input) };
     ASSERT_EQ(pack.infile, "tests/infile.txt");
   }
 
   TEST(FindInfile, infile_in_middle)
   {
     char const* input[] = { "dummy.exe", "-", "hello", "-i", "tests/infile.txt", "+", "world" };
-    alf::ArgPack pack{ alf::parse_arguments(std::size(input), input) };
+    alf::parser::ArgPack pack{ alf::parser::parse_arguments(std::size(input), input) };
     ASSERT_EQ(pack.infile, "tests/infile.txt");
   }
 
   TEST(FindInfile, infile_at_end)
   {
     char const* input[] = { "dummy.exe", "-", "hello", "-i", "tests/infile.txt" };
-    alf::ArgPack pack{ alf::parse_arguments(std::size(input), input) };
+    alf::parser::ArgPack pack{ alf::parser::parse_arguments(std::size(input), input) };
     ASSERT_EQ(pack.infile, "tests/infile.txt");
   }
 
@@ -53,21 +53,21 @@ namespace
   TEST(FindOutfile, outfile_at_beginning)
   {
     char const* input[] = { "dummy.exe", "-o", "tests/outfile.txt" };
-    alf::ArgPack pack{ alf::parse_arguments(std::size(input), input) };
+    alf::parser::ArgPack pack{ alf::parser::parse_arguments(std::size(input), input) };
     ASSERT_EQ(pack.outfile, "tests/outfile.txt");
   }
 
   TEST(FindOutfile, outfile_in_middle)
   {
     char const* input[] = { "dummy.exe", "-", "hello", "-o", "tests/outfile.txt", "+", "world" };
-    alf::ArgPack pack{ alf::parse_arguments(std::size(input), input) };
+    alf::parser::ArgPack pack{ alf::parser::parse_arguments(std::size(input), input) };
     ASSERT_EQ(pack.outfile, "tests/outfile.txt");
   }
 
   TEST(FindOutfile, outfile_at_end)
   {
     char const* input[] = { "dummy.exe", "-", "hello", "-o", "tests/outfile.txt" };
-    alf::ArgPack pack{ alf::parse_arguments(std::size(input), input) };
+    alf::parser::ArgPack pack{ alf::parser::parse_arguments(std::size(input), input) };
     ASSERT_EQ(pack.outfile, "tests/outfile.txt");
   }
 
@@ -89,7 +89,7 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    alf::ArgPack result{ alf::parse_arguments(std::size(input), input) };
+    alf::parser::ArgPack result{ alf::parser::parse_arguments(std::size(input), input) };
     
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -118,7 +118,7 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    alf::ArgPack result{ alf::parse_arguments(std::size(input), input) };
+    alf::parser::ArgPack result{ alf::parser::parse_arguments(std::size(input), input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -147,7 +147,7 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    alf::ArgPack result{ alf::parse_arguments(std::size(input), input) };
+    alf::parser::ArgPack result{ alf::parser::parse_arguments(std::size(input), input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -174,7 +174,7 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    alf::ArgPack result{ alf::parse_arguments(std::size(input), input) };
+    alf::parser::ArgPack result{ alf::parser::parse_arguments(std::size(input), input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -203,7 +203,7 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    alf::ArgPack result{ alf::parse_arguments(std::size(input), input) };
+    alf::parser::ArgPack result{ alf::parser::parse_arguments(std::size(input), input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -235,7 +235,7 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    alf::ArgPack result{ alf::parse_arguments(std::size(input), input) };
+    alf::parser::ArgPack result{ alf::parser::parse_arguments(std::size(input), input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -267,7 +267,7 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    alf::ArgPack result{ alf::parse_arguments(std::size(input), input) };
+    alf::parser::ArgPack result{ alf::parser::parse_arguments(std::size(input), input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -297,7 +297,7 @@ namespace
       { SubStr{ std::string("up"), true }},
     };
 
-    alf::ArgPack result{ alf::parse_arguments(std::size(input), input) };
+    alf::parser::ArgPack result{ alf::parser::parse_arguments(std::size(input), input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -324,7 +324,7 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    alf::ArgPack result{ alf::parse_arguments(std::size(input), input) };
+    alf::parser::ArgPack result{ alf::parser::parse_arguments(std::size(input), input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -353,7 +353,7 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    alf::ArgPack result{ alf::parse_arguments(std::size(input), input) };
+    alf::parser::ArgPack result{ alf::parser::parse_arguments(std::size(input), input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -385,7 +385,7 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    alf::ArgPack result{ alf::parse_arguments(std::size(input), input) };
+    alf::parser::ArgPack result{ alf::parser::parse_arguments(std::size(input), input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -417,7 +417,7 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    alf::ArgPack result{ alf::parse_arguments(std::size(input), input) };
+    alf::parser::ArgPack result{ alf::parser::parse_arguments(std::size(input), input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";

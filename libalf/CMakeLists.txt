@@ -7,9 +7,12 @@ add_library(libalf)
 
 target_sources(libalf
     PUBLIC include/alf_types.h
+
+    PUBLIC include/line_filter.h
+    PRIVATE src/line_filter.cpp
     PUBLIC include/parser.h
-    PUBLIC include/shunting_yard.h
     PRIVATE src/parser.cpp
+    PUBLIC include/shunting_yard.h
     PRIVATE src/shunting_yard.cpp
 )
 

@@ -37,7 +37,7 @@ namespace
       { SubStr{ std::string("up"), true }},
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -58,7 +58,7 @@ namespace
       { SubStr{ std::string("up"), true }},
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -79,7 +79,7 @@ namespace
       { SubStr{ std::string("up"), true }},
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -100,7 +100,7 @@ namespace
       { SubStr{ std::string("d"), false }},
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -121,7 +121,7 @@ namespace
       { SubStr{ std::string("d"), false }},
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -142,7 +142,7 @@ namespace
       { SubStr{ std::string("up"), true }},
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -163,7 +163,7 @@ namespace
       { SubStr{ std::string("up"), true }},
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -187,7 +187,7 @@ namespace
       { SubStr{ std::string("up"), true }},
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -208,7 +208,7 @@ namespace
       { SubStr{ std::string("up"), false }},
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -231,7 +231,7 @@ namespace
       { SubStr{ std::string("up"), true }},
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 
 #ifdef VERBOSE
@@ -250,7 +250,7 @@ namespace
       { SubStr{ std::string("world whats"), true }}
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -268,7 +268,7 @@ namespace
       { SubStr{ std::string("world whats"), false }}
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -289,7 +289,7 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -310,7 +310,7 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -333,7 +333,7 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -356,7 +356,7 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -379,7 +379,7 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -399,7 +399,7 @@ namespace
       { SubStr{ std::string("world"), true }}
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -419,7 +419,7 @@ namespace
       { SubStr{ std::string("world"), true }}
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -439,7 +439,7 @@ namespace
       { SubStr{ std::string("world"), true }}
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -459,7 +459,7 @@ namespace
       { SubStr{ std::string("world"), true }}
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -479,7 +479,7 @@ namespace
       { SubStr{ std::string("world"), true }}
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -498,7 +498,7 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -517,7 +517,7 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -544,7 +544,7 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -563,7 +563,7 @@ namespace
       { brackets::CloseCurlyBracket{}}
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -590,7 +590,7 @@ namespace
       { brackets::CloseCurlyBracket{}}
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -609,7 +609,7 @@ namespace
       { brackets::CloseSquareBracket{}}
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -636,7 +636,7 @@ namespace
       { brackets::CloseSquareBracket{}}
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -657,7 +657,7 @@ namespace
       { SubStr{ std::string("b"), true }},
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -678,7 +678,7 @@ namespace
       { SubStr{ std::string("b"), true }},
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -704,7 +704,7 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -730,7 +730,7 @@ namespace
       { brackets::CloseParen{}}
     };
 
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -757,7 +757,7 @@ namespace
       { brackets::CloseParen{}},
       { brackets::CloseParen{}}
     };
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -781,7 +781,7 @@ namespace
       { brackets::CloseParen{}},
       { brackets::CloseParen{}}
     };
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";
@@ -802,7 +802,7 @@ namespace
       { SubStr{ std::string("f"), false }},
       { SubStr{ std::string("g"), true }}
     };
-    std::vector<alf::types::TokenBase> result{ alf::parse_algebraic(input) };
+    std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic(input) };
 
 #ifdef VERBOSE
     std::cout << "expected  : ";

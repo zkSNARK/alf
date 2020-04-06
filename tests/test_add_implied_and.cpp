@@ -45,7 +45,7 @@ namespace {
     };
     
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -77,7 +77,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -109,7 +109,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -141,7 +141,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -172,7 +172,7 @@ namespace {
         { SubStr{ std::string("d"), false }},
     };
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -204,7 +204,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -236,7 +236,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -271,7 +271,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -303,7 +303,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -336,7 +336,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -365,7 +365,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -394,7 +394,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -428,7 +428,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -461,7 +461,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -494,7 +494,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -519,7 +519,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -544,7 +544,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -569,7 +569,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -594,7 +594,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -619,7 +619,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -642,7 +642,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -665,7 +665,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -705,7 +705,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -729,7 +729,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -769,7 +769,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -793,7 +793,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -833,7 +833,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -862,7 +862,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -892,7 +892,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -932,7 +932,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -972,7 +972,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -1015,7 +1015,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -1053,7 +1053,7 @@ namespace {
         { brackets::CloseParen{}}
     };
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE
@@ -1088,7 +1088,7 @@ namespace {
     };
 
     std::vector<alf::types::TokenBase> result{
-        alf::fill_in_missing_AND_symbols(input)
+        alf::parser::fill_in_missing_AND_symbols(input)
     };
 
 #ifdef VERBOSE

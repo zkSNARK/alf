@@ -10,11 +10,11 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <optional>
 
 
 namespace alf::types
 {
-
   /**
    * A token enum containing all the possible token types that the parser can create.
    */

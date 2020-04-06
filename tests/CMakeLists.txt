@@ -19,18 +19,19 @@ add_executable(TestArgumentParser test_argument_parser.cpp)
 target_link_libraries(TestArgumentParser gtest gmock gtest_main libalf)
 add_executable(TestAlgebraicParser test_algebraic_parser.cpp)
 target_link_libraries(TestAlgebraicParser gtest gmock gtest_main libalf)
-add_executable(TestAddImpliedAND  test_add_implied_and.cpp)
+add_executable(TestAddImpliedAND test_add_implied_and.cpp)
 target_link_libraries(TestAddImpliedAND gtest gmock gtest_main libalf)
-add_executable(TestShuntingYard  test_shunting_yard.cpp)
+add_executable(TestShuntingYard test_shunting_yard.cpp)
 target_link_libraries(TestShuntingYard gtest gmock gtest_main libalf)
-
+add_executable(TestFilters test_filters.cpp)
+target_link_libraries(TestFilters gtest gmock gtest_main libalf)
 
 add_executable(test
     test_argument_parser.cpp
     test_algebraic_parser.cpp
     test_add_implied_and.cpp
     test_shunting_yard.cpp
-)
+    test_filters.cpp)
 
 target_link_libraries(test
     libalf

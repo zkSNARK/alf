@@ -40,11 +40,6 @@ script:
   - cmake --build build
 
 
-#install:
-##   - pip install --user -r requirements.txt
-##   - pip install .
-# - pip install --user sphinx sphinx_rtd_theme sphinxcontrib-bibtex
-
 os: linux
 addons:
   apt:
