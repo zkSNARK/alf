@@ -11,5 +11,5 @@
 
 namespace alf
 {
-  auto shunting_yard(std::vector<alf::types::TokenBase> v) -> std::queue<alf::types::TokenBase>;
+  auto shunting_yard(std::vector<alf::types::TokenBase> v) -> std::vector<alf::types::TokenBase>;
 }

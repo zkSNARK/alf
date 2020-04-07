@@ -141,7 +141,6 @@ namespace
 
 namespace alf::parser
 {
-
   /**
    * Since the user is allowed to enter statements like 'a b' and then is supposed to mean
    * require substr 'a' AND require substr 'b', but the postfix converter wants to see all
@@ -178,6 +177,7 @@ namespace alf::parser
     }
     return std::move(tokens);
   }
+
 
   /**
    * Parse the input args into a vector, splitting tokens out, and either prefixing
@@ -285,13 +285,9 @@ namespace alf::parser
         add_or_pack(tokens, std::move(neg_group));
         continue;
       }
-      tokens.emplace_back(alf::types::SubStr{ arg, true});
+      tokens.emplace_back(alf::types::SubStr{ arg, true });
     }
 
-
-    return
-      {
-        std::move(infile), std::move(outfile), std::move(tokens)
-      };
+    return { std::move(infile), std::move(outfile), std::move(tokens) };
   }
 } // end namespace alf
