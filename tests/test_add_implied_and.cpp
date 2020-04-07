@@ -25,6 +25,28 @@ namespace {
     std::cout << "]\n";
   }
 
+  TEST(TestAddImpliedAnd, one_token) {
+    std::vector<TokenBase> input{
+      { SubStr{ std::string("I"), true }},
+    };
+
+    std::vector<TokenBase> expected{
+      { SubStr{ std::string("I"), true }}
+    };
+
+    std::vector<alf::types::TokenBase> result{
+      alf::parser::fill_in_missing_AND_symbols(input)
+    };
+
+#ifdef VERBOSE
+    std::cout << "expected  : ";
+    print_vec(expected);
+    std::cout << "actual    : ";
+    print_vec(result.tokens);
+#endif
+    ASSERT_THAT(result, testing::ElementsAreArray(expected));
+  }
+
   TEST(TestAddImpliedAnd, basic_all_positive_no_plus) {
     std::vector<TokenBase> input{
         { SubStr{ std::string("hello"), true }},
@@ -42,7 +64,7 @@ namespace {
         { operators::AND{}},
         { SubStr{ std::string("up"), true }},
     };
-    
+
     std::vector<alf::types::TokenBase> result{
         alf::parser::fill_in_missing_AND_symbols(input)
     };
