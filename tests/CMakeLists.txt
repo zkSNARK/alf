@@ -16,15 +16,15 @@ set_target_properties(gmock PROPERTIES FOLDER extern)
 set_target_properties(gmock_main PROPERTIES FOLDER extern)
 
 add_executable(TestArgumentParser test_argument_parser.cpp)
-target_link_libraries(TestArgumentParser gtest gmock gtest_main libalf)
+target_link_libraries(TestArgumentParser gtest gmock gtest_main algebraic_line_filter)
 add_executable(TestAlgebraicParser test_algebraic_parser.cpp)
-target_link_libraries(TestAlgebraicParser gtest gmock gtest_main libalf)
+target_link_libraries(TestAlgebraicParser gtest gmock gtest_main algebraic_line_filter)
 add_executable(TestAddImpliedAND test_add_implied_and.cpp)
-target_link_libraries(TestAddImpliedAND gtest gmock gtest_main libalf)
+target_link_libraries(TestAddImpliedAND gtest gmock gtest_main algebraic_line_filter)
 add_executable(TestShuntingYard test_shunting_yard.cpp)
-target_link_libraries(TestShuntingYard gtest gmock gtest_main libalf)
+target_link_libraries(TestShuntingYard gtest gmock gtest_main algebraic_line_filter)
 add_executable(TestFilters test_filters.cpp)
-target_link_libraries(TestFilters gtest gmock gtest_main libalf)
+target_link_libraries(TestFilters gtest gmock gtest_main algebraic_line_filter)
 
 add_executable(test
     test_argument_parser.cpp
@@ -34,7 +34,7 @@ add_executable(test
     test_filters.cpp)
 
 target_link_libraries(test
-    libalf
+    algebraic_line_filter
     gtest
     gmock
     gtest_main

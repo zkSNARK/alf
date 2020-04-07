@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.15)
-project(alf)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_library(libalf)
+add_library(algebraic_line_filter)
 
-target_sources(libalf
+target_sources(algebraic_line_filter
     PUBLIC include/alf_types.h
 
     PUBLIC include/line_filter.h
@@ -16,7 +15,7 @@ target_sources(libalf
     PRIVATE src/shunting_yard.cpp
 )
 
-target_include_directories(libalf
+target_include_directories(algebraic_line_filter
     PUBLIC include
 )
 
