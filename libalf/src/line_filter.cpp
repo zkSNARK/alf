@@ -56,16 +56,13 @@ auto alf::handle_operator(std::stack<bool>& stk, types::TYPE_TOKEN tt) -> void
 
 
 
-auto alf::passes_filters(std::queue<alf::types::TokenBase> const& filters, const std::string& line) -> bool
+auto alf::passes_filters(std::vector<alf::types::TokenBase> const& filters, const std::string& line) -> bool
 {
   using alf::types::TokenBase;
 
-  iterable_queue<TokenBase> q2 { filters};
-  std::vector<TokenBase> v(q2.begin(), q2.end());
-
   std::stack<bool> stk;
 
-  for (auto & e : v) {
+  for (auto & e : filters) {
     if (e.type == types::TYPE_TOKEN::SUBSTR) {
       std::size_t found = line.find(e.value);
       if(e.required) {

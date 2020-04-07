@@ -39,9 +39,7 @@ namespace
       { operators::AND{}}
     };
 
-    std::queue<TokenBase, std::deque<TokenBase>> q(std::deque<TokenBase>(input_tokens.begin(),
-                                                                      input_tokens.end()));
-    auto result = alf::passes_filters(q, input_str);
+    auto result = alf::passes_filters(input_tokens, input_str);
 
     ASSERT_TRUE(result);
   }
@@ -59,9 +57,7 @@ namespace
       { operators::AND{}}
     };
 
-    std::queue<TokenBase, std::deque<TokenBase>> q(std::deque<TokenBase>(input_tokens.begin(),
-                                                                         input_tokens.end()));
-    auto result = alf::passes_filters(q, input_str);
+    auto result = alf::passes_filters(input_tokens, input_str);
 
     ASSERT_FALSE(result);
   }
@@ -79,9 +75,7 @@ namespace
       { operators::AND{}}
     };
 
-    std::queue<TokenBase, std::deque<TokenBase>> q(std::deque<TokenBase>(input_tokens.begin(),
-                                                                         input_tokens.end()));
-    auto result = alf::passes_filters(q, input_str);
+    auto result = alf::passes_filters(input_tokens, input_str);
 
     ASSERT_TRUE(result);
   }
@@ -95,9 +89,7 @@ namespace
       { operators::OR{}}
     };
 
-    std::queue<TokenBase, std::deque<TokenBase>> q(std::deque<TokenBase>(input_tokens.begin(),
-                                                                         input_tokens.end()));
-    auto result = alf::passes_filters(q, input_str);
+    auto result = alf::passes_filters(input_tokens, input_str);
 
     ASSERT_TRUE(result);
   }
@@ -111,9 +103,7 @@ namespace
       { operators::OR{}}
     };
 
-    std::queue<TokenBase, std::deque<TokenBase>> q(std::deque<TokenBase>(input_tokens.begin(),
-                                                                         input_tokens.end()));
-    auto result = alf::passes_filters(q, input_str);
+    auto result = alf::passes_filters(input_tokens, input_str);
 
     ASSERT_TRUE(result);
   }
@@ -127,9 +117,7 @@ namespace
       { operators::OR{}}
     };
 
-    std::queue<TokenBase, std::deque<TokenBase>> q(std::deque<TokenBase>(input_tokens.begin(),
-                                                                         input_tokens.end()));
-    auto result = alf::passes_filters(q, input_str);
+    auto result = alf::passes_filters(input_tokens, input_str);
 
     ASSERT_TRUE(result);
   }
@@ -143,9 +131,7 @@ namespace
       { operators::OR{}}
     };
 
-    std::queue<TokenBase, std::deque<TokenBase>> q(std::deque<TokenBase>(input_tokens.begin(),
-                                                                         input_tokens.end()));
-    auto result = alf::passes_filters(q, input_str);
+    auto result = alf::passes_filters(input_tokens, input_str);
 
     ASSERT_TRUE(result);
   }
@@ -159,9 +145,7 @@ namespace
       { operators::OR{}}
     };
 
-    std::queue<TokenBase, std::deque<TokenBase>> q(std::deque<TokenBase>(input_tokens.begin(),
-                                                                         input_tokens.end()));
-    auto result = alf::passes_filters(q, input_str);
+    auto result = alf::passes_filters(input_tokens, input_str);
 
     ASSERT_FALSE(result);
   }
@@ -175,9 +159,7 @@ namespace
       { operators::XOR{}}
     };
 
-    std::queue<TokenBase, std::deque<TokenBase>> q(std::deque<TokenBase>(input_tokens.begin(),
-                                                                         input_tokens.end()));
-    auto result = alf::passes_filters(q, input_str);
+    auto result = alf::passes_filters(input_tokens, input_str);
 
     ASSERT_FALSE(result);
   }
@@ -191,9 +173,7 @@ namespace
       { operators::XOR{}}
     };
 
-    std::queue<TokenBase, std::deque<TokenBase>> q(std::deque<TokenBase>(input_tokens.begin(),
-                                                                         input_tokens.end()));
-    auto result = alf::passes_filters(q, input_str);
+    auto result = alf::passes_filters(input_tokens, input_str);
 
     ASSERT_FALSE(result);
   }
@@ -207,9 +187,7 @@ namespace
       { operators::XOR{}}
     };
 
-    std::queue<TokenBase, std::deque<TokenBase>> q(std::deque<TokenBase>(input_tokens.begin(),
-                                                                         input_tokens.end()));
-    auto result = alf::passes_filters(q, input_str);
+    auto result = alf::passes_filters(input_tokens, input_str);
 
     ASSERT_TRUE(result);
   }
@@ -223,9 +201,7 @@ namespace
       { operators::XOR{}}
     };
 
-    std::queue<TokenBase, std::deque<TokenBase>> q(std::deque<TokenBase>(input_tokens.begin(),
-                                                                         input_tokens.end()));
-    auto result = alf::passes_filters(q, input_str);
+    auto result = alf::passes_filters(input_tokens, input_str);
 
     ASSERT_TRUE(result);
   }

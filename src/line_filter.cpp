@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "shunting_yard.h"
+#include "line_filter.h"
 
 #include <string>
 #include <csignal>
