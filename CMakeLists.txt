@@ -5,10 +5,10 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(libalf)
 
-add_executable(alf src/line_filter.cpp)
+add_executable(alf src/main.cpp)
 
 target_link_libraries(alf
-    PRIVATE libalf
+    PRIVATE algebraic_line_filter
 )
 target_include_directories(alf PUBLIC "${PROJECT_BINARY_DIR}")
 
