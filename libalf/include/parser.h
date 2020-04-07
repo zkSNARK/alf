@@ -31,7 +31,7 @@ namespace alf::parser
     std::vector<alf::types::TokenBase> tokens;
   };
 
-  std::vector<alf::types::TokenBase> fill_in_missing_AND_symbols(std::vector<alf::types::TokenBase>& v);
+  auto fill_in_missing_AND_symbols(std::vector<alf::types::TokenBase>& v) -> std::vector<alf::types::TokenBase>;
 
   auto parse_algebraic(std::string_view const& sv) -> std::vector<alf::types::TokenBase>;
 

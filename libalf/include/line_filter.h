@@ -13,10 +13,9 @@
 
 namespace alf
 {
-  auto passes_filters(std::queue<alf::types::TokenBase> const& filters, std::string const& line) -> bool;
+  auto passes_filters(std::queue<types::TokenBase> const& filters, std::string const& line) -> bool;
 
-  auto
-  apply_filters(alf::parser::ArgPack p) -> void;
+  auto apply_filters(parser::ArgPack p) -> void;
 
   auto handle_operator(std::stack<bool>& stk, types::TYPE_TOKEN tt) -> void;
 }

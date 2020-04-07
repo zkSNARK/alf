@@ -5,7 +5,6 @@
 #include "shunting_yard.h"
 
 #include <vector>
-#include <queue>
 #include <stack>
 #include <stdexcept>
 
@@ -68,10 +67,11 @@ namespace
 
 }
 
-auto alf::shunting_yard(std::vector<alf::types::TokenBase> v) -> std::queue<alf::types::TokenBase>
+auto alf::shunting_yard(std::vector<alf::types::TokenBase> v) -> std::vector<alf::types::TokenBase>
 {
   std::stack<alf::types::TokenBase> stk;
-  std::queue<alf::types::TokenBase> que;
+  std::vector<alf::types::TokenBase> que;
+  que.reserve(v.size());
 
   for (auto& t : v) {
     if (is_operator(t.type)) {
@@ -81,7 +81,7 @@ auto alf::shunting_yard(std::vector<alf::types::TokenBase> v) -> std::queue<alf:
         continue;
       }
       while (p < precedence(stk.top().type)) {
-        que.push(std::move(stk.top()));
+        que.emplace_back(std::move(stk.top()));
         stk.pop();
       }
       stk.push(t);
@@ -90,7 +90,7 @@ auto alf::shunting_yard(std::vector<alf::types::TokenBase> v) -> std::queue<alf:
         stk.push(std::move(t));
       } else {
         while (!is_opening_bracket(stk.top().type)) {
-          que.push(std::move(stk.top()));
+          que.emplace_back(std::move(stk.top()));
           stk.pop();
         }
         if (companion_parenthesis_type(stk.top().type) != t.type) {
@@ -99,11 +99,11 @@ auto alf::shunting_yard(std::vector<alf::types::TokenBase> v) -> std::queue<alf:
         stk.pop();
       }
     } else {
-      que.push(std::move(t));
+      que.emplace_back(std::move(t));
     }
   }
   while (!stk.empty()) {
-    que.push({ stk.top() });
+    que.emplace_back(std::move(stk.top()));
     stk.pop();
   }
 
