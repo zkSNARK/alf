@@ -72,7 +72,10 @@ Alf works in 2 modes.
    
     * alf::types::SUBSTR
    
-   ... but otherwise, the above symbols are parsed specially regardless of whether there is a space between them or not.  So for example. '(hello)' is parsed the same as '( hello )', and both are parsed internally as vector with approximately the follong structure ...
+   ... but otherwise, the above symbols are parsed specially regardless of 
+   whether there is a space between them or not.  So for example. '(hello)' 
+   is parsed the same as '( hello )', and both are parsed internally as 
+   vector with approximately the follong structure ...
    
   ```json
   {
@@ -93,5 +96,17 @@ Alf works in 2 modes.
   }
   ```
   
- 
+## Build Instructions
+Currently, this project is tested only on linux, and build requires Cmake 
+3.15 or higher. 
+
+From this directory, 
+
+    cmake -S . -B build
+    cmake --build build
+
+This will create an executable in the build directory named 'alf'.  Move it 
+wherever you want.  I suggest /usr/local/bin and then call it with your algebraic
+or non algebraic expressions.
+
 ## Examples 
