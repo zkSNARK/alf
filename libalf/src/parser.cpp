@@ -41,6 +41,10 @@ namespace
         is_pos_req = true;
         break;
       }
+      case '!': {
+        is_pos_req = true;
+        break;
+      }
       case '-': {
         is_pos_req = false;
         break;
@@ -83,9 +87,8 @@ namespace
   }
 
 
-  auto
-  handle_quote(char const*& first, char const*& second, char const*& last,
-               std::vector<alf::types::TokenBase>& tokens, bool& is_pos_req)
+  auto handle_quote(char const*& first, char const*& second, char const*& last,
+                    std::vector<alf::types::TokenBase>& tokens, bool& is_pos_req)
   {
     static std::string const single_quote = "'";
     static std::string const double_quote = "\"";
@@ -157,19 +160,21 @@ namespace alf::parser
    * @param v
    * @return
    */
-  std::vector<alf::types::TokenBase> fill_in_missing_AND_symbols(std::vector<alf::types::TokenBase>& v)
+  std::vector<types::TokenBase> fill_in_missing_AND_symbols(std::vector<types::TokenBase>& v)
   {
-    std::vector<alf::types::TokenBase> tokens;
+    using alf::types::TYPE_TOKEN;
+
+    std::vector<types::TokenBase> tokens;
     tokens.reserve(v.size() * 2);
 
-    alf::types::TYPE_TOKEN previous_type = alf::types::TYPE_TOKEN::OPERATOR_AND;
+    TYPE_TOKEN previous_type = TYPE_TOKEN::OPERATOR_AND;
     for (types::TokenBase& t : v) {
-      alf::types::TYPE_TOKEN cur_type = t.type;
-      if (cur_type == alf::types::TYPE_TOKEN::SUBSTR and
-          (previous_type == alf::types::TYPE_TOKEN::SUBSTR or is_closing_bracket(previous_type))) {
+      TYPE_TOKEN cur_type = t.type;
+      if (cur_type == TYPE_TOKEN::SUBSTR and
+          (previous_type == TYPE_TOKEN::SUBSTR or is_closing_bracket(previous_type))) {
         tokens.emplace_back(alf::types::operators::AND{});
       } else if (is_opening_bracket(cur_type) and
-                 (previous_type == alf::types::TYPE_TOKEN::SUBSTR or is_closing_bracket(previous_type))) {
+                 (previous_type == TYPE_TOKEN::SUBSTR or is_closing_bracket(previous_type))) {
         tokens.emplace_back(alf::types::operators::AND{});
       }
       tokens.emplace_back(std::move(t));
@@ -188,9 +193,9 @@ namespace alf::parser
    * @param s
    * @return
    */
-  auto parse_algebraic(std::string_view const& s) -> std::vector<alf::types::TokenBase>
+  auto parse_algebraic(std::string_view const& s) -> std::vector<types::TokenBase>
   {
-    static std::string_view const delims = " '\"&|{([])}-+";
+    static std::string_view const delims = " '\"&|{([])}!^-+";
     std::stack<char> paren_stk;
     std::vector<alf::types::TokenBase> tokens;
     tokens.reserve(s.size() / 2);
