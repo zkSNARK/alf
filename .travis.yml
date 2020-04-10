@@ -37,7 +37,7 @@ script:
   - g++ -v
   - cmake --version
   - cmake -S . -B build
-  - cmake --build build
+  - cmake --build build --parallel 12
 
 
 os: linux

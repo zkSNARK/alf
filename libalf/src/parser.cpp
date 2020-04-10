@@ -160,7 +160,7 @@ namespace alf::parser
    * @param v
    * @return
    */
-  std::vector<types::TokenBase> fill_in_missing_AND_symbols(std::vector<types::TokenBase>& v)
+  auto fill_in_missing_AND_symbols(std::vector<types::TokenBase>& v) -> std::vector<types::TokenBase>
   {
     using alf::types::TYPE_TOKEN;
 

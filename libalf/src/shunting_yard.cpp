@@ -67,6 +67,7 @@ namespace
 
 }
 
+
 auto alf::shunting_yard(std::vector<alf::types::TokenBase> v) -> std::vector<alf::types::TokenBase>
 {
   std::stack<alf::types::TokenBase> stk;

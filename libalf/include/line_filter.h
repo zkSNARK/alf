@@ -13,7 +13,7 @@
 
 namespace alf
 {
-  auto passes_filters(std::vector<types::TokenBase> const& filters, std::string const& line) -> bool;
+  [[nodiscard]] auto passes_filters(std::vector<types::TokenBase> const& filters, std::string const& line) -> bool;
 
   auto apply_filters(parser::ArgPack p) -> void;
 
