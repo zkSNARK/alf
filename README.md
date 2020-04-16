@@ -132,7 +132,24 @@ or non algebraic expressions.
 
 ## Examples 
 
-Tired of those pesky "Permission denied", "Operation not permitted", or "No such file 
-or directory" messages when you run find?  Eliminate them with non algebraic ANDs... 
+Tired of those pesky "Permission denied", "Operation not permitted", "No such file 
+or directory", or "Not a directory" messages when you run find?  Eliminate them with 
+negative requirements ('-') combined with terse implied AND syntax. 
 
-find / -name pyconfig.h  2>&1 | alf -"Permission denied" -"Operation not permitted" -"No such file or directory"
+`time find / -name pyconfig.h  2>&1 | alf -"Permission denied" -"Operation not permitted" 
+-"No such file or directory"`
+
+results of the above command under time
+
+find / -name pyconfig.h 2>&1  5.95s user 113.66s system 61% cpu 3:13.27 total
+alf -"Permission denied" -"Operation not permitted"  -"Not a directory"  0.00s user 
+0.00s system 0% cpu 3:13.28 total
+
+Here is the same thing in grep ...
+`time find / -name pyconfig.h  2>&1 | grep -v "Permission denied" | grep -v "Operation 
+not permitted" | grep -v "No such file or directory" | grep  -v "Not a directory"`
+
+Could you do the above with AWK?  I think so, but I don't know AWK and I needed a 
+project to get some coding practice in C++.  Part of the beauty of this project is that
+I know it inside and out, and thus I can manipulate it.  
+
