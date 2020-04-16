@@ -141,13 +141,15 @@ negative requirements ('-') combined with terse implied AND syntax.
 
 results of the above command under time
 
-find / -name pyconfig.h 2>&1  5.95s user 113.66s system 61% cpu 3:13.27 total
-alf -"Permission denied" -"Operation not permitted"  -"Not a directory"  0.00s user 
-0.00s system 0% cpu 3:13.28 total
+5.95s user 113.66s system 61% cpu 3:13.27 total
+0.00s user 0.00s system 0% cpu 3:13.28 total
 
 Here is the same thing in grep ...
 `time find / -name pyconfig.h  2>&1 | grep -v "Permission denied" | grep -v "Operation 
 not permitted" | grep -v "No such file or directory" | grep  -v "Not a directory"`
+
+5.81s user 110.95s system 62% cpu 3:08.24 total
+0.00s user 0.00s system 0% cpu 3:08.24 total
 
 Could you do the above with AWK?  I think so, but I don't know AWK and I needed a 
 project to get some coding practice in C++.  Part of the beauty of this project is that
