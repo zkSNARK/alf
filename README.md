@@ -131,3 +131,8 @@ wherever you want.  I suggest /usr/local/bin and then call it with your algebrai
 or non algebraic expressions.
 
 ## Examples 
+
+Tired of those pesky "Permission denied", "Operation not permitted", or "No such file 
+or directory" messages when you run find?  Eliminate them with non algebraic ANDs... 
+
+find / -name pyconfig.h  2>&1 | alf -"Permission denied" -"Operation not permitted" -"No such file or directory"
