@@ -151,7 +151,43 @@ not permitted" | grep -v "No such file or directory" | grep  -v "Not a directory
 5.81s user 110.95s system 62% cpu 3:08.24 total
 0.00s user 0.00s system 0% cpu 3:08.24 total
 
-Could you do the above with AWK?  I think so, but I don't know AWK and I needed a 
-project to get some coding practice in C++.  Part of the beauty of this project is that
-I know it inside and out, and thus I can manipulate it.  
+Could you do the above with AWK?... yes.  But alf is sorta the first half of awk 
+(the filter section) without 'do something with the results' section.  Just the
+filter section is really convenient as a substitute for grep.
 
+One other benefit over awk, is that this is a c++ library.  Technically, this could
+give someone the ability to embed the filter section of alf into a c++ project.  
+
+You can see how it works in the executable ... 
+https://github.com/zkSNARK/alf/blob/master/src/main.cpp
+
+```
+  alf::parser::ArgPack pack { alf::parser::parse_arguments(argc, argv)};
+  pack.tokens = alf::parser::fill_in_missing_AND_symbols(pack.tokens);
+  pack.tokens = alf::shunting_yard(std::move(pack.tokens));
+  apply_filters(std::move(pack));
+```
+
+The above could be used inside of a user program by calling the parser with
+a valid sequence directly.  See the tests https://github.com/zkSNARK/alf/blob/master/tests/test_algebraic_parser.cpp 
+for examples of how to call the parser ... 
+
+In the following code, we can see that you can simply pass the parser a string
+
+```
+std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic("hello world") };
+```
+
+Currently, it would be used as follows ... 
+```
+  alf::parser::ArgPack pack { alf::parser::parse_arguments(argc, argv)};
+  pack.tokens = alf::parser::fill_in_missing_AND_symbols(pack.tokens);
+  pack.tokens = alf::shunting_yard(std::move(pack.tokens));
+  if (alf::passes_filters(pack.tokens, some_std_string)) {
+    // do whatever it is you do
+  }
+```
+
+At a later time, the first three lines will be wrapped into a convenience function which
+will give users the ability to call a single if statement with the target filters and a 
+line to check.
