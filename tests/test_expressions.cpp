@@ -150,7 +150,7 @@ namespace
   TEST(Expressions, invalid_regex_is_an_error)
   {
     EXPECT_THROW(compile("r'(unclosed'"), std::runtime_error);
-    EXPECT_THROW(compile("r'[z-a]'"), std::runtime_error);
+    EXPECT_THROW(compile("r'*x'"), std::runtime_error);     // nothing to repeat
   }
 
   TEST(Expressions, no_requirements_passes_everything)
