@@ -10,6 +10,17 @@
 
 auto alf::handle_operator(std::stack<bool>& stk, types::TYPE_TOKEN tt) -> void
 {
+  if (types::is_unary_operator(tt)) {
+    if (stk.empty()) {
+      throw std::runtime_error("malformed expression: nothing to negate");
+    }
+    stk.top() = !stk.top();
+    return;
+  }
+  if (stk.size() < 2) {
+    throw std::runtime_error("malformed expression: an operator is missing an operand");
+  }
+
   bool a = stk.top();
   stk.pop();
   bool b = stk.top();
@@ -39,6 +50,10 @@ auto alf::passes_filters(std::vector<alf::types::TokenBase> const& filters, cons
 {
   using alf::types::TokenBase;
 
+  if (filters.empty()) {
+    return true;  // no requirements: every line passes
+  }
+
   std::stack<bool> stk;
 
   for (auto & e : filters) {
@@ -52,6 +67,9 @@ auto alf::passes_filters(std::vector<alf::types::TokenBase> const& filters, cons
       continue;
     }
     handle_operator(stk, e.type);
+  }
+  if (stk.size() != 1) {
+    throw std::runtime_error("malformed expression: operands without an operator between them");
   }
   return stk.top();
 }

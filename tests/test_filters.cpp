@@ -14,7 +14,7 @@ namespace
 {
   using namespace alf::types;
 
-  auto print_vec(std::vector<alf::types::TokenBase> const& v)
+  [[maybe_unused]] auto print_vec(std::vector<alf::types::TokenBase> const& v)
   {
     std::cout << "[";
     for (auto e = v.begin(); e != v.end(); ++e) {

@@ -1,41 +1,25 @@
-set(BINARY ${CMAKE_PROJECT_NAME}_tst)
-
 include(FetchContent)
 
 FetchContent_Declare(
     googletest
-    GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG release-1.8.0
+    URL https://github.com/google/googletest/archive/refs/tags/v1.15.2.tar.gz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
-
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-set_target_properties(gtest PROPERTIES FOLDER extern)
-set_target_properties(gtest_main PROPERTIES FOLDER extern)
-set_target_properties(gmock PROPERTIES FOLDER extern)
-set_target_properties(gmock_main PROPERTIES FOLDER extern)
+# The argument-parser tests open tests/infile.txt, so every test runs from the build directory
+# (the top-level CMakeLists copies the file there).
+function(alf_test name source)
+  add_executable(${name} ${source})
+  target_link_libraries(${name} PRIVATE algebraic_line_filter GTest::gtest GTest::gmock GTest::gtest_main)
+  add_test(NAME ${name} COMMAND ${name} WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
+endfunction()
 
-add_executable(TestArgumentParser test_argument_parser.cpp)
-target_link_libraries(TestArgumentParser gtest gmock gtest_main algebraic_line_filter)
-add_executable(TestAlgebraicParser test_algebraic_parser.cpp)
-target_link_libraries(TestAlgebraicParser gtest gmock gtest_main algebraic_line_filter)
-add_executable(TestAddImpliedAND test_add_implied_and.cpp)
-target_link_libraries(TestAddImpliedAND gtest gmock gtest_main algebraic_line_filter)
-add_executable(TestShuntingYard test_shunting_yard.cpp)
-target_link_libraries(TestShuntingYard gtest gmock gtest_main algebraic_line_filter)
-add_executable(TestFilters test_filters.cpp)
-target_link_libraries(TestFilters gtest gmock gtest_main algebraic_line_filter)
-
-add_executable(test
-    test_argument_parser.cpp
-    test_algebraic_parser.cpp
-    test_add_implied_and.cpp
-    test_shunting_yard.cpp
-    test_filters.cpp)
-
-target_link_libraries(test
-    algebraic_line_filter
-    gtest
-    gmock
-    gtest_main
-)
+alf_test(TestArgumentParser test_argument_parser.cpp)
+alf_test(TestAlgebraicParser test_algebraic_parser.cpp)
+alf_test(TestAddImpliedAND test_add_implied_and.cpp)
+alf_test(TestShuntingYard test_shunting_yard.cpp)
+alf_test(TestFilters test_filters.cpp)
+alf_test(TestExpressions test_expressions.cpp)

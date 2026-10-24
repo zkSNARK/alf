@@ -47,6 +47,8 @@ namespace
         return 20;
       case alf::types::TYPE_TOKEN::OPERATOR_AND:
         return 30;
+      case alf::types::TYPE_TOKEN::OPERATOR_NOT:
+        return 40;
       case alf::types::TYPE_TOKEN::BRACKET_OPEN_CURLY:
       case alf::types::TYPE_TOKEN::BRACKET_CLOSE_CURLY:
       case alf::types::TYPE_TOKEN::BRACKET_OPEN_PAREN:
@@ -68,33 +70,42 @@ namespace
 }
 
 
+/**
+ * Infix to postfix.  Binary operators of equal precedence are kept right-associative
+ * (a & b & c -> a b c & &); that is safe because and, or and xor are all associative.
+ * The unary NOT binds tightest and is only ever written in front of a group.
+ */
 auto alf::shunting_yard(std::vector<alf::types::TokenBase> v) -> std::vector<alf::types::TokenBase>
 {
   std::stack<alf::types::TokenBase> stk;
   std::vector<alf::types::TokenBase> que;
   que.reserve(v.size());
+  bool previous_was_opening_bracket = false;
 
   for (auto& t : v) {
+    bool const is_open = is_opening_bracket(t.type);
     if (is_operator(t.type)) {
-      int p = precedence(t.type);
-      if (stk.empty() or is_opening_bracket(stk.top().type) or p >= precedence(stk.top().type)) {
-        stk.push(std::move(t));
-        continue;
-      }
-      while (p < precedence(stk.top().type)) {
-        que.emplace_back(std::move(stk.top()));
-        stk.pop();
-      }
-      stk.push(t);
-    } else if (is_bracket(t.type)) {
-      if (is_opening_bracket(t.type)) {
-        stk.push(std::move(t));
-      } else {
-        while (!is_opening_bracket(stk.top().type)) {
+      if (!is_unary_operator(t.type)) {
+        // pop operators that bind tighter, stopping at the group's opening bracket
+        int p = precedence(t.type);
+        while (!stk.empty() and !is_opening_bracket(stk.top().type) and p < precedence(stk.top().type)) {
           que.emplace_back(std::move(stk.top()));
           stk.pop();
         }
-        if (companion_parenthesis_type(stk.top().type) != t.type) {
+      }
+      stk.push(std::move(t));
+    } else if (is_bracket(t.type)) {
+      if (is_closing_bracket(t.type) and previous_was_opening_bracket) {
+        throw std::runtime_error("empty group");
+      }
+      if (is_opening_bracket(t.type)) {
+        stk.push(std::move(t));
+      } else {
+        while (!stk.empty() and !is_opening_bracket(stk.top().type)) {
+          que.emplace_back(std::move(stk.top()));
+          stk.pop();
+        }
+        if (stk.empty() or companion_parenthesis_type(stk.top().type) != t.type) {
           throw std::runtime_error("imbalanced parenthesis detected");
         }
         stk.pop();
@@ -102,11 +113,15 @@ auto alf::shunting_yard(std::vector<alf::types::TokenBase> v) -> std::vector<alf
     } else {
       que.emplace_back(std::move(t));
     }
+    previous_was_opening_bracket = is_open;
   }
   while (!stk.empty()) {
+    if (is_opening_bracket(stk.top().type)) {
+      throw std::runtime_error("imbalanced parenthesis detected");
+    }
     que.emplace_back(std::move(stk.top()));
     stk.pop();
   }
 
-  return std::move(que);
+  return que;
 }

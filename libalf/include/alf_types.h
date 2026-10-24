@@ -25,6 +25,7 @@ namespace alf::types
     OPERATOR_OR,
     OPERATOR_XOR,
     OPERATOR_AND,
+    OPERATOR_NOT,   // unary prefix: negates the group that follows, as in -( ... ) or !( ... )
 
     BRACKET_OPEN_CURLY,
     BRACKET_CLOSE_CURLY,
@@ -58,7 +59,10 @@ namespace alf::types
         return "OPERATOR_OR";
       case TYPE_TOKEN::OPERATOR_XOR:
         return "OPERATOR_XOR";
+      case TYPE_TOKEN::OPERATOR_NOT:
+        return "OPERATOR_NOT";
     }
+    return "UNKNOWN";
   }
 
 
@@ -66,7 +70,7 @@ namespace alf::types
    * Tokens are not polymorphic, but there is a hierarchy.
    * Sub categories are
    *    - substrings
-   *    - binary operators (and, or, xor)
+   *    - binary operators (and, or, xor) and the unary not
    *    - brackets (parenthesis, square, curly)
    *
    *  NOTE: if the bool required is false, then that implies
@@ -86,9 +90,9 @@ namespace alf::types
     TYPE_TOKEN type;
 
     TokenBase(TYPE_TOKEN type, std::string value, bool require)
-      : type(type),
-        value(std::move(value)),
-        required(require) { }
+      : value(std::move(value)),
+        required(require),
+        type(type) { }
 
     auto operator==(const TokenBase& other) const
     {
@@ -135,6 +139,15 @@ namespace alf::types
     struct XOR : public BinaryOperator
     {
       XOR() : BinaryOperator(TYPE_TOKEN::OPERATOR_XOR, "^") { }
+    };
+
+    /**
+     * Negates a bracketed group.  A negated substring doesn't need it: '-a' and '!a' are stored
+     * as SubStr{"a", required = false}.
+     */
+    struct NOT : public Operator
+    {
+      NOT() : Operator(TYPE_TOKEN::OPERATOR_NOT, "!", true) { }
     };
   } // end namespace operators
 
@@ -191,7 +204,13 @@ namespace alf::types
   {
     return t == TYPE_TOKEN::OPERATOR_AND
            or t == TYPE_TOKEN::OPERATOR_OR
-           or t == TYPE_TOKEN::OPERATOR_XOR;
+           or t == TYPE_TOKEN::OPERATOR_XOR
+           or t == TYPE_TOKEN::OPERATOR_NOT;
+  }
+
+  inline auto is_unary_operator(alf::types::TYPE_TOKEN const& t) -> bool
+  {
+    return t == TYPE_TOKEN::OPERATOR_NOT;
   }
 
   inline auto is_opening_bracket(alf::types::TYPE_TOKEN const& t) -> bool

@@ -19,64 +19,83 @@ namespace
   }
 
 
+  /**
+   * A '-' or '!' must be followed by a string or a bracketed group, never by an operator or a
+   * closing bracket ("a & -" or "-)" mean nothing).
+   */
+  void require_operand_after_negation(bool is_pos_req, char c)
+  {
+    if (!is_pos_req) {
+      throw std::runtime_error(std::string("'-' or '!' must be followed by a string or a group, not '") + c + "'");
+    }
+  }
+
+
+  /**
+   * A negated opening bracket negates the whole group: emit a unary NOT in front of it.
+   */
+  template <typename Bracket>
+  void open_group(bool& is_pos_req, std::vector<alf::types::TokenBase>& tokens)
+  {
+    if (!is_pos_req) {
+      tokens.emplace_back(alf::types::operators::NOT{});
+    }
+    tokens.emplace_back(Bracket{});
+    is_pos_req = true;
+  }
+
+
   auto make_token(std::string_view token, bool& is_pos_req, std::vector<alf::types::TokenBase>& tokens)
   {
     switch (token[0]) {
       case '|': {
+        require_operand_after_negation(is_pos_req, token[0]);
         tokens.emplace_back(alf::types::operators::OR{});
-        is_pos_req = true;
         break;
       }
       case '&': {
+        require_operand_after_negation(is_pos_req, token[0]);
         tokens.emplace_back(alf::types::operators::AND{});
-        is_pos_req = true;
         break;
       }
       case '^': {
+        require_operand_after_negation(is_pos_req, token[0]);
         tokens.emplace_back(alf::types::operators::XOR{});
-        is_pos_req = true;
         break;
       }
       case '+': {
-        is_pos_req = true;
         break;
       }
-      case '!': {
-        is_pos_req = true;
-        break;
-      }
+      case '!':
       case '-': {
-        is_pos_req = false;
+        is_pos_req = !is_pos_req;  // a second negation cancels the first
         break;
       }
       case '(': {
-        tokens.emplace_back(alf::types::brackets::OpenParen{});
-        is_pos_req = true;
+        open_group<alf::types::brackets::OpenParen>(is_pos_req, tokens);
         break;
       }
       case '[': {
-        tokens.emplace_back(alf::types::brackets::OpenSquareBracket{});
-        is_pos_req = true;
+        open_group<alf::types::brackets::OpenSquareBracket>(is_pos_req, tokens);
         break;
       }
       case '{': {
-        tokens.emplace_back(alf::types::brackets::OpenCurlyBracket{});
-        is_pos_req = true;
+        open_group<alf::types::brackets::OpenCurlyBracket>(is_pos_req, tokens);
         break;
       }
       case ')': {
+        require_operand_after_negation(is_pos_req, token[0]);
         tokens.emplace_back(alf::types::brackets::CloseParen{});
-        is_pos_req = true;
         break;
       }
       case ']': {
+        require_operand_after_negation(is_pos_req, token[0]);
         tokens.emplace_back(alf::types::brackets::CloseSquareBracket{});
-        is_pos_req = true;
         break;
       }
       case '}': {
+        require_operand_after_negation(is_pos_req, token[0]);
         tokens.emplace_back(alf::types::brackets::CloseCurlyBracket{});
-        is_pos_req = true;
         break;
       }
       default:
@@ -173,14 +192,14 @@ namespace alf::parser
       if (cur_type == TYPE_TOKEN::SUBSTR and
           (previous_type == TYPE_TOKEN::SUBSTR or is_closing_bracket(previous_type))) {
         tokens.emplace_back(alf::types::operators::AND{});
-      } else if (is_opening_bracket(cur_type) and
+      } else if ((is_opening_bracket(cur_type) or is_unary_operator(cur_type)) and
                  (previous_type == TYPE_TOKEN::SUBSTR or is_closing_bracket(previous_type))) {
         tokens.emplace_back(alf::types::operators::AND{});
       }
       tokens.emplace_back(std::move(t));
       previous_type = cur_type;
     }
-    return std::move(tokens);
+    return tokens;
   }
 
 
@@ -209,11 +228,17 @@ namespace alf::parser
       if (first != second) {
         make_token(std::string_view(first, second - first), is_positive_req, tokens);
       }
+      if (second == last) {
+        break;
+      }
       if (is_quote(*second)) {
         handle_quote(first, second, last, tokens, is_positive_req);
-      } else if (*second != ' ' and second != last) {
+      } else if (*second != ' ') {
         make_token(std::string_view{ second, 1 }, is_positive_req, tokens);
       }
+    }
+    if (!is_positive_req) {
+      throw std::runtime_error("expression ends with '-' or '!'");
     }
 
     return tokens;

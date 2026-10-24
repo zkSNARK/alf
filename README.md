@@ -1,193 +1,101 @@
-[![Build Status](https://travis-ci.com/zkSNARK/alf.svg?branch=master)](https://travis-ci.com/zkSNARK/alf)
-
-https://zksnark.github.io/alf/
+[![CI](https://github.com/zkSNARK/alf/actions/workflows/ci.yml/badge.svg)](https://github.com/zkSNARK/alf/actions/workflows/ci.yml)
 
 # alf
-Algebraic Line Filter - alf is a command line tool which allows users to
- filter logs or other files by creating sets of requirements which can 
- be specified in an algebraic form.
 
-Alf parses your input and then applies it to either a file that you 
-specify or whatever you pipe in, and then sends the output to stdout 
-or to a file based on command line options.
+**Algebraic Line Filter.** alf filters the lines of a file, or whatever you pipe into it, by a
+set of required (and forbidden) substrings that you write as a boolean expression.
 
-## What problem does this solve?
-Sometimes you want to filter the lines in a file based on a set of 
-required substrings.  A specific use case, might be you want all log
- entries in a file related to plugin 410000.  So you might want to grep 
- for 410000 in that log file.  
-
-That works fine until you want to start doing multiple elements with 
-conditions like AND and OR.  Grep or some of its sister filtering tools 
-may or may not have some modes that you can use to add AND and OR conditions 
-to your searches, but they are ceraintly not easy to use, and they are not 
-capable of easily doing nestings.
-
-For example, if you want to say something like ...
-
-give me all the lines in file in.log that contain 'hello' AND 'world' but 
-only contain one of ('jack' AND 'jill'), ('bob' AND 'bill'), or ('tim', 'tam')
-
-... this would be very hard to say in grep.
-
-Also, complex nestings such as...
-
-('a' & !'b') | ('a' & (('b' | 'c') & 'd'))
-
-...might or might not be impossible in grep.
-
-In alf, they are easy, and you can in fact type eactly "('a' & !'b') 
-| ('a' & (('b' | 'c') & 'd'))", and alf will parse it and filter your file on it.  
-
-
-## Modality
-Alf works in 2 modes.  
-1. Basic mode - non-algebraic.
-  - Most people who want to filter logs only need to specifiy a few positive and 
-    negative requirements.
-  - Accepts quoted or non-quoted tokens.
-  - Only 2 key symbols : '-' and '+'. 
-  This mode has its own parser, which is far more simple than the algebraic mode 
-  described above.  You can call alf like follows...
-  
-  alf -i in.log + a b c - d e
-  
-  The above would filter the file in.log and would output lines which contain 
-  ('a' OR 'b' OR 'c') AND (NOT 'd' or NOT 'e').
-  
-  The parser looks at the '+' and '-' symbols begin a group.  Groups continue 
-  until either the end of the arguments, or until the next '+' or '-'.  In this 
-  mode, requirements inside of a group are considered to have an implicit 'OR' 
-  between them, but groups are considered to have an implict AND between them.  
-  Because of this rule, it is easy to specify a bunch of AND requirements by 
-  simply placing a '+' or a '-' between everything.
-  
-  alf -i in.log +a +b -c -d
-  
-  ... which would be parsed as REQUIRE 'a' AND 'b' AND NOT 'c' AND NOT 'd'.
-  
-2.  Algebraic mode - full algebraic input as a string
-  - Allows users to enter complex sets of requirements.
-  - Accepts following special characters ...
-
-  Type symbols 
-  
-    * '(' : alf::types::brackets::BRACKET_OPEN_PAREN
-    * '{' : alf::types::brackets::BRACKET_OPEN_CURLY
-    * '[' : alf::types::brackets::BRACKET_OPEN_SQUARE
-    * ']' : alf::types::brackets::BRACKET_CLOSE_PAREN
-    * '}' : alf::types::brackets::BRACKET_CLOSE_CURLY
-    * ')' : alf::types::brackets::BRACKET_CLOSE_SQUARE
-    * '&' : alf::types::operators::AND
-    * '|' : alf::types::operators::OR
-    
-   Other
-   
-    * '+' : positive requirement
-    * '-' : negative requirement (EG : require not found in this line)
-    * '!' : negative requirement (EG : require not found in this line)
-    * '\'' : single quote
-    * '"' : double quote
-    
-   - anything between quotes is considered a substr of type...
-   
-    * alf::types::SUBSTR
-   
-   ... but otherwise, the above symbols are parsed specially regardless of 
-   whether there is a space between them or not.  So for example. '(hello)' 
-   is parsed the same as '( hello )', and both are parsed internally as 
-   vector with approximately the follong structure ...
-   
-  ```json
-  {
-    "sequence": [
-      {
-        "type": "alf::types::brackets::BRACKET_OPEN_PAREN",
-        "required": true
-      },
-      {
-        "type": "alf::types::SUBSTR",
-        "required": true
-      },
-      {
-        "type": "alf::types::brackets::BRACKET_CLOSE_PAREN",
-        "required": true
-      }
-    ]
-  }
-  ```
-  
-## Build Instructions
-Currently, this project is tested only on linux, and build requires Cmake 
-3.15 or higher. 
-
-From this directory, 
-
-    cmake -S . -B build
-    cmake --build build
-
-This will create an executable in the build directory named 'alf'.  Move it 
-wherever you want.  I suggest /usr/local/bin and then call it with your algebraic
-or non algebraic expressions.
-
-## Examples 
-
-Tired of those pesky "Permission denied", "Operation not permitted", "No such file 
-or directory", or "Not a directory" messages when you run find?  Eliminate them with 
-negative requirements ('-') combined with terse implied AND syntax. 
-
-`time find / -name pyconfig.h  2>&1 | alf -"Permission denied" -"Operation not permitted" 
--"No such file or directory"`
-
-results of the above command under time
-
-5.95s user 113.66s system 61% cpu 3:13.27 total
-0.00s user 0.00s system 0% cpu 3:13.28 total
-
-Here is the same thing in grep ...
-`time find / -name pyconfig.h  2>&1 | grep -v "Permission denied" | grep -v "Operation 
-not permitted" | grep -v "No such file or directory" | grep  -v "Not a directory"`
-
-5.81s user 110.95s system 62% cpu 3:08.24 total
-0.00s user 0.00s system 0% cpu 3:08.24 total
-
-Could you do the above with AWK?... yes.  But alf is sorta the first half of awk 
-(the filter section) without 'do something with the results' section.  Just the
-filter section is really convenient as a substitute for grep.
-
-One other benefit over awk, is that this is a c++ library.  Technically, this could
-give someone the ability to embed the filter section of alf into a c++ project.  
-
-You can see how it works in the executable ... 
-https://github.com/zkSNARK/alf/blob/master/src/main.cpp
-
-```
-  alf::parser::ArgPack pack { alf::parser::parse_arguments(argc, argv)};
-  pack.tokens = alf::parser::fill_in_missing_AND_symbols(pack.tokens);
-  pack.tokens = alf::shunting_yard(std::move(pack.tokens));
-  apply_filters(std::move(pack));
+```sh
+alf -i server.log -a "('error' | 'warn') & -'heartbeat'"
 ```
 
-The above could be used inside of a user program by calling the parser with
-a valid sequence directly.  See the tests https://github.com/zkSNARK/alf/blob/master/tests/test_algebraic_parser.cpp 
-for examples of how to call the parser ... 
+## Why
 
-In the following code, we can see that you can simply pass the parser a string
+`grep` is great until you need "lines with this and that, but not those, unless something
+else." Say you want every line in `in.log` that contains `hello` and `world`, and also one of
+the pairs (`jack` and `jill`), (`bob` and `bill`) or (`tim` and `tam`). With grep that's a
+pipeline of several commands. With alf it's one expression:
 
-```
-std::vector<alf::types::TokenBase> result{ alf::parser::parse_algebraic("hello world") };
-```
-
-Currently, it would be used as follows ... 
-```
-  alf::parser::ArgPack pack { alf::parser::parse_arguments(argc, argv)};
-  pack.tokens = alf::parser::fill_in_missing_AND_symbols(pack.tokens);
-  pack.tokens = alf::shunting_yard(std::move(pack.tokens));
-  if (alf::passes_filters(pack.tokens, some_std_string)) {
-    // do whatever it is you do
-  }
+```sh
+alf -i in.log -a "'hello' 'world' (('jack' 'jill') | ('bob' 'bill') | ('tim' 'tam'))"
 ```
 
-At a later time, the first three lines will be wrapped into a convenience function which
-will give users the ability to call a single if statement with the target filters and a 
-line to check.
+## Two ways to write a filter
+
+### Basic mode: `+` and `-` groups
+
+Most of the time you only need a few strings that must appear and a few that must not.
+
+```sh
+alf -i in.log + a b c - d e
+```
+
+`+` starts a group of strings that are wanted and `-` starts a group of strings that are not
+wanted. Inside a group the strings are joined with **or**; the groups are joined with **and**.
+The example above keeps lines that contain `a`, `b` or `c`, **and** that are missing `d` or
+missing `e`.
+
+Put a `+` or `-` in front of every string to require them all:
+
+```sh
+alf -i in.log +a +b -c -d           # a and b, and neither c nor d
+find / -name pyconfig.h 2>&1 | alf -"Permission denied" -"Operation not permitted"
+```
+
+### Algebraic mode: `-a "expression"`
+
+| Write | Means |
+| --- | --- |
+| `'text'` or `"text"` | the line contains `text` (quotes are needed for anything with spaces or symbols) |
+| `-'text'` or `!'text'` | the line does **not** contain `text` |
+| `-( … )` or `!( … )` | the group is **not** true |
+| `a & b` | and |
+| `a ^ b` | exclusive or |
+| `a \| b` | or |
+| `a b` | and (an `&` is implied between neighbours) |
+| `( )`, `[ ]`, `{ }` | grouping; any bracket style, as long as each pair matches |
+
+`&` binds tighter than `^`, which binds tighter than `|`, so `'a' & 'b' | 'c'` means
+`('a' & 'b') | 'c'`. A negation applies to the one string or group right after it, and two
+negations cancel.
+
+The symbols `& | ^ ! - + ( ) [ ] { }` and spaces always split unquoted text, so quote any
+string that contains them: `-'error-code'`, not `-error-code`.
+
+Malformed expressions (an unbalanced bracket, an operator with nothing on one side, an empty
+group) are reported before any input is read, and alf exits with status 2.
+
+## Options
+
+| Option | |
+| --- | --- |
+| `-i FILE`, `--infile FILE` | read FILE instead of standard input |
+| `-o FILE`, `--outfile FILE` | write to FILE instead of standard output |
+| `-a EXPR`, `--algebra EXPR` | an algebraic expression (may be combined with basic-mode groups; everything is and-ed) |
+
+## Build
+
+Requires CMake 3.15+ and a C++20 compiler. Tested on Linux and macOS.
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+ctest --test-dir build        # unit tests (googletest is downloaded at configure time)
+```
+
+The executable is `build/alf`; copy it somewhere on your `PATH`. Configure with
+`-DALF_BUILD_TESTS=OFF` to skip the tests and the googletest download.
+
+## How it works
+
+1. The expression is split into tokens: strings (each marked wanted or not wanted), operators
+   and brackets. A `-`/`!` in front of a bracket becomes a unary **not** token.
+2. A small state machine inserts the `&` implied between neighbouring strings and groups.
+3. [Shunting-yard](https://en.wikipedia.org/wiki/Shunting-yard_algorithm) converts the tokens
+   to postfix.
+4. Each line is checked with a stack of booleans: a string pushes whether the line contains
+   it, an operator pops its operands and pushes the result.
+
+The tests include a randomized check that compiles thousands of generated expressions and
+compares alf's answer with a straightforward recursive evaluator on every combination of
+matching strings.
