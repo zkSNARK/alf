@@ -4,6 +4,7 @@
 
 #include "line_filter.h"
 
+#include <regex>
 #include <stack>
 #include <stdexcept>
 
@@ -64,6 +65,10 @@ auto alf::passes_filters(std::vector<alf::types::TokenBase> const& filters, cons
       } else {
         stk.push(found == std::string::npos);
       }
+      continue;
+    }
+    if (e.type == types::TYPE_TOKEN::REGEX) {
+      stk.push(std::regex_search(line, *e.regex) == e.required);
       continue;
     }
     handle_operator(stk, e.type);

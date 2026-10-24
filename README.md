@@ -48,6 +48,8 @@ find / -name pyconfig.h 2>&1 | alf -"Permission denied" -"Operation not permitte
 | --- | --- |
 | `'text'` or `"text"` | the line contains `text` (quotes are needed for anything with spaces or symbols) |
 | `-'text'` or `!'text'` | the line does **not** contain `text` |
+| `r'pattern'` or `r"pattern"` | the regular expression matches somewhere in the line |
+| `-r'pattern'` or `!r'pattern'` | the regular expression does **not** match |
 | `-( … )` or `!( … )` | the group is **not** true |
 | `a & b` | and |
 | `a ^ b` | exclusive or |
@@ -58,6 +60,27 @@ find / -name pyconfig.h 2>&1 | alf -"Permission denied" -"Operation not permitte
 `&` binds tighter than `^`, which binds tighter than `|`, so `'a' & 'b' | 'c'` means
 `('a' & 'b') | 'c'`. A negation applies to the one string or group right after it, and two
 negations cancel.
+
+### Regular expressions
+
+Write a regex like a Python raw string: an `r` right against the opening quote.
+
+```sh
+alf -i server.log -a "r'^\[(WARN|ERROR)\]' & -r'code=2\d\d'"
+alf -i build.log -a "r'warning: unused' | r\"error C\d{4}\""
+```
+
+Patterns use the ECMAScript grammar of `std::regex` and are matched with `std::regex_search`,
+so a pattern matches anywhere unless you anchor it with `^` or `$`. The line ending is not part
+of the line, so `r'done$'` works on files with `\n` or `\r\n` endings. There are no escapes
+for the delimiting quote; to use `'` inside a pattern, delimit it with `"`, and the other way
+round. An invalid pattern is an error before any input is read. Regexes are only available in
+algebraic mode: in basic mode the shell has already removed the quotes.
+
+`std::regex` is not fast: on a million-line log a regex filter takes about five times as long
+as a substring filter. Prefer plain strings when they say the same thing.
+
+### Quoting
 
 The symbols `& | ^ ! - + ( ) [ ] { }` and spaces always split unquoted text, so quote any
 string that contains them: `-'error-code'`, not `-error-code`.
@@ -88,7 +111,8 @@ The executable is `build/alf`; copy it somewhere on your `PATH`. Configure with
 
 ## How it works
 
-1. The expression is split into tokens: strings (each marked wanted or not wanted), operators
+1. The expression is split into tokens: strings and regexes (each marked wanted or not wanted,
+   regexes compiled once here), operators
    and brackets. A `-`/`!` in front of a bracket becomes a unary **not** token.
 2. A small state machine inserts the `&` implied between neighbouring strings and groups.
 3. [Shunting-yard](https://en.wikipedia.org/wiki/Shunting-yard_algorithm) converts the tokens

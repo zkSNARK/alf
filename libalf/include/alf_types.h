@@ -7,6 +7,9 @@
 
 #pragma once
 
+#include <memory>
+#include <regex>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -21,6 +24,7 @@ namespace alf::types
   enum class TYPE_TOKEN : char
   {
     SUBSTR,
+    REGEX,
 
     OPERATOR_OR,
     OPERATOR_XOR,
@@ -41,6 +45,8 @@ namespace alf::types
     switch (tt) {
       case TYPE_TOKEN::SUBSTR :
         return "SUBSTR";
+      case TYPE_TOKEN::REGEX :
+        return "REGEX";
       case TYPE_TOKEN::BRACKET_OPEN_CURLY:
         return "BRACKET_OPEN_CURLY";
       case TYPE_TOKEN::BRACKET_CLOSE_CURLY:
@@ -69,7 +75,7 @@ namespace alf::types
   /**
    * Tokens are not polymorphic, but there is a hierarchy.
    * Sub categories are
-   *    - substrings
+   *    - substrings and regular expressions (the operands)
    *    - binary operators (and, or, xor) and the unary not
    *    - brackets (parenthesis, square, curly)
    *
@@ -88,6 +94,7 @@ namespace alf::types
     std::string value;
     bool required;
     TYPE_TOKEN type;
+    std::shared_ptr<std::regex const> regex;  // REGEX only: compiled once, shared by copies
 
     TokenBase(TYPE_TOKEN type, std::string value, bool require)
       : value(std::move(value)),
@@ -112,6 +119,27 @@ namespace alf::types
     explicit SubStr(std::string_view value, bool require)
       : TokenBase(TYPE_TOKEN::SUBSTR, std::string(value), require) { }
   };
+
+  /**
+   * A regular expression written r'pattern' or r"pattern".  A line matches if the pattern is
+   * found anywhere in it (std::regex_search, ECMAScript grammar).
+   */
+  struct Regex : public TokenBase
+  {
+    Regex(std::string pattern, bool require) : TokenBase(TYPE_TOKEN::REGEX, std::move(pattern), require)
+    {
+      try {
+        regex = std::make_shared<std::regex const>(value, std::regex::ECMAScript | std::regex::optimize);
+      } catch (std::regex_error const& e) {
+        throw std::runtime_error("invalid regex '" + value + "': " + e.what());
+      }
+    }
+  };
+
+  inline auto is_operand(TYPE_TOKEN const& t) -> bool
+  {
+    return t == TYPE_TOKEN::SUBSTR or t == TYPE_TOKEN::REGEX;
+  }
 
   namespace operators
   {

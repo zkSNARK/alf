@@ -107,38 +107,30 @@ namespace
   }
 
 
+  /**
+   * `second` points at an opening quote.  Reads up to the matching quote and emits a SubStr, or
+   * a Regex when the quote was prefixed with r (as in r'^\\d+').  There are no escapes: to use
+   * one kind of quote inside a string or pattern, delimit it with the other kind.
+   */
   auto handle_quote(char const*& first, char const*& second, char const*& last,
-                    std::vector<alf::types::TokenBase>& tokens, bool& is_pos_req)
+                    std::vector<alf::types::TokenBase>& tokens, bool& is_pos_req, bool is_regex)
   {
-    static std::string const single_quote = "'";
-    static std::string const double_quote = "\"";
-
+    char const quote = *second;
     first = second + 1;
-    switch (*second) {
-      case '\'': {
-        second = std::find_first_of(first, last, std::cbegin(single_quote), std::cend(single_quote));
-        if (second == last) {
-          throw std::runtime_error("imperfect quotes");
-        }
-
-        std::string_view sv(first, second - first);
-        tokens.emplace_back(alf::types::SubStr{ sv, is_pos_req });
-        is_pos_req = true;
-      }
-        break;
-      case '"': {
-        second = std::find_first_of(first, last, std::cbegin(double_quote), std::cend(double_quote));
-        if (second == last) {
-          throw std::runtime_error("imperfect quotes");
-        }
-
-        std::string_view sv(first, second - first);
-        tokens.emplace_back(alf::types::SubStr{ sv, is_pos_req });
-        is_pos_req = true;
-      }
-        break;
+    second = std::find(first, last, quote);
+    if (second == last) {
+      throw std::runtime_error("imperfect quotes");
     }
+
+    std::string value(first, second - first);
+    if (is_regex) {
+      tokens.emplace_back(alf::types::Regex{ std::move(value), is_pos_req });
+    } else {
+      tokens.emplace_back(alf::types::SubStr{ std::move(value), is_pos_req });
+    }
+    is_pos_req = true;
   }
+
 
   void add_or_pack(std::vector<alf::types::TokenBase>& tokens, std::vector<alf::types::TokenBase> v)
   {
@@ -190,11 +182,11 @@ namespace alf::parser
     TYPE_TOKEN previous_type = TYPE_TOKEN::OPERATOR_AND;
     for (types::TokenBase& t : v) {
       TYPE_TOKEN cur_type = t.type;
-      if (cur_type == TYPE_TOKEN::SUBSTR and
-          (previous_type == TYPE_TOKEN::SUBSTR or is_closing_bracket(previous_type))) {
+      if (is_operand(cur_type) and
+          (is_operand(previous_type) or is_closing_bracket(previous_type))) {
         tokens.emplace_back(alf::types::operators::AND{});
       } else if ((is_opening_bracket(cur_type) or is_unary_operator(cur_type)) and
-                 (previous_type == TYPE_TOKEN::SUBSTR or is_closing_bracket(previous_type))) {
+                 (is_operand(previous_type) or is_closing_bracket(previous_type))) {
         tokens.emplace_back(alf::types::operators::AND{});
       }
       tokens.emplace_back(std::move(t));
@@ -226,14 +218,16 @@ namespace alf::parser
          second != last && first != last; first = second + 1) {
       second = std::find_first_of(first, last, std::cbegin(delims), std::cend(delims));
 
-      if (first != second) {
+      // an r written right against a quote marks a regex: r'pattern'
+      bool const is_regex = second != last and is_quote(*second) and std::string_view(first, second - first) == "r";
+      if (first != second and !is_regex) {
         make_token(std::string_view(first, second - first), is_positive_req, tokens);
       }
       if (second == last) {
         break;
       }
       if (is_quote(*second)) {
-        handle_quote(first, second, last, tokens, is_positive_req);
+        handle_quote(first, second, last, tokens, is_positive_req, is_regex);
       } else if (*second != ' ') {
         make_token(std::string_view{ second, 1 }, is_positive_req, tokens);
       }

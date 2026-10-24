@@ -108,6 +108,51 @@ namespace
     }
   }
 
+  TEST(Expressions, regex_matches_anywhere_in_the_line)
+  {
+    EXPECT_TRUE(matches("r'code=\\d+'", "error code=503 upstream"));
+    EXPECT_FALSE(matches("r'code=\\d+'", "error code=abc"));
+    EXPECT_TRUE(matches("r\"^\\[(WARN|ERROR)\\]\"", "[WARN] disk 91%"));
+    EXPECT_FALSE(matches("r\"^\\[(WARN|ERROR)\\]\"", "info [WARN] quoted"));
+    EXPECT_TRUE(matches("r'done$'", "job 7 done"));
+    EXPECT_FALSE(matches("r'done$'", "done with job 7"));
+  }
+
+  TEST(Expressions, regex_negation_and_operators)
+  {
+    EXPECT_TRUE(matches("-r'\\d'", "no digits here"));
+    EXPECT_FALSE(matches("!r'\\d'", "4 digits"));
+    EXPECT_TRUE(matches("'error' & !r'timeout|reset'", "error: bad request"));
+    EXPECT_FALSE(matches("'error' & !r'timeout|reset'", "error: connection reset"));
+    EXPECT_TRUE(matches("r'^a' 'z'", "abcz"));            // implied & between operands
+    EXPECT_FALSE(matches("r'^a' 'z'", "abc"));
+    EXPECT_TRUE(matches("'x' & r'^y' | r'z$'", "abz"));   // & before |, regexes included
+    EXPECT_TRUE(matches("!(r'^a' | r'b$')", "cac"));
+  }
+
+  TEST(Expressions, r_is_only_special_right_against_a_quote)
+  {
+    EXPECT_TRUE(matches("r 'x'", "r x"));    // the substring "r", then 'x'
+    EXPECT_FALSE(matches("r 'x'", "x"));
+    EXPECT_TRUE(matches("'r'", "bar"));
+    EXPECT_TRUE(matches("bar'x'", "bar x")); // a word ending in r is still a word
+  }
+
+  TEST(Expressions, regex_tokens_from_the_parser)
+  {
+    auto tokens = alf::parser::parse_algebraic("-r'a.c'");
+    ASSERT_EQ(tokens.size(), 1u);
+    EXPECT_EQ(tokens[0].type, alf::types::TYPE_TOKEN::REGEX);
+    EXPECT_EQ(tokens[0].value, "a.c");
+    EXPECT_FALSE(tokens[0].required);
+  }
+
+  TEST(Expressions, invalid_regex_is_an_error)
+  {
+    EXPECT_THROW(compile("r'(unclosed'"), std::runtime_error);
+    EXPECT_THROW(compile("r'[z-a]'"), std::runtime_error);
+  }
+
   TEST(Expressions, no_requirements_passes_everything)
   {
     EXPECT_TRUE(alf::passes_filters({}, "anything"));

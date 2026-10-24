@@ -17,10 +17,17 @@ auto apply_filters(alf::parser::ArgPack p) -> void {
   }
 
   char *line = nullptr;
-  size_t len = 0;
-  while ((getline(&line, &len, fi)) != -1) {
-    if (alf::passes_filters(p.tokens, line)) {
-      fputs(line, fo);
+  size_t cap = 0;
+  ssize_t n;
+  std::string text;
+  while ((n = getline(&line, &cap, fi)) != -1) {
+    // match against the line without its line ending, so a regex like r'done$' works
+    size_t end = static_cast<size_t>(n);
+    if (end > 0 and line[end - 1] == '\n') { --end; }
+    if (end > 0 and line[end - 1] == '\r') { --end; }
+    text.assign(line, end);
+    if (alf::passes_filters(p.tokens, text)) {
+      fwrite(line, 1, static_cast<size_t>(n), fo);
     }
   }
   fclose(fi);
