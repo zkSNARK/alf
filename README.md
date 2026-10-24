@@ -51,7 +51,7 @@ find / -name pyconfig.h 2>&1 | alf -"Permission denied" -"Operation not permitte
 | `-( … )` or `!( … )` | the group is **not** true |
 | `a & b` | and |
 | `a ^ b` | exclusive or |
-| `a \| b` | or |
+| <code>a &#124; b</code> | or |
 | `a b` | and (an `&` is implied between neighbours) |
 | `( )`, `[ ]`, `{ }` | grouping; any bracket style, as long as each pair matches |
 
