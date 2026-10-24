@@ -4,6 +4,7 @@
 
 #include "parser.h"
 
+#include <algorithm>
 #include <filesystem>
 #include <string>
 #include <vector>

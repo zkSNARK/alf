@@ -5,6 +5,7 @@
 #include "shunting_yard.h"
 
 #include <vector>
+#include <cstdint>
 #include <stack>
 #include <stdexcept>
 
