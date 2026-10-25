@@ -240,6 +240,79 @@ namespace
     EXPECT_FALSE(x.settled("", 0b01).has_value());   // 'b' turning up later would flip it
   }
 
+  TEST(Program, settled_answers_hold_whatever_else_the_line_contains)
+  {
+    // If settled() gives an answer for the strings found so far, every line that contains them
+    // (and any of the other strings) must get that answer.
+    std::mt19937 rng(41);
+    for (int round = 0; round < 2000; ++round) {
+      std::string const e = random_expression(rng, 3);
+      if (e.find("r'") != std::string::npos) {
+        continue;
+      }
+      auto tokens = postfix(e);
+      alf::Program const p{ tokens };
+      auto const& lits = p.literals();
+      std::uint64_t const all = (std::uint64_t{ 1 } << lits.size()) - 1;
+      for (std::uint64_t found = 0; found <= all; ++found) {
+        std::optional<bool> const answer = p.settled("", found);
+        if (!answer) {
+          continue;
+        }
+        for (std::uint64_t present = found; present <= all; present = (present + 1) | found) {
+          std::string line;
+          for (std::size_t i = 0; i < lits.size(); ++i) {
+            if ((present >> i) & 1u) {
+              line += lits[i] + " ";
+            }
+          }
+          ASSERT_EQ(alf::passes_filters(tokens, line), *answer) << e << " found " << found << " line '" << line << "'";
+          if (present == all) {
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  TEST(Program, many_strings_on_log_like_text)
+  {
+    // Teddy with frequent and absent strings, strings sharing a fingerprint, and short strings,
+    // on text made of the same words: every grouping the scanner might pick must give the same
+    // lines as the reference.
+    std::vector<std::string> const words{ "code=200", "code=304", "code=404", "code=503", "user=7", "user=12",
+                                          "seq=9", "rows=1", "rows=99", "job ", "POST", "[auth]", "[db]",
+                                          "latency=3", "heartbeat", "DEBUG", "zz-absent-1", "zz-absent-2",
+                                          "zz-absent-3", "ab", "x" };
+    std::vector<std::string> const filler{ "INFO ", "code=2", "user=", "rows=", "seq=1", "latency=", "zz-", "POS",
+                                           "[au", "job", "heart", " ", "2026-10-24T10:00:00Z ", "=", "1", "9" };
+    std::mt19937 rng(77);
+    std::string text;
+    for (int line = 0; line < 3000; ++line) {
+      int const n = static_cast<int>(rng() % 8);
+      for (int k = 0; k < n; ++k) {
+        text += (rng() % 4 == 0) ? words[rng() % (words.size() - 3)] : filler[rng() % filler.size()];
+      }
+      text += "\n";
+    }
+    for (int round = 0; round < 60; ++round) {
+      std::string e;
+      std::size_t const terms = 2 + rng() % words.size();
+      for (std::size_t t = 0; t < terms; ++t) {
+        e += std::string(rng() % 4 ? "!'" : "'") + words[rng() % words.size()] + "' ";
+        if (rng() % 5 == 0 and t + 1 < terms) {
+          e += "| ";
+        }
+      }
+      auto tokens = postfix(e);
+      alf::Program const p{ tokens };
+      std::string const want = naive(text, tokens);
+      for (unsigned threads : { 1u, 3u }) {
+        ASSERT_EQ(run(text, p, threads), want) << e << " threads " << threads;
+      }
+    }
+  }
+
   TEST(Program, required_literals)
   {
     auto const len = [](std::string_view s) { return static_cast<double>(s.size()); };

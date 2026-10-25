@@ -96,6 +96,11 @@ namespace alf
     std::size_t m_depth{ 0 };   // deepest the evaluation stack gets
     std::vector<std::string> m_literals;
     std::optional<bool> m_without_literals;
+    // Strings that settle a line on their own (bit i: m_literals[i]): in !'a' & !'b', finding
+    // either drops the line whatever else is there.  Only set when settled() doesn't depend on
+    // the line itself (no regexes).
+    std::uint64_t m_drops_alone{ 0 };
+    std::uint64_t m_keeps_alone{ 0 };
   };
 
   /** Where filter() sends the kept text. */

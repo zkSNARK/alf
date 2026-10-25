@@ -178,7 +178,9 @@ namespace
       if (m_teddy) {
         for (unsigned g = groups_at(q, last); g != 0; g &= g - 1) {
           for (std::uint16_t i : m_groups[static_cast<std::size_t>(std::countr_zero(g))]) {
-            check(i, m_window[i]);
+            if (*q == m_needles[i].text[m_window[i]]) {  // a group passes many near misses
+              check(i, m_window[i]);
+            }
           }
         }
         return;
@@ -249,18 +251,87 @@ namespace
         m_window[i] = best;
         fp[i] = t.substr(best, 3);
       }
-      // similar fingerprints share a group, so a group's combined tables let fewer bytes through
-      std::vector<std::uint16_t> order(m_needles.size());
-      for (std::size_t i = 0; i < order.size(); ++i) {
-        order[i] = static_cast<std::uint16_t>(i);
+      // Strings with the same fingerprint always share a group.  How the distinct fingerprints
+      // are spread over the 8 groups decides the cost: every position where a group's bit
+      // survives is a stop, and every string in a surviving group is compared.  A fingerprint
+      // that turns up all the time is best alone in its group, so its stops compare one string;
+      // rare ones can share.  So a few layouts are tried on the sample and the cheapest kept:
+      // alphabetical (similar fingerprints share a group, so its combined tables let fewer bytes
+      // through), and the k most frequent fingerprints alone with the rest alphabetical.
+      std::vector<std::string_view> distinct(fp);
+      std::sort(distinct.begin(), distinct.end());
+      distinct.erase(std::unique(distinct.begin(), distinct.end()), distinct.end());
+      std::vector<std::size_t> seen(distinct.size(), 0);  // occurrences in the sample
+      std::array<std::vector<std::size_t>, 256> starting_with;
+      for (std::size_t d = 0; d < distinct.size(); ++d) {
+        starting_with[static_cast<unsigned char>(distinct[d][0])].push_back(d);
       }
-      std::sort(order.begin(), order.end(), [&](std::uint16_t a, std::uint16_t b) { return fp[a] < fp[b]; });
+      for (std::size_t o = 0; o < sample.size(); ++o) {
+        for (std::size_t d : starting_with[static_cast<unsigned char>(sample[o])]) {
+          seen[d] += sample.compare(o, distinct[d].size(), distinct[d]) == 0;
+        }
+      }
+      std::vector<std::size_t> by_seen(distinct.size());
+      for (std::size_t d = 0; d < by_seen.size(); ++d) {
+        by_seen[d] = d;
+      }
+      std::stable_sort(by_seen.begin(), by_seen.end(), [&](std::size_t a, std::size_t b) { return seen[a] > seen[b]; });
+      std::vector<std::size_t> strings_with(distinct.size(), 0);
+      std::vector<std::size_t> fp_of(m_needles.size());
+      for (std::size_t i = 0; i < m_needles.size(); ++i) {
+        fp_of[i] = static_cast<std::size_t>(std::lower_bound(distinct.begin(), distinct.end(), fp[i]) - distinct.begin());
+        ++strings_with[fp_of[i]];
+      }
+
+      std::vector<std::size_t> best_layout;  // group of each distinct fingerprint
+      double best_cost = -1;
+      std::size_t const singles_max = std::min<std::size_t>(GROUPS - 1, distinct.size());
+      for (std::size_t singles = 0; singles <= singles_max; ++singles) {
+        std::vector<std::size_t> layout(distinct.size());
+        std::vector<bool> alone(distinct.size(), false);
+        for (std::size_t r = 0; r < singles; ++r) {
+          alone[by_seen[r]] = true;
+          layout[by_seen[r]] = r;
+        }
+        std::size_t const rest = distinct.size() - singles, shared = GROUPS - singles;
+        for (std::size_t d = 0, r = 0; d < distinct.size(); ++d) {
+          if (!alone[d]) {
+            layout[d] = singles + r++ * shared / std::max<std::size_t>(rest, 1);
+          }
+        }
+        fill_tables(layout, fp, fp_of);
+        std::array<double, GROUPS> size{};
+        for (std::size_t d = 0; d < distinct.size(); ++d) {
+          size[layout[d]] += static_cast<double>(strings_with[d]);
+        }
+        double cost = 0;
+        char const* b = sample.data();
+        char const* e = b + sample.size();
+        for (char const* q = m_simd.teddy(m_tables, b, e, e); q < e; q = m_simd.teddy(m_tables, q + 1, e, e)) {
+          cost += 1;  // the stop
+          for (unsigned g = groups_at(q, e); g != 0; g &= g - 1) {
+            cost += size[static_cast<std::size_t>(std::countr_zero(g))];
+          }
+        }
+        if (best_cost < 0 or cost < best_cost) {
+          best_cost = cost;
+          best_layout = std::move(layout);
+        }
+      }
+      fill_tables(best_layout, fp, fp_of);
+      for (std::size_t i = 0; i < m_needles.size(); ++i) {
+        m_groups[best_layout[fp_of[i]]].push_back(static_cast<std::uint16_t>(i));
+      }
+    }
+
+    // Teddy tables for fingerprints fp (string i's is fp[i], distinct fingerprint fp_of[i]),
+    // with distinct fingerprint d in group layout[d].
+    void fill_tables(std::vector<std::size_t> const& layout, std::vector<std::string_view> const& fp,
+                     std::vector<std::size_t> const& fp_of)
+    {
       m_tables = {};
-      for (std::size_t r = 0; r < order.size(); ++r) {
-        std::size_t const g = r * 8 / order.size();
-        std::uint16_t const i = order[r];
-        m_groups[g].push_back(i);
-        auto const bit = static_cast<unsigned char>(1u << g);
+      for (std::size_t i = 0; i < fp.size(); ++i) {
+        auto const bit = static_cast<unsigned char>(1u << layout[fp_of[i]]);
         for (std::size_t k = 0; k < 3; ++k) {
           if (k < fp[i].size()) {
             auto const b = static_cast<unsigned char>(fp[i][k]);
@@ -276,6 +347,8 @@ namespace
       }
     }
 
+    static constexpr std::size_t GROUPS = 8;
+
     std::vector<Needle> const& m_needles;
     alf::simd::Backend const& m_simd;
     // rare-byte mode
@@ -284,7 +357,7 @@ namespace
     // Teddy mode
     bool m_teddy{ false };
     alf::simd::TeddyTables m_tables{};
-    std::array<std::vector<std::uint16_t>, 8> m_groups;
+    std::array<std::vector<std::uint16_t>, GROUPS> m_groups;
     std::vector<std::size_t> m_window;  // offset of each string's fingerprint within it
   };
 
@@ -509,6 +582,14 @@ alf::Program::Program(std::vector<types::TokenBase> const& postfix)
       }
     }
     m_without_literals = stk.back() != 0;
+    // Three-valued evaluation only gains certainty as more strings are found, so a string whose
+    // presence alone settles the answer settles it in every line that contains it.
+    for (std::size_t i = 0; i < m_literals.size() and i < 64; ++i) {
+      std::uint64_t const bit = std::uint64_t{ 1 } << i;
+      if (auto const r = eval_settled(m_nodes.size() - 1, {}, bit)) {
+        (*r ? m_keeps_alone : m_drops_alone) |= bit;
+      }
+    }
   }
 }
 
@@ -580,6 +661,12 @@ auto alf::Program::eval_found(std::size_t node, std::string_view line, std::uint
 auto alf::Program::settled(std::string_view line, std::uint64_t found) const -> std::optional<bool>
 {
   if (m_nodes.empty()) {
+    return true;
+  }
+  if ((found & m_drops_alone) != 0) {
+    return false;
+  }
+  if ((found & m_keeps_alone) != 0) {
     return true;
   }
   return eval_settled(m_nodes.size() - 1, line, found);
