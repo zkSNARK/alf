@@ -113,13 +113,14 @@ The executable is `build/alf`; copy it somewhere on your `PATH`. Configure with
 ## Performance
 
 alf memory-maps its input, searches the whole buffer for the strings an expression requires
-(all of them in one pass, so most lines are never looked at), evaluates the rest without
-allocating, writes kept lines without copying long runs, and splits large inputs across every
-performance core (`--threads N` to change that). On a 142 MB log on an Apple M4 Max it finds
-one string in 7 ms (ripgrep 20, GNU grep 33), answers a nested and/or/not query in 10 ms
-(ripgrep 236) and drops eight kinds of noise in 24 ms (ripgrep 118). Pinned to one core it
-still beats grep and ripgrep on every string task. Sixteen or more strings on one core, and
-regexes without fixed text, are where ripgrep is still faster. [`bench/`](bench/) has the harness, the results and how to
+(all of them in one pass, with Teddy shuffle fingerprints when there are many), evaluates the
+rest without allocating, writes kept lines without copying long runs, and splits large inputs
+across every performance core (`--threads N` to change that). On a 142 MB log on an Apple M4
+Max it finds one string in 8 ms (ripgrep 22, GNU grep 33), answers a nested and/or/not query
+in 9 ms (GNU grep 232) and drops eight kinds of noise in 22 ms (ripgrep 122). Pinned to one
+core it still beats grep and ripgrep on every string task, and on exclude lists of up to 16
+strings. Regexes without fixed text, and 32+ strings on one core, are where ripgrep is still
+faster. [`bench/`](bench/) has the harness, the results and how to
 rerun them; the write-up with charts is at <https://goebel-home.net/projects/alf/>.
 
 ### Memory-mapped input
