@@ -95,6 +95,7 @@ group) are reported before any input is read, and alf exits with status 2.
 | `-i FILE`, `--infile FILE` | read FILE instead of standard input |
 | `-o FILE`, `--outfile FILE` | write to FILE instead of standard output |
 | `-a EXPR`, `--algebra EXPR` | an algebraic expression (may be combined with basic-mode groups; everything is and-ed) |
+| `--threads N` | filter with N threads (default: one per core); output order is always preserved |
 
 ## Build
 
@@ -111,10 +112,13 @@ The executable is `build/alf`; copy it somewhere on your `PATH`. Configure with
 
 ## Performance
 
-alf reads about 400–900 MB/s on substring filters (Apple M4 Max): slower than GNU grep and
-ripgrep, faster than sed and awk on macOS, and behind mawk on Linux. Regexes use `std::regex`
-and are much slower. [`bench/`](bench/) has the harness, the results and how to rerun them;
-the write-up with charts is at <https://goebel-home.net/projects/alf/>.
+alf memory-maps its input, evaluates each line without allocating, and splits large inputs
+across every core (`--threads N` to change that). On a 142 MB log on an Apple M4 Max it is the
+fastest of GNU grep, BSD grep, ripgrep, sed and awk on four of five benchmark tasks: 10 ms to
+find one string (ripgrep 21, GNU grep 32) and 27 ms for a nested and/or/not query (GNU grep
+`-P` 234). On one thread it still beats grep on nested queries. Regexes use `std::regex` and
+remain much slower than grep's. [`bench/`](bench/) has the harness, the results and how to
+rerun them; the write-up with charts is at <https://goebel-home.net/projects/alf/>.
 
 ## How it works
 
