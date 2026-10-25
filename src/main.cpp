@@ -111,7 +111,11 @@ namespace
     if (m == MAP_FAILED) {
       throw error("mmap failed");
     }
-    madvise(m, size, MADV_SEQUENTIAL);
+    // Ask for the whole file up front.  Without this, every thread page-faults its way through
+    // its chunk and on macOS they queue on the kernel's VM locks: measured on an M4 Max, the hint
+    // makes a one-thread scan 40% faster and halves the CPU time of a 12-thread one.  (On Linux,
+    // which already maps neighbouring pages on each fault, it is about neutral.)
+    madvise(m, size, MADV_WILLNEED);
     alf::filter(std::string_view(static_cast<char const*>(m), size), program, threads,
                 { [&](std::string_view v) { out.add(v); }, [&] { out.flush(); } });
     out.flush();  // every view points into the mapping: write them all before unmapping
