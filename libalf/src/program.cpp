@@ -4,6 +4,12 @@
 
 #include "program.h"
 
+#if defined(__aarch64__) && defined(__ARM_NEON)
+#include <arm_neon.h>
+#elif defined(__x86_64__) || defined(__i386__)
+#include <immintrin.h>
+#endif
+
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -126,18 +132,119 @@ namespace
     return std::min(1.0, static_cast<double>(hits) / static_cast<double>(lines));
   }
 
-  // Finds every occurrence of several strings in one pass over the buffer.  A candidate is any
-  // byte that is one of the strings' rare bytes; candidates are found 64 bytes at a time with
-  // vector compares (the compiler's portable vector types: NEON on ARM, SSE on x86), then
-  // checked against the strings that use that byte.  One string falls back to memchr, which the
-  // C library already vectorizes.  (Fingerprinting by two adjacent bytes instead was tried: it
-  // stops less often with 16+ strings but costs twice the compares, and was slower on the
-  // benchmark tasks.)
+  // ---- Teddy: shuffle-based multi-string fingerprints ---------------------------------------
+  //
+  // The idea from Hyperscan and ripgrep.  Every string gets a 3-byte fingerprint (its rarest
+  // 3-byte window; shorter strings get "any byte" in the missing places) and the strings are
+  // split into 8 groups.  Each fingerprint byte is split into its low and high 4 bits, and for
+  // each of the 3 positions there are two 16-entry tables: entry n says which groups (one bit
+  // each) have n there.  A byte-shuffle instruction does 16 of those lookups at once, so 16
+  // text positions are tested against every string in six lookups and a few ANDs, however many
+  // strings there are.  Where a group's bit survives, only that group's strings are compared.
+  //
+  // The shuffle is per platform (tbl on ARM, pshufb on x86, checked at run time there); with
+  // neither, ALF uses the rare-byte scanner below.
+  struct TeddyTables
+  {
+    alignas(16) unsigned char lo[3][16]{};
+    alignas(16) unsigned char hi[3][16]{};
+
+    // Which groups could have a fingerprint starting at q, from the bytes before `end` (bytes
+    // past it count as "any").  A superset of the vector result, for the edges of a range.
+    [[nodiscard]] auto groups_at(char const* q, char const* end) const -> unsigned
+    {
+      unsigned m = 0xFF;
+      for (int k = 0; k < 3 and q + k < end; ++k) {
+        auto const b = static_cast<unsigned char>(q[k]);
+        m &= lo[k][b & 15u] & hi[k][b >> 4];
+      }
+      return m;
+    }
+  };
+
+#if defined(__aarch64__) && defined(__ARM_NEON)
+  auto teddy_available() -> bool { return true; }
+
+  // First position in [p, last) whose 16-byte block has a fingerprint hit, or nullptr once
+  // fewer than 18 readable bytes (before `limit`) remain; `p` is left where scanning stopped.
+  auto teddy_scan(TeddyTables const& t, char const*& p, char const* last, char const* limit) -> char const*
+  {
+    uint8x16_t const lo0 = vld1q_u8(t.lo[0]), lo1 = vld1q_u8(t.lo[1]), lo2 = vld1q_u8(t.lo[2]);
+    uint8x16_t const hi0 = vld1q_u8(t.hi[0]), hi1 = vld1q_u8(t.hi[1]), hi2 = vld1q_u8(t.hi[2]);
+    uint8x16_t const low4 = vdupq_n_u8(0x0F);
+    while (p < last and limit - p >= 18) {
+      auto const* u = reinterpret_cast<std::uint8_t const*>(p);
+      uint8x16_t const a = vld1q_u8(u), b = vld1q_u8(u + 1), c = vld1q_u8(u + 2);
+      uint8x16_t m = vandq_u8(vqtbl1q_u8(lo0, vandq_u8(a, low4)), vqtbl1q_u8(hi0, vshrq_n_u8(a, 4)));
+      m = vandq_u8(m, vandq_u8(vqtbl1q_u8(lo1, vandq_u8(b, low4)), vqtbl1q_u8(hi1, vshrq_n_u8(b, 4))));
+      m = vandq_u8(m, vandq_u8(vqtbl1q_u8(lo2, vandq_u8(c, low4)), vqtbl1q_u8(hi2, vshrq_n_u8(c, 4))));
+      if (vmaxvq_u8(m) != 0) {
+        // one 4-bit flag per lane in a 64-bit word: the lowest set flag is the first hit
+        uint8x16_t const hit = vtstq_u8(m, m);
+        std::uint64_t const flags = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(vreinterpretq_u16_u8(hit), 4)), 0);
+        char const* q = p + (__builtin_ctzll(flags) >> 2);
+        return q < last ? q : last;
+      }
+      p += 16;
+    }
+    return nullptr;
+  }
+#elif defined(__x86_64__) || defined(__i386__)
+  auto teddy_available() -> bool
+  {
+    static bool const ok = __builtin_cpu_supports("ssse3");
+    return ok;
+  }
+
+  __attribute__((target("ssse3")))
+  auto teddy_scan(TeddyTables const& t, char const*& p, char const* last, char const* limit) -> char const*
+  {
+    auto const ld = [](void const* x) { return _mm_load_si128(static_cast<__m128i const*>(x)); };
+    __m128i const lo0 = ld(t.lo[0]), lo1 = ld(t.lo[1]), lo2 = ld(t.lo[2]);
+    __m128i const hi0 = ld(t.hi[0]), hi1 = ld(t.hi[1]), hi2 = ld(t.hi[2]);
+    __m128i const low4 = _mm_set1_epi8(0x0F), zero = _mm_setzero_si128();
+    auto const look = [&](__m128i lo, __m128i hi, __m128i v) {
+      return _mm_and_si128(_mm_shuffle_epi8(lo, _mm_and_si128(v, low4)),
+                           _mm_shuffle_epi8(hi, _mm_and_si128(_mm_srli_epi16(v, 4), low4)));
+    };
+    while (p < last and limit - p >= 18) {
+      __m128i const a = _mm_loadu_si128(reinterpret_cast<__m128i const*>(p));
+      __m128i const b = _mm_loadu_si128(reinterpret_cast<__m128i const*>(p + 1));
+      __m128i const c = _mm_loadu_si128(reinterpret_cast<__m128i const*>(p + 2));
+      __m128i const m = _mm_and_si128(_mm_and_si128(look(lo0, hi0, a), look(lo1, hi1, b)), look(lo2, hi2, c));
+      int const hits = ~_mm_movemask_epi8(_mm_cmpeq_epi8(m, zero)) & 0xFFFF;
+      if (hits != 0) {
+        char const* q = p + __builtin_ctz(static_cast<unsigned>(hits));
+        return q < last ? q : last;
+      }
+      p += 16;
+    }
+    return nullptr;
+  }
+#else
+  auto teddy_available() -> bool { return false; }
+  auto teddy_scan(TeddyTables const&, char const*&, char const*, char const*) -> char const* { return nullptr; }
+#endif
+
+  // Finds every occurrence of several strings in one pass over the buffer, three ways:
+  //  - one string: memchr for its rare byte (the C library already vectorizes memchr);
+  //  - a few strings: any of their rare bytes, 64 bytes at a time with the compiler's portable
+  //    vector types, then the strings that use that byte;
+  //  - when those rare bytes aren't rare (common with many strings), and shuffles are
+  //    available: Teddy fingerprints (above), whose cost per byte doesn't grow with the number
+  //    of strings and which rarely stop for nothing.
+  // A candidate position is where a string's fingerprint (rare byte, or 3-byte window) starts;
+  // verify() works back from it to where the string would start.
   class MultiScanner
   {
   public:
-    explicit MultiScanner(std::vector<Needle> const& needles) : m_needles{ needles }
+    MultiScanner(std::vector<Needle> const& needles, std::string_view sample) : m_needles{ needles }
     {
+      m_teddy = needles.size() >= 2 and teddy_available() and rare_byte_stop_interval(needles, sample) < TEDDY_BELOW_INTERVAL;
+      if (m_teddy) {
+        build_teddy(sample);
+        return;
+      }
       for (std::size_t i = 0; i < needles.size(); ++i) {
         auto const key = static_cast<unsigned char>(needles[i].text[needles[i].rare]);
         if (!m_is_key[key]) {
@@ -153,12 +260,22 @@ namespace
       }
     }
 
-    // The next byte at or after `p` (before `last`) that is some string's rare byte, or `last`.
-    // Bytes up to `limit` (>= last, inside the same buffer) may be read but never reported: that
-    // lets a range shorter than a vector, like the rest of one line, still be checked 16 bytes
-    // at a time.
+    // The next candidate at or after `p` (before `last`), or `last`.  Bytes up to `limit`
+    // (>= last, inside the same buffer) may be read but never reported: that lets a range
+    // shorter than a vector, like the rest of one line, still be checked 16 bytes at a time.
     [[nodiscard]] auto next_candidate(char const* p, char const* last, char const* limit) const -> char const*
     {
+      if (m_teddy) {
+        if (char const* q = teddy_scan(m_tables, p, last, limit)) {
+          return q;
+        }
+        for (; p < last; ++p) {  // the last few positions, where a vector can't be loaded
+          if (m_tables.groups_at(p, limit) != 0) {
+            return p;
+          }
+        }
+        return last;
+      }
       if (m_keys.size() == 1) {
         auto q = static_cast<char const*>(std::memchr(p, m_keys[0], static_cast<std::size_t>(last - p)));
         return q ? q : last;
@@ -198,22 +315,107 @@ namespace
       return last;
     }
 
-    // Call on_hit(index) for every string whose rare byte is the one at `q` and that occurs
-    // there entirely within [first, last).
+    // Call on_hit(index) for every string whose fingerprint is at `q` and that occurs there
+    // entirely within [first, last).
     template <typename F>
     void verify(char const* q, char const* first, char const* last, F&& on_hit) const
     {
-      for (std::uint16_t i : m_by_key[static_cast<unsigned char>(*q)]) {
+      auto const check = [&](std::uint16_t i, std::size_t offset) {
         Needle const& n = m_needles[i];
-        char const* start = q - n.rare;
+        char const* start = q - offset;
         if (start >= first and static_cast<std::size_t>(last - start) >= n.text.size() and
             std::memcmp(start, n.text.data(), n.text.size()) == 0) {
           on_hit(i);
         }
+      };
+      if (m_teddy) {
+        for (unsigned g = m_tables.groups_at(q, last); g != 0; g &= g - 1) {
+          for (std::uint16_t i : m_groups[static_cast<std::size_t>(__builtin_ctz(g))]) {
+            check(i, m_window[i]);
+          }
+        }
+        return;
+      }
+      for (std::uint16_t i : m_by_key[static_cast<unsigned char>(*q)]) {
+        check(i, m_needles[i].rare);
       }
     }
 
   private:
+    // The rare-byte scanner skips 64 bytes per step while its bytes really are rare, and then
+    // beats Teddy's fixed cost per byte; when they turn up often it stops constantly and Teddy
+    // wins.  Measured on the benchmark log: rare bytes every 219 bytes (ERROR, WARN) favoured
+    // the rare-byte scanner (33 vs 37 ms), every 105 bytes or less favoured Teddy (49 vs 67 ms
+    // for two strings, 113 vs 213 for sixteen).
+    static constexpr double TEDDY_BELOW_INTERVAL = 128;
+
+    // Average bytes between stops of the rare-byte scanner, estimated from the sample.
+    static auto rare_byte_stop_interval(std::vector<Needle> const& needles, std::string_view sample) -> double
+    {
+      std::array<bool, 256> key{};
+      for (auto const& n : needles) {
+        key[static_cast<unsigned char>(n.text[n.rare])] = true;
+      }
+      std::size_t stops = 0;
+      for (unsigned char c : sample) {
+        stops += key[c];
+      }
+      return static_cast<double>(sample.size() + 1) / static_cast<double>(stops + 1);
+    }
+
+    void build_teddy(std::string_view sample)
+    {
+      double freq[256];
+      for (double& f : freq) {
+        f = 1;
+      }
+      for (unsigned char c : sample) {
+        freq[c] += 1;
+      }
+      // each string's rarest 3-byte window (estimated as the product of its bytes' frequencies)
+      m_window.resize(m_needles.size());
+      std::vector<std::string_view> fp(m_needles.size());
+      for (std::size_t i = 0; i < m_needles.size(); ++i) {
+        std::string_view const t = m_needles[i].text;
+        std::size_t best = 0;
+        double best_cost = -1;
+        for (std::size_t o = 0; o + 3 <= t.size(); ++o) {
+          double const c = freq[static_cast<unsigned char>(t[o])] * freq[static_cast<unsigned char>(t[o + 1])] *
+                           freq[static_cast<unsigned char>(t[o + 2])];
+          if (best_cost < 0 or c < best_cost) {
+            best_cost = c;
+            best = o;
+          }
+        }
+        m_window[i] = best;
+        fp[i] = t.substr(best, 3);
+      }
+      // similar fingerprints share a group, so a group's combined tables let fewer bytes through
+      std::vector<std::uint16_t> order(m_needles.size());
+      for (std::size_t i = 0; i < order.size(); ++i) {
+        order[i] = static_cast<std::uint16_t>(i);
+      }
+      std::sort(order.begin(), order.end(), [&](std::uint16_t a, std::uint16_t b) { return fp[a] < fp[b]; });
+      for (std::size_t r = 0; r < order.size(); ++r) {
+        std::size_t const g = r * 8 / order.size();
+        std::uint16_t const i = order[r];
+        m_groups[g].push_back(i);
+        auto const bit = static_cast<unsigned char>(1u << g);
+        for (std::size_t k = 0; k < 3; ++k) {
+          if (k < fp[i].size()) {
+            auto const b = static_cast<unsigned char>(fp[i][k]);
+            m_tables.lo[k][b & 15u] |= bit;
+            m_tables.hi[k][b >> 4] |= bit;
+          } else {  // a string shorter than 3 bytes: any byte matches here
+            for (int n = 0; n < 16; ++n) {
+              m_tables.lo[k][n] |= bit;
+              m_tables.hi[k][n] |= bit;
+            }
+          }
+        }
+      }
+    }
+
     using V = unsigned char __attribute__((vector_size(16)));
 
     static auto load(char const* p) -> V
@@ -232,10 +434,16 @@ namespace
     }
 
     std::vector<Needle> const& m_needles;
+    // rare-byte mode
     std::vector<unsigned char> m_keys;
     std::vector<V> m_splats;
     std::array<bool, 256> m_is_key{};
     std::array<std::vector<std::uint16_t>, 256> m_by_key;
+    // Teddy mode
+    bool m_teddy{ false };
+    TeddyTables m_tables;
+    std::array<std::vector<std::uint16_t>, 8> m_groups;
+    std::vector<std::size_t> m_window;  // offset of each string's fingerprint within it
   };
 
   // The kept text, as views into the input: touching pieces merge, so a run of kept lines is
@@ -715,7 +923,7 @@ void alf::filter(std::string_view data, Program const& program, unsigned threads
   if (!needles.empty() and (use_found ? max_hit_fraction < 0 : hit_fraction(needles, sample) > max_hit_fraction)) {
     needles.clear();
   }
-  MultiScanner const scanner{ needles };
+  MultiScanner const scanner{ needles, sample };
   auto const run = [&](char const* first, char const* last, Spans& out) {
     if (needles.empty()) {
       filter_range(first, last, program, out);
