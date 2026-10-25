@@ -9,7 +9,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        # x86-64 Linux (sse2/ssse3/avx2, and avx512 where the runner has it), AArch64 Linux
+        # (neon, and sve/sve2 on the Arm runners' Neoverse cores), AArch64 macOS (neon).
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -17,5 +19,7 @@ jobs:
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-Wall -Wextra -fsanitize=address,undefined"
       - name: Build
         run: cmake --build build --parallel
-      - name: Test
+      - name: SIMD backends on this runner
+        run: build/alf --simd-info
+      - name: Test (every SIMD backend this runner can run; the rest are skipped)
         run: ctest --test-dir build --output-on-failure

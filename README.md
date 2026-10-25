@@ -123,6 +123,13 @@ strings. Regexes without fixed text, and 32+ strings on one core, are where ripg
 faster. [`bench/`](bench/) has the harness, the results and how to
 rerun them; the write-up with charts is at <https://goebel-home.net/projects/alf/>.
 
+### SIMD
+
+The byte scanning uses vector instructions where the CPU has them: SSE2, SSSE3, AVX2 and AVX-512
+on x86-64, NEON and SVE on AArch64, with a scalar fallback. One binary contains every backend
+for its architecture and picks the best at run time; `alf --simd-info` shows which, and
+`ALF_SIMD=<name>` forces one. See [`libalf/src/simd/README.md`](libalf/src/simd/README.md).
+
 ### Memory-mapped input
 
 A file given with `-i` (or redirected with `<`) is memory-mapped, and kept lines are written

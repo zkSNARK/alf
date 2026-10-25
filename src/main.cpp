@@ -1,6 +1,7 @@
 #include "parser.h"
 #include "program.h"
 #include "shunting_yard.h"
+#include "../libalf/src/simd/simd.h"
 
 #include <algorithm>
 #include <cerrno>
@@ -202,6 +203,13 @@ auto apply_filters(alf::parser::ArgPack const& p, alf::Program const& program) -
 
 // SIGPIPE keeps its default action, so `alf ... | head` ends quietly once head has its lines.
 int main(int argc, const char **argv) {
+  if (argc == 2 and std::string_view(argv[1]) == "--simd-info") {  // which SIMD backends this binary has
+    for (alf::simd::Backend const* b : alf::simd::compiled()) {
+      std::printf("%-7s %s%s\n", b->name, b->runs_here() ? "runs here" : "not on this CPU",
+                  b == &alf::simd::active() ? "  (in use)" : "");
+    }
+    return 0;
+  }
   try {
     alf::parser::ArgPack pack { alf::parser::parse_arguments(argc, argv)};
     pack.tokens = alf::parser::fill_in_missing_AND_symbols(pack.tokens);

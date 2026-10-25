@@ -9,6 +9,10 @@
 
 #include <gtest/gtest.h>
 
+#include "../libalf/src/simd/simd.h"
+
+#include <cstdlib>
+
 #include <random>
 #include <stdexcept>
 #include <string>
@@ -16,6 +20,22 @@
 
 namespace
 {
+  // ctest runs this suite once per SIMD backend with ALF_SIMD=<name> (tests/CMakeLists.txt).
+  // If this machine can't run that backend, alf falls back to another one; skip rather than
+  // test the wrong thing.
+  class SimdEnvironment : public ::testing::Environment
+  {
+  public:
+    void SetUp() override
+    {
+      if (char const* want = std::getenv("ALF_SIMD"); want and std::string_view(want) != alf::simd::active().name) {
+        GTEST_SKIP() << "SIMD backend " << want << " doesn't run on this machine";
+      }
+      std::cout << "  SIMD backend: " << alf::simd::active().name << "\n";
+    }
+  };
+  [[maybe_unused]] auto* const simd_environment = ::testing::AddGlobalTestEnvironment(new SimdEnvironment);
+
   auto postfix(std::string const& expression) -> std::vector<alf::types::TokenBase>
   {
     auto tokens = alf::parser::parse_algebraic(expression);
