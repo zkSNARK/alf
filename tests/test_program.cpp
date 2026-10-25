@@ -192,26 +192,25 @@ namespace
     EXPECT_EQ(run("ax\r\nxa\nbx", anchored, 1), "ax\r\nbx");  // the line ending is not part of the line
   }
 
-  TEST(Program, output_is_views_into_the_input)
+  TEST(Program, long_runs_are_views_into_the_input)
   {
-    // zero copy on one thread: every piece filter() hands out points into the buffer it was given
+    // zero copy where it pays: a filter that keeps long runs of lines hands out views into the
+    // buffer it was given rather than copies
     std::mt19937 rng(5);
-    std::string const text = random_text(rng, 300000) + sparse_text(rng, 300000);
-    auto tokens = postfix("('a' & !'b') | 'c'");
+    std::string const text = random_text(rng, 300000);
+    auto tokens = postfix("!'zz'");  // keeps every line: one long contiguous run
     alf::Program const p{ tokens };
-    for (unsigned threads : { 1u }) {
-      for (double fraction : { 2.0, -1.0 }) {
-        std::string out;
-        std::size_t pieces = 0;
-        alf::filter(text, p, threads, { [&](std::string_view v) {
-          ASSERT_GE(v.data(), text.data());
-          ASSERT_LE(v.data() + v.size(), text.data() + text.size());
-          out.append(v);
-          ++pieces;
-        }, {} }, fraction);
-        EXPECT_EQ(out, naive(text, tokens));
-        EXPECT_GT(pieces, 0u);
-      }
+    for (double fraction : { 2.0, -1.0 }) {
+      std::string out;
+      std::size_t pieces = 0, inside = 0;
+      alf::filter(text, p, 1, { [&](std::string_view v) {
+        out.append(v);
+        ++pieces;
+        inside += (v.data() >= text.data() and v.data() + v.size() <= text.data() + text.size());
+      }, {} }, fraction);
+      EXPECT_EQ(out, naive(text, tokens));
+      EXPECT_GT(pieces, 0u);
+      EXPECT_EQ(inside, pieces) << "fraction " << fraction;
     }
   }
 

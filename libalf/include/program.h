@@ -91,10 +91,11 @@ namespace alf
    * their original order, to `out.write` (possibly in several pieces).  A last line without a
    * trailing '\n' is treated as a line.  Lines are matched without their "\n" or "\r\n".
    *
-   * Lifetimes: most pieces are views into `data` and stay valid as long as `data` does.  With
-   * several threads, a thread whose kept lines are many short scattered pieces packs them into
-   * a buffer of its own and passes a view of that; such a view is valid only until `out.flush`
-   * is called, which filter() always does before releasing the buffer.  A sink that consumes
+   * Lifetimes: long runs of kept lines are passed as views into `data` and stay valid as long as
+   * `data` does.  Many short scattered pieces are cheaper to write as one block, so filter()
+   * packs those into a buffer of its own and passes a view of that; such a view is valid only
+   * until `out.flush` is called, which filter() always does before reusing or releasing the
+   * buffer.  A sink that consumes
    * each piece inside `write` can leave `flush` empty; one that collects views (to write them
    * in batches) must write them out in `flush`.
    *

@@ -19,8 +19,8 @@ namespace
   // line (the cut-over share of lines with a hit is filter()'s max_hit_fraction).
   constexpr std::size_t SAMPLE_BYTES = 1 << 16;
 
-  // With several threads, a thread whose kept views average less than this many bytes copies
-  // them into one buffer (in parallel) rather than handing them over one by one.
+  // Kept views averaging less than this many bytes are packed into one buffer before being
+  // handed over (by each worker thread in parallel, or per batch on one thread).
   constexpr std::size_t PACK_BELOW = 16 << 10;
 
   auto line_end(char const* p, char const* end) -> char const*
@@ -95,13 +95,18 @@ namespace
     return std::min(1.0, static_cast<double>(hits) / static_cast<double>(lines));
   }
 
-  // The kept text, as views into the input: nothing is copied.  Touching pieces merge, so a run
-  // of kept lines is one view.  With a `flush`, finished views are handed on as the list grows
-  // (memory stays bounded); without one they are kept until the caller takes them.
+  // The kept text, as views into the input: touching pieces merge, so a run of kept lines is
+  // one view.  With a `sink` (one thread), finished pieces are handed on in batches as the list
+  // grows, so memory stays bounded; without one (a worker thread) they are kept until the caller
+  // takes them.
+  //
+  // Handing the kernel many short pieces costs far more than their bytes (measured: 100,000
+  // pieces of 71 bytes take 5.1 ms to write, the same 7 MB in one piece 0.9 ms), so a batch of
+  // small scattered pieces is packed into one reused buffer first.  Long runs stay views.
   class Spans
   {
   public:
-    explicit Spans(std::function<void(std::string_view)> const* flush = nullptr) : m_flush{ flush } { }
+    explicit Spans(alf::Output const* sink = nullptr) : m_sink{ sink } { }
 
     void add(char const* b, char const* e)
     {
@@ -112,21 +117,50 @@ namespace
         m_list.back() = std::string_view(m_list.back().data(), m_list.back().size() + static_cast<std::size_t>(e - b));
         return;
       }
-      if (m_flush and m_list.size() >= FLUSH_EVERY) {
-        for (auto v : m_list) {
-          (*m_flush)(v);
-        }
-        m_list.clear();
+      if (m_sink and m_list.size() >= FLUSH_EVERY) {
+        emit();
       }
       m_list.emplace_back(b, static_cast<std::size_t>(e - b));
+    }
+
+    // Hand every piece still held to the sink.
+    void finish()
+    {
+      if (m_sink) {
+        emit();
+      }
     }
 
     [[nodiscard]] auto list() const -> std::vector<std::string_view> const& { return m_list; }
 
   private:
+    void emit()
+    {
+      std::size_t bytes = 0;
+      for (auto v : m_list) {
+        bytes += v.size();
+      }
+      if (m_list.size() > 1 and bytes / m_list.size() < PACK_BELOW) {
+        m_pack.clear();
+        for (auto v : m_list) {
+          m_pack.append(v);
+        }
+        m_sink->write(m_pack);
+        if (m_sink->flush) {
+          m_sink->flush();  // m_pack is reused for the next batch: it must be consumed first
+        }
+      } else {
+        for (auto v : m_list) {
+          m_sink->write(v);
+        }
+      }
+      m_list.clear();
+    }
+
     static constexpr std::size_t FLUSH_EVERY = 4096;
-    std::function<void(std::string_view)> const* m_flush;
+    alf::Output const* m_sink;
     std::vector<std::string_view> m_list;
+    std::string m_pack;
   };
 
   // Filter [first, last) by searching for the strings: only lines with a hit are evaluated; the
@@ -413,11 +447,9 @@ void alf::filter(std::string_view data, Program const& program, unsigned threads
   threads = std::max(1u, std::min<unsigned>(threads, static_cast<unsigned>(data.size() / MIN_BYTES_PER_THREAD)));
 
   if (threads == 1) {
-    Spans out{ &write };
-    run(begin, end, out);
-    for (auto v : out.list()) {
-      write(v);
-    }
+    Spans spans{ &out };
+    run(begin, end, spans);
+    spans.finish();
     return;
   }
 

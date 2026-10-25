@@ -16,6 +16,9 @@
 #include <vector>
 
 #include <fcntl.h>
+#if defined(__APPLE__)
+#include <sys/sysctl.h>
+#endif
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
@@ -25,6 +28,22 @@ namespace
 {
   // stdin and pipes are read in blocks of this much per thread
   constexpr std::size_t BLOCK_PER_THREAD = 4 << 20;
+
+  // One thread per performance core.  On a chip with slower efficiency cores (Apple silicon),
+  // threads on those cores finish last and the whole filter waits for them: measured on an M4
+  // Max, 12 threads were as fast as 16 or faster on every benchmark task and used 10-20% less
+  // CPU.  Where the system doesn't say which cores are which, use them all.
+  auto default_threads() -> unsigned
+  {
+#if defined(__APPLE__)
+    int perf = 0;
+    std::size_t len = sizeof perf;
+    if (sysctlbyname("hw.perflevel0.logicalcpu", &perf, &len, nullptr, 0) == 0 and perf > 0) {
+      return static_cast<unsigned>(perf);
+    }
+#endif
+    return std::max(1u, std::thread::hardware_concurrency());
+  }
 
   auto error(std::string const& what) -> std::runtime_error
   {
@@ -151,7 +170,7 @@ namespace
 
 auto apply_filters(alf::parser::ArgPack const& p, alf::Program const& program) -> void
 {
-  unsigned const threads = p.threads ? p.threads : std::max(1u, std::thread::hardware_concurrency());
+  unsigned const threads = p.threads ? p.threads : default_threads();
   int in = p.infile ? open(p.infile->c_str(), O_RDONLY) : STDIN_FILENO;
   if (in < 0) {
     throw error(*p.infile);
