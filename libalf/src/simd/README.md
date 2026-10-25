@@ -26,14 +26,18 @@ each instruction set has its own implementation of all three, chosen once at run
   function types, and `Backend`, a record of a backend's kernels plus "does it run here" and
   "pick it automatically".
 - **One file per instruction set** (`x86_sse2.cpp`, `x86_ssse3.cpp`, `x86_avx2.cpp`,
-  `x86_avx512.cpp`, `arm_neon.cpp`, `arm_sve.cpp`) implements the kernels with intrinsics. CMake
-  compiles each file with only its own flags, and only on the matching architecture, so one
-  binary carries every backend for its architecture and runs on any CPU of it.
+  `x86_avx512.cpp`, `arm_neon.cpp`, `arm_sve.cpp`, `riscv_rvv.cpp`, `power_vsx.cpp`,
+  `wasm_simd128.cpp`) implements the kernels with intrinsics. CMake compiles each file with only
+  its own flags (GCC/Clang spellings, or `/arch:` for MSVC), and only on the matching
+  architecture, so one binary carries every backend for its architecture and runs on any CPU of
+  it. `bits.h` gives the backends portable lowest/highest-set-bit helpers (builtins on GCC/Clang,
+  `_BitScanForward`/`_BitScanReverse` on MSVC).
 - **`scalar.cpp`** is the reference. Every other backend must return exactly what it returns:
   `tests/test_simd.cpp` checks that on random inputs, and the vector kernels use the scalar ones
   for the few bytes at the end of a range that a whole vector can't cover.
-- **`dispatch.cpp`** detects the CPU (`__builtin_cpu_supports` on x86, which also checks that the
-  OS saves the wide registers; `getauxval(AT_HWCAP)` for SVE on Linux), builds the backend
+- **`dispatch.cpp`** detects the CPU (`__builtin_cpu_supports` on x86 with GCC/Clang, or `__cpuid`
+  plus `_xgetbv` with MSVC, both of which also check that the OS saves the wide registers;
+  `getauxval(AT_HWCAP)` for SVE, RVV and VSX on Linux), builds the backend
   table, and picks the first backend that runs here and is preferred. It's compiled with the
   baseline flags only, so the checks never use the instructions they check for.
 - The scanner (`program.cpp`) asks `alf::simd::active()` once per filter and calls through the

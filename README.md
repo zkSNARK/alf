@@ -99,7 +99,9 @@ group) are reported before any input is read, and alf exits with status 2.
 
 ## Build
 
-Requires CMake 3.15+ and a C++20 compiler. Tested on Linux and macOS.
+Requires CMake 3.15+ and a C++20 compiler (GCC, Clang or MSVC). CI builds and tests on Linux
+(x86-64 and Arm), macOS, Windows (MSVC), RISC-V and POWER (cross-compiled, run under QEMU with
+`cmake/toolchains/`), and WebAssembly (Emscripten, run under Node.js).
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
@@ -126,7 +128,8 @@ rerun them; the write-up with charts is at <https://goebel-home.net/projects/alf
 ### SIMD
 
 The byte scanning uses vector instructions where the CPU has them: SSE2, SSSE3, AVX2 and AVX-512
-on x86-64, NEON and SVE on AArch64, with a scalar fallback. One binary contains every backend
+on x86-64, NEON and SVE on AArch64, the V extension on RISC-V, VSX on POWER8+, and SIMD128 on
+WebAssembly, with a scalar fallback. One binary contains every backend
 for its architecture and picks the best at run time; `alf --simd-info` shows which, and
 `ALF_SIMD=<name>` forces one. See [`libalf/src/simd/README.md`](libalf/src/simd/README.md).
 
