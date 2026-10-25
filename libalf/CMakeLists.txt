@@ -28,8 +28,8 @@ target_include_directories(algebraic_line_filter
 
 # ---- SIMD backends ---------------------------------------------------------------------------
 # One file per instruction set, each compiled with only its own flags, so the binary runs on any
-# CPU of the architecture and picks the best backend at run time (src/simd/README.md).  Flags are
-# GCC/Clang spellings; other compilers get the scalar backend only.
+# CPU of the architecture and picks the best backend at run time (src/simd/README.md).  GCC/Clang
+# and MSVC (x64) spellings; other compilers get the scalar backend only.
 include(CheckCXXSourceCompiles)
 string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" alf_cpu)
 if (CMAKE_OSX_ARCHITECTURES)
@@ -66,6 +66,13 @@ elseif (alf_gnu_like AND alf_cpu MATCHES "^(x86_64|amd64|i[3-6]86)$")
     alf_simd_source(src/simd/x86_avx512.cpp "-mavx512f;-mavx512bw")
     target_compile_definitions(algebraic_line_filter PRIVATE ALF_SIMD_AVX512)
   endif ()
+elseif (MSVC AND alf_cpu MATCHES "^(amd64|x86_64)$")
+  # MSVC: SSE2 and SSSE3 intrinsics need no flag on x64; AVX2 and AVX-512 files get /arch.
+  alf_simd_source(src/simd/x86_sse2.cpp "")
+  alf_simd_source(src/simd/x86_ssse3.cpp "")
+  alf_simd_source(src/simd/x86_avx2.cpp "/arch:AVX2")
+  alf_simd_source(src/simd/x86_avx512.cpp "/arch:AVX512")
+  target_compile_definitions(algebraic_line_filter PRIVATE ALF_SIMD_X86 ALF_SIMD_AVX512)
 elseif (alf_gnu_like AND alf_cpu MATCHES "^(aarch64|arm64)$")
   alf_simd_source(src/simd/arm_neon.cpp "")
   target_compile_definitions(algebraic_line_filter PRIVATE ALF_SIMD_NEON)

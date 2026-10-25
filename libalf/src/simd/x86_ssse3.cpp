@@ -5,6 +5,7 @@
 // Compiled with -mssse3; intrinsics and file-local helpers only (see x86_sse2.cpp).
 //
 
+#include "bits.h"
 #include "kernels.h"
 
 #include <tmmintrin.h>
@@ -25,7 +26,7 @@ namespace alf::simd
     while (p < last and limit - p >= 18) {  // three overlapping 16-byte loads: p .. p+17
       __m128i const m = _mm_and_si128(_mm_and_si128(look(lo0, hi0, p), look(lo1, hi1, p + 1)), look(lo2, hi2, p + 2));
       if (unsigned const h = static_cast<unsigned>(~_mm_movemask_epi8(_mm_cmpeq_epi8(m, zero))) & 0xFFFFu; h != 0) {
-        char const* q = p + __builtin_ctz(h);
+        char const* q = p + bits::lowest32(h);
         return q < last ? q : last;
       }
       p += 16;

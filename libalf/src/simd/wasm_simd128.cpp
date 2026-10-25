@@ -11,6 +11,7 @@
 // Compiled with -msimd128; intrinsics and file-local helpers only (see x86_sse2.cpp).
 //
 
+#include "bits.h"
 #include "kernels.h"
 
 #include <wasm_simd128.h>
@@ -38,7 +39,7 @@ namespace alf::simd
         m = wasm_v128_or(m, wasm_i8x16_eq(v, splat[i]));
       }
       if (unsigned const h = wasm_i8x16_bitmask(m); h != 0) {
-        char const* q = p + __builtin_ctz(h);
+        char const* q = p + bits::lowest32(h);
         return q < last ? q : last;
       }
       p += 16;
@@ -58,7 +59,7 @@ namespace alf::simd
     while (p < last and limit - p >= 18) {  // three overlapping 16-byte loads: p .. p+17
       v128_t const m = wasm_v128_and(wasm_v128_and(look(lo0, hi0, p), look(lo1, hi1, p + 1)), look(lo2, hi2, p + 2));
       if (unsigned const h = wasm_i8x16_bitmask(wasm_i8x16_ne(m, wasm_i64x2_const(0, 0))); h != 0) {
-        char const* q = p + __builtin_ctz(h);
+        char const* q = p + bits::lowest32(h);
         return q < last ? q : last;
       }
       p += 16;
@@ -71,7 +72,7 @@ namespace alf::simd
     v128_t const nl = wasm_i8x16_splat('\n');
     while (p - floor >= 16) {
       if (unsigned const h = wasm_i8x16_bitmask(wasm_i8x16_eq(load(p - 16), nl)); h != 0) {
-        return p - 16 + (31 - __builtin_clz(h)) + 1;
+        return p - 16 + bits::highest32(h) + 1;
       }
       p -= 16;
     }

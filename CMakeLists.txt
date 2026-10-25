@@ -14,7 +14,13 @@ endif ()
 
 add_subdirectory(libalf)
 
-add_executable(alf src/main.cpp)
+add_executable(alf src/main.cpp src/io_stream.cpp)
+if (WIN32)
+  target_sources(alf PRIVATE src/io_windows.cpp)
+  target_compile_definitions(alf PRIVATE _WIN32_WINNT=0x0A00)  # Windows 10: PrefetchVirtualMemory
+else ()
+  target_sources(alf PRIVATE src/io_posix.cpp)
+endif ()
 
 target_link_libraries(alf
     PRIVATE algebraic_line_filter

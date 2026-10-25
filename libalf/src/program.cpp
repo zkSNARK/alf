@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <cstdint>
 #include <cstring>
 #include <exception>
@@ -176,7 +177,7 @@ namespace
       };
       if (m_teddy) {
         for (unsigned g = groups_at(q, last); g != 0; g &= g - 1) {
-          for (std::uint16_t i : m_groups[static_cast<std::size_t>(__builtin_ctz(g))]) {
+          for (std::uint16_t i : m_groups[static_cast<std::size_t>(std::countr_zero(g))]) {
             check(i, m_window[i]);
           }
         }

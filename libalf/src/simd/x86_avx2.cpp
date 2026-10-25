@@ -5,6 +5,7 @@
 // Compiled with -mavx2; intrinsics and file-local helpers only (see x86_sse2.cpp).
 //
 
+#include "bits.h"
 #include "kernels.h"
 
 #include <immintrin.h>
@@ -41,7 +42,7 @@ namespace alf::simd
     }
     while (p < last and limit - p >= 32) {
       if (unsigned const h = hits(p); h != 0) {
-        char const* q = p + __builtin_ctz(h);
+        char const* q = p + bits::lowest32(h);
         return q < last ? q : last;
       }
       p += 32;
@@ -65,7 +66,7 @@ namespace alf::simd
     while (p < last and limit - p >= 34) {  // three overlapping 32-byte loads: p .. p+33
       __m256i const m = _mm256_and_si256(_mm256_and_si256(look(lo0, hi0, p), look(lo1, hi1, p + 1)), look(lo2, hi2, p + 2));
       if (unsigned const h = ~static_cast<unsigned>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(m, zero))); h != 0) {
-        char const* q = p + __builtin_ctz(h);
+        char const* q = p + bits::lowest32(h);
         return q < last ? q : last;
       }
       p += 32;
@@ -78,7 +79,7 @@ namespace alf::simd
     __m256i const nl = _mm256_set1_epi8('\n');
     while (p - floor >= 32) {
       if (unsigned const h = static_cast<unsigned>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(load(p - 32), nl))); h != 0) {
-        return p - 32 + (31 - __builtin_clz(h)) + 1;
+        return p - 32 + bits::highest32(h) + 1;
       }
       p -= 32;
     }

@@ -8,6 +8,7 @@
 // Intrinsics and file-local helpers only (see x86_sse2.cpp on why).
 //
 
+#include "bits.h"
 #include "kernels.h"
 
 #include <arm_neon.h>
@@ -54,7 +55,7 @@ namespace alf::simd
     while (p < last and limit - p >= 16) {
       uint8x16_t const m = hits(p);
       if (vmaxvq_u8(m) != 0) {
-        char const* q = p + (__builtin_ctzll(lane_flags(m)) >> 2);
+        char const* q = p + (bits::lowest64(lane_flags(m)) >> 2);
         return q < last ? q : last;
       }
       p += 16;
@@ -74,7 +75,7 @@ namespace alf::simd
     while (p < last and limit - p >= 18) {  // three overlapping 16-byte loads: p .. p+17
       uint8x16_t const m = vandq_u8(vandq_u8(look(lo0, hi0, p), look(lo1, hi1, p + 1)), look(lo2, hi2, p + 2));
       if (vmaxvq_u8(m) != 0) {
-        char const* q = p + (__builtin_ctzll(lane_flags(m)) >> 2);
+        char const* q = p + (bits::lowest64(lane_flags(m)) >> 2);
         return q < last ? q : last;
       }
       p += 16;
@@ -88,7 +89,7 @@ namespace alf::simd
     while (p - floor >= 16) {
       uint8x16_t const m = vceqq_u8(load(p - 16), nl);
       if (vmaxvq_u8(m) != 0) {
-        return p - 16 + ((63 - __builtin_clzll(lane_flags(m))) >> 2) + 1;
+        return p - 16 + (bits::highest64(lane_flags(m)) >> 2) + 1;
       }
       p -= 16;
     }

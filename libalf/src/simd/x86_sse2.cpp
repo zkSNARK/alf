@@ -6,6 +6,7 @@
 // templates, which could leak code compiled for this file's flags into the rest of the program.
 //
 
+#include "bits.h"
 #include "kernels.h"
 
 #include <emmintrin.h>
@@ -42,7 +43,7 @@ namespace alf::simd
     }
     while (p < last and limit - p >= 16) {
       if (unsigned const h = hits(p); h != 0) {
-        char const* q = p + __builtin_ctz(h);
+        char const* q = p + bits::lowest32(h);
         return q < last ? q : last;
       }
       p += 16;
@@ -55,7 +56,7 @@ namespace alf::simd
     __m128i const nl = _mm_set1_epi8('\n');
     while (p - floor >= 16) {
       if (unsigned const h = static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(load(p - 16), nl))); h != 0) {
-        return p - 16 + (31 - __builtin_clz(h)) + 1;  // just after the last '\n' in these 16
+        return p - 16 + bits::highest32(h) + 1;  // just after the last '\n' in these 16
       }
       p -= 16;
     }

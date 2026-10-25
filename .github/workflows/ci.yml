@@ -71,3 +71,18 @@ jobs:
       - name: Test under Node.js
         run: ctest --test-dir build --output-on-failure --timeout 1800
 
+  # Windows with MSVC: sse2/ssse3/avx2 (and avx512 where the runner has it) plus scalar, through
+  # the Windows I/O layer (src/io_windows.cpp).
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build
+      - name: Build
+        run: cmake --build build --config Debug --parallel
+      - name: SIMD backends on this runner
+        run: build\Debug\alf.exe --simd-info
+      - name: Test
+        run: ctest --test-dir build -C Debug --output-on-failure --timeout 900
+

@@ -10,6 +10,7 @@
 // Compiled with -mavx512f -mavx512bw; intrinsics and file-local helpers only (see x86_sse2.cpp).
 //
 
+#include "bits.h"
 #include "kernels.h"
 
 #include <immintrin.h>
@@ -37,7 +38,7 @@ namespace alf::simd
         m |= _mm512_cmpeq_epi8_mask(v, splat[i]);
       }
       if (m != 0) {
-        char const* q = p + __builtin_ctzll(m);
+        char const* q = p + bits::lowest64(m);
         return q < last ? q : last;
       }
       p += 64;
@@ -61,7 +62,7 @@ namespace alf::simd
     while (p < last and limit - p >= 66) {  // three overlapping 64-byte loads: p .. p+65
       __m512i const m = _mm512_and_si512(_mm512_and_si512(look(lo0, hi0, p), look(lo1, hi1, p + 1)), look(lo2, hi2, p + 2));
       if (__mmask64 const h = _mm512_test_epi8_mask(m, m); h != 0) {
-        char const* q = p + __builtin_ctzll(h);
+        char const* q = p + bits::lowest64(h);
         return q < last ? q : last;
       }
       p += 64;
@@ -74,7 +75,7 @@ namespace alf::simd
     __m512i const nl = _mm512_set1_epi8('\n');
     while (p - floor >= 64) {
       if (__mmask64 const h = _mm512_cmpeq_epi8_mask(load(p - 64), nl); h != 0) {
-        return p - 64 + (63 - __builtin_clzll(h)) + 1;
+        return p - 64 + bits::highest64(h) + 1;
       }
       p -= 64;
     }

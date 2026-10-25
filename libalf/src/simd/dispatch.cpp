@@ -8,6 +8,10 @@
 #include "kernels.h"
 #include "simd.h"
 
+#if defined(_MSC_VER) && !defined(__clang__)
+#include <intrin.h>
+#endif
+
 #include <atomic>
 #include <cstdio>
 #include <cstdlib>
@@ -26,14 +30,51 @@ namespace alf::simd
     auto no() noexcept -> bool { return false; }
 #endif
 
-#if defined(ALF_SIMD_X86)
+#if defined(ALF_SIMD_X86) && defined(_MSC_VER) && !defined(__clang__)
+    // MSVC: read CPUID directly.  AVX/AVX-512 also need the OS to save the wider registers on a
+    // context switch, which XGETBV reports (bits 1-2: SSE/AVX state; 5-7: AVX-512 state).
+    struct X86Features
+    {
+      bool sse2, ssse3, avx2, avx512;
+    };
+    auto x86() noexcept -> X86Features const&
+    {
+      static X86Features const f = [] {
+        int r[4];
+        __cpuid(r, 0);
+        int const max_leaf = r[0];
+        __cpuid(r, 1);
+        bool const sse2 = (r[3] & (1 << 26)) != 0;
+        bool const ssse3 = (r[2] & (1 << 9)) != 0;
+        bool const osxsave = (r[2] & (1 << 27)) != 0;
+        bool const avx = (r[2] & (1 << 28)) != 0;
+        unsigned long long const xcr0 = osxsave ? _xgetbv(0) : 0;
+        bool avx2 = false, avx512f = false, avx512bw = false;
+        if (max_leaf >= 7) {
+          __cpuidex(r, 7, 0);
+          avx2 = (r[1] & (1 << 5)) != 0;
+          avx512f = (r[1] & (1 << 16)) != 0;
+          avx512bw = (r[1] & (1 << 30)) != 0;
+        }
+        bool const ymm_saved = (xcr0 & 0x06) == 0x06, zmm_saved = (xcr0 & 0xE6) == 0xE6;
+        return X86Features{ sse2, ssse3, avx and avx2 and ymm_saved, avx512f and avx512bw and zmm_saved };
+      }();
+      return f;
+    }
+    auto has_sse2() noexcept -> bool { return x86().sse2; }
+    auto has_ssse3() noexcept -> bool { return x86().ssse3; }
+    auto has_avx2() noexcept -> bool { return x86().avx2; }
+#if defined(ALF_SIMD_AVX512)
+    auto has_avx512() noexcept -> bool { return x86().avx512; }
+#endif
+#elif defined(ALF_SIMD_X86)
     // __builtin_cpu_supports also checks that the OS saves the wider registers (XGETBV).
     auto has_sse2() noexcept -> bool { return __builtin_cpu_supports("sse2"); }
     auto has_ssse3() noexcept -> bool { return __builtin_cpu_supports("ssse3"); }
     auto has_avx2() noexcept -> bool { return __builtin_cpu_supports("avx2"); }
-#endif
 #if defined(ALF_SIMD_AVX512)
     auto has_avx512() noexcept -> bool { return __builtin_cpu_supports("avx512f") and __builtin_cpu_supports("avx512bw"); }
+#endif
 #endif
 #if defined(ALF_SIMD_SVE)
     auto has_sve() noexcept -> bool
