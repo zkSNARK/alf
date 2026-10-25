@@ -140,11 +140,11 @@ alf memory-maps its input, searches the whole buffer for the strings an expressi
 (all of them in one pass, with Teddy shuffle fingerprints when there are many), evaluates the
 rest without allocating, writes kept lines without copying long runs, and splits large inputs
 across every performance core (`--threads N` to change that). On a 142 MB log on an Apple M4
-Max it finds one string in 7 ms (ripgrep 21, GNU grep 33), answers a nested and/or/not query
-in 9 ms (GNU grep 227) and drops eight kinds of noise in 21 ms (ripgrep 120). Pinned to one
-core it still beats grep and ripgrep on every string task, and on exclude lists of up to 16
-strings; at 32 it is level with ripgrep on macOS and behind it on Linux. Regexes without fixed
-text are where ripgrep is still faster. [`bench/`](bench/) has the harness, the results and how to
+Max it finds one string in 7 ms (ripgrep 22, GNU grep 33), answers a nested and/or/not query
+in 9 ms (GNU grep 230) and drops eight kinds of noise in 21 ms (ripgrep 117). Pinned to one
+core it still beats grep and ripgrep on every string task, and on exclude lists of every
+length measured (1 to 32 strings) on macOS and Linux. Regexes without fixed text are where
+ripgrep is still faster. [`bench/`](bench/) has the harness, the results and how to
 rerun them; the write-up with charts is at <https://goebel-home.net/projects/alf/>.
 
 ### SIMD
