@@ -4,17 +4,21 @@
 
 #include <algorithm>
 #include <cerrno>
+#include <climits>
 #include <cstdio>
 #include <cstring>
 #include <exception>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <thread>
+#include <vector>
 
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/uio.h>
 #include <unistd.h>
 
 namespace
@@ -22,64 +26,124 @@ namespace
   // stdin and pipes are read in blocks of this much per thread
   constexpr std::size_t BLOCK_PER_THREAD = 4 << 20;
 
-  auto write_all(FILE* fo) -> std::function<void(std::string_view)>
+  auto error(std::string const& what) -> std::runtime_error
   {
-    return [fo](std::string_view s) {
-      if (!s.empty() and std::fwrite(s.data(), 1, s.size(), fo) != s.size()) {
-        throw std::runtime_error(std::string("write failed: ") + std::strerror(errno));
-      }
-    };
+    return std::runtime_error(what + ": " + std::strerror(errno));
   }
 
-  // A regular file: map it and filter it in one go.
-  auto filter_mapped(int fd, std::size_t size, alf::Program const& program, unsigned threads, FILE* fo) -> void
+  /**
+   * Writes views straight from the input's memory with writev: no stdio buffer, no copy in this
+   * process.  Views are batched and must stay valid until flush() (filter_* call it before the
+   * memory behind them goes away).
+   */
+  class Writer
+  {
+  public:
+    explicit Writer(int fd) : m_fd{ fd } { m_iov.reserve(BATCH); }
+
+    void add(std::string_view v)
+    {
+      m_iov.push_back({ const_cast<char*>(v.data()), v.size() });
+      if (m_iov.size() == BATCH) {
+        flush();
+      }
+    }
+
+    void flush()
+    {
+      iovec* iov = m_iov.data();
+      int left = static_cast<int>(m_iov.size());
+      while (left > 0) {
+        ssize_t n = writev(m_fd, iov, left);
+        if (n < 0) {
+          if (errno == EINTR) {
+            continue;
+          }
+          throw error("write failed");
+        }
+        // skip what was written; a partial write leaves the rest of one view for the next call
+        auto done = static_cast<std::size_t>(n);
+        while (left > 0 and done >= iov->iov_len) {
+          done -= iov->iov_len;
+          ++iov;
+          --left;
+        }
+        if (left > 0) {
+          iov->iov_base = static_cast<char*>(iov->iov_base) + done;
+          iov->iov_len -= done;
+        }
+      }
+      m_iov.clear();
+    }
+
+  private:
+    static constexpr std::size_t BATCH = IOV_MAX < 1024 ? IOV_MAX : 1024;
+    int m_fd;
+    std::vector<iovec> m_iov;
+  };
+
+  // A regular file: map it, filter it, write the kept lines straight from the mapping.
+  auto filter_mapped(int fd, std::size_t size, alf::Program const& program, unsigned threads, Writer& out) -> void
   {
     if (size == 0) {
       return;
     }
     void* m = mmap(nullptr, size, PROT_READ, MAP_PRIVATE, fd, 0);
     if (m == MAP_FAILED) {
-      throw std::runtime_error(std::string("mmap failed: ") + std::strerror(errno));
+      throw error("mmap failed");
     }
     madvise(m, size, MADV_SEQUENTIAL);
-    alf::filter(std::string_view(static_cast<char const*>(m), size), program, threads, write_all(fo));
+    alf::filter(std::string_view(static_cast<char const*>(m), size), program, threads,
+                [&](std::string_view v) { out.add(v); });
+    out.flush();  // every view points into the mapping: write them all before unmapping
     munmap(m, size);
   }
 
-  // stdin or a pipe: read large blocks, filter the complete lines, carry the partial last line.
-  auto filter_stream(int fd, alf::Program const& program, unsigned threads, FILE* fo) -> void
+  // stdin or a pipe: read blocks into one reused buffer (never zero-filled), filter the complete
+  // lines, write them from the buffer, and move only the partial last line to the front.
+  auto filter_stream(int fd, alf::Program const& program, unsigned threads, Writer& out) -> void
   {
     std::size_t const block = BLOCK_PER_THREAD * threads;
-    std::string buf;
-    auto const write = write_all(fo);
+    std::size_t cap = 2 * block;
+    std::unique_ptr<char[]> buf(new char[cap]);  // default-initialized: no memset of the buffer
+    std::size_t have = 0;
+    auto const write = [&](std::string_view v) { out.add(v); };
     for (;;) {
-      std::size_t const have = buf.size();
-      buf.resize(have + block);
+      if (cap - have < block) {  // one line longer than everything read so far: grow
+        cap *= 2;
+        std::unique_ptr<char[]> bigger(new char[cap]);
+        std::memcpy(bigger.get(), buf.get(), have);
+        buf = std::move(bigger);
+      }
       std::size_t got = 0;
       while (got < block) {  // fill the block (a pipe hands over at most a pipe-buffer at a time)
-        ssize_t n = read(fd, buf.data() + have + got, block - got);
+        ssize_t n = read(fd, buf.get() + have + got, block - got);
         if (n < 0 and errno == EINTR) {
           continue;
         }
         if (n < 0) {
-          throw std::runtime_error(std::string("read failed: ") + std::strerror(errno));
+          throw error("read failed");
         }
         if (n == 0) {
           break;
         }
         got += static_cast<std::size_t>(n);
       }
-      buf.resize(have + got);
+      have += got;
+      std::string_view const data(buf.get(), have);
       if (got == 0) {  // end of input: whatever is left is the last line
-        alf::filter(buf, program, threads, write);
+        alf::filter(data, program, threads, write);
+        out.flush();
         return;
       }
-      auto last_nl = buf.rfind('\n');
-      if (last_nl == std::string::npos) {
+      auto const last_nl = data.rfind('\n');
+      if (last_nl == std::string_view::npos) {
         continue;  // no complete line yet
       }
-      alf::filter(std::string_view(buf).substr(0, last_nl + 1), program, threads, write);
-      buf.erase(0, last_nl + 1);
+      alf::filter(data.substr(0, last_nl + 1), program, threads, write);
+      out.flush();  // the views point into buf, which is about to be reused
+      have -= last_nl + 1;
+      std::memmove(buf.get(), buf.get() + last_nl + 1, have);
     }
   }
 }
@@ -88,29 +152,27 @@ namespace
 auto apply_filters(alf::parser::ArgPack const& p, alf::Program const& program) -> void
 {
   unsigned const threads = p.threads ? p.threads : std::max(1u, std::thread::hardware_concurrency());
-  int fd = p.infile ? open(p.infile->c_str(), O_RDONLY) : STDIN_FILENO;
-  if (fd < 0) {
-    throw std::runtime_error(*p.infile + ": " + std::strerror(errno));
+  int in = p.infile ? open(p.infile->c_str(), O_RDONLY) : STDIN_FILENO;
+  if (in < 0) {
+    throw error(*p.infile);
   }
-  FILE* fo = p.outfile ? std::fopen(p.outfile->c_str(), "w") : stdout;
-  if (fo == nullptr) {
-    throw std::runtime_error(*p.outfile + ": " + std::strerror(errno));
+  int outfd = p.outfile ? open(p.outfile->c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644) : STDOUT_FILENO;
+  if (outfd < 0) {
+    throw error(*p.outfile);
   }
+  Writer out{ outfd };
 
   struct stat sb{};
-  if (fstat(fd, &sb) == 0 and S_ISREG(sb.st_mode)) {
-    filter_mapped(fd, static_cast<std::size_t>(sb.st_size), program, threads, fo);
+  if (fstat(in, &sb) == 0 and S_ISREG(sb.st_mode)) {
+    filter_mapped(in, static_cast<std::size_t>(sb.st_size), program, threads, out);
   } else {
-    filter_stream(fd, program, threads, fo);
+    filter_stream(in, program, threads, out);
   }
   if (p.infile) {
-    close(fd);
+    close(in);
   }
-  if (std::fflush(fo) != 0) {
-    throw std::runtime_error(std::string("write failed: ") + std::strerror(errno));
-  }
-  if (p.outfile) {
-    std::fclose(fo);
+  if (p.outfile and close(outfd) != 0) {
+    throw error("write failed");
   }
 }
 

@@ -81,7 +81,10 @@ namespace alf
 
   /**
    * Filter the complete lines in `data` and pass the kept ones, line endings included and in
-   * their original order, to `write` (possibly in several pieces).  A last line without a
+   * their original order, to `write` (possibly in several pieces).  Pieces are views into
+   * `data`, so `data` must stay valid until filter() returns; with several threads, a thread
+   * whose kept lines are many short scattered pieces hands over one packed copy instead (also
+   * valid until filter() returns).  A last line without a
    * trailing '\n' is treated as a line.  Lines are matched without their "\n" or "\r\n".
    *
    * When the expression requires one of a few strings (see Program::required_literals), or when

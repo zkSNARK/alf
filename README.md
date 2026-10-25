@@ -120,6 +120,14 @@ find one string (ripgrep 21, GNU grep 32) and 27 ms for a nested and/or/not quer
 remain much slower than grep's. [`bench/`](bench/) has the harness, the results and how to
 rerun them; the write-up with charts is at <https://goebel-home.net/projects/alf/>.
 
+### Memory-mapped input
+
+A file given with `-i` (or redirected with `<`) is memory-mapped, and kept lines are written
+straight from the mapping. If another process truncates the file while alf is reading it
+(log rotation with `copytruncate`, for example), the operating system stops the process with
+`SIGBUS`. To filter a log that may be truncated underneath you, pipe it in instead
+(`cat app.log | alf ...`): piped input is read into alf's own buffer.
+
 ## How it works
 
 1. The expression is split into tokens: strings and regexes (each marked wanted or not wanted,

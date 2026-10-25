@@ -19,6 +19,10 @@ namespace
   // line (the cut-over share of lines with a hit is filter()'s max_hit_fraction).
   constexpr std::size_t SAMPLE_BYTES = 1 << 16;
 
+  // With several threads, a thread whose kept views average less than this many bytes copies
+  // them into one buffer (in parallel) rather than handing them over one by one.
+  constexpr std::size_t PACK_BELOW = 16 << 10;
+
   auto line_end(char const* p, char const* end) -> char const*
   {
     auto nl = static_cast<char const*>(std::memchr(p, '\n', static_cast<std::size_t>(end - p)));
@@ -91,10 +95,44 @@ namespace
     return std::min(1.0, static_cast<double>(hits) / static_cast<double>(lines));
   }
 
+  // The kept text, as views into the input: nothing is copied.  Touching pieces merge, so a run
+  // of kept lines is one view.  With a `flush`, finished views are handed on as the list grows
+  // (memory stays bounded); without one they are kept until the caller takes them.
+  class Spans
+  {
+  public:
+    explicit Spans(std::function<void(std::string_view)> const* flush = nullptr) : m_flush{ flush } { }
+
+    void add(char const* b, char const* e)
+    {
+      if (b == e) {
+        return;
+      }
+      if (!m_list.empty() and m_list.back().data() + m_list.back().size() == b) {
+        m_list.back() = std::string_view(m_list.back().data(), m_list.back().size() + static_cast<std::size_t>(e - b));
+        return;
+      }
+      if (m_flush and m_list.size() >= FLUSH_EVERY) {
+        for (auto v : m_list) {
+          (*m_flush)(v);
+        }
+        m_list.clear();
+      }
+      m_list.emplace_back(b, static_cast<std::size_t>(e - b));
+    }
+
+    [[nodiscard]] auto list() const -> std::vector<std::string_view> const& { return m_list; }
+
+  private:
+    static constexpr std::size_t FLUSH_EVERY = 4096;
+    std::function<void(std::string_view)> const* m_flush;
+    std::vector<std::string_view> m_list;
+  };
+
   // Filter [first, last) by searching for the strings: only lines with a hit are evaluated; the
-  // lines in between all get the answer `keep_others` and are skipped or copied in one piece.
+  // lines in between all get the answer `keep_others` and are skipped or kept in one piece.
   void filter_range_search(char const* first, char const* last, alf::Program const& program,
-                           std::vector<Needle> const& needles, bool keep_others, std::string& out)
+                           std::vector<Needle> const& needles, bool keep_others, Spans& out)
   {
     std::vector<char const*> next(needles.size());
     for (std::size_t i = 0; i < needles.size(); ++i) {
@@ -105,7 +143,7 @@ namespace
       char const* hit = *std::min_element(next.begin(), next.end());
       if (hit == last) {
         if (keep_others) {
-          out.append(cursor, last);
+          out.add(cursor, last);
         }
         return;
       }
@@ -114,13 +152,13 @@ namespace
         --ls;
       }
       if (keep_others) {
-        out.append(cursor, ls);
+        out.add(cursor, ls);
       }
       char const* e = line_end(hit, last);
       char const* text_end = (e > ls and e[-1] == '\r') ? e - 1 : e;
       cursor = e < last ? e + 1 : e;
       if (program.matches(std::string_view(ls, static_cast<std::size_t>(text_end - ls)))) {
-        out.append(ls, cursor);
+        out.add(ls, cursor);
       }
       for (std::size_t i = 0; i < needles.size(); ++i) {
         if (next[i] < cursor) {
@@ -130,15 +168,15 @@ namespace
     }
   }
 
-  // Filter [first, last) line by line, appending kept lines to `out`.
-  void filter_range(char const* first, char const* last, alf::Program const& program, std::string& out)
+  // Filter [first, last) line by line, adding kept lines to `out`.
+  void filter_range(char const* first, char const* last, alf::Program const& program, Spans& out)
   {
     for (char const* p = first; p < last;) {
       char const* e = line_end(p, last);
       char const* text_end = (e > p and e[-1] == '\r') ? e - 1 : e;
       char const* next = e < last ? e + 1 : e;
       if (program.matches(std::string_view(p, static_cast<std::size_t>(text_end - p)))) {
-        out.append(p, next);
+        out.add(p, next);
       }
       p = next;
     }
@@ -364,7 +402,7 @@ void alf::filter(std::string_view data, Program const& program, unsigned threads
   if (!needles.empty() and hit_fraction(needles, sample) > max_hit_fraction) {
     needles.clear();
   }
-  auto const run = [&](char const* first, char const* last, std::string& out) {
+  auto const run = [&](char const* first, char const* last, Spans& out) {
     if (needles.empty()) {
       filter_range(first, last, program, out);
     } else {
@@ -374,10 +412,11 @@ void alf::filter(std::string_view data, Program const& program, unsigned threads
   threads = std::max(1u, std::min<unsigned>(threads, static_cast<unsigned>(data.size() / MIN_BYTES_PER_THREAD)));
 
   if (threads == 1) {
-    std::string out;
-    out.reserve(std::min<std::size_t>(data.size(), 1 << 20));
+    Spans out{ &write };
     run(begin, end, out);
-    write(out);
+    for (auto v : out.list()) {
+      write(v);
+    }
     return;
   }
 
@@ -391,14 +430,34 @@ void alf::filter(std::string_view data, Program const& program, unsigned threads
   }
   cuts.push_back(end);
 
-  std::vector<std::string> outs(threads);
+  // Each thread's result: its views, or (when those views are many small scattered pieces) one
+  // contiguous copy of them.  Writing a hundred thousand short views costs the kernel more than
+  // it saves, and the main thread would be making that copy alone; packing them here spreads
+  // the copy over every thread and leaves the main thread a few large writes.
+  struct Piece
+  {
+    Spans spans;
+    std::string packed;
+  };
+  std::vector<Piece> outs(threads);
   std::vector<std::exception_ptr> errors(threads);
   std::vector<std::thread> pool;
   pool.reserve(threads);
   for (unsigned t = 0; t < threads; ++t) {
     pool.emplace_back([&, t] {
       try {
-        run(cuts[t], cuts[t + 1], outs[t]);
+        run(cuts[t], cuts[t + 1], outs[t].spans);
+        auto const& views = outs[t].spans.list();
+        std::size_t bytes = 0;
+        for (auto v : views) {
+          bytes += v.size();
+        }
+        if (!views.empty() and bytes / views.size() < PACK_BELOW) {
+          outs[t].packed.reserve(bytes);
+          for (auto v : views) {
+            outs[t].packed.append(v);
+          }
+        }
       } catch (...) {
         errors[t] = std::current_exception();
       }
@@ -413,6 +472,12 @@ void alf::filter(std::string_view data, Program const& program, unsigned threads
     }
   }
   for (auto const& o : outs) {
-    write(o);
+    if (!o.packed.empty()) {
+      write(o.packed);
+    } else {
+      for (auto v : o.spans.list()) {
+        write(v);
+      }
+    }
   }
 }
