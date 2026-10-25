@@ -28,7 +28,7 @@ namespace
   auto run(std::string_view data, alf::Program const& p, unsigned threads, double max_hit_fraction = 0.25) -> std::string
   {
     std::string out;
-    alf::filter(data, p, threads, [&](std::string_view s) { out.append(s); }, max_hit_fraction);
+    alf::filter(data, p, threads, { [&](std::string_view s) { out.append(s); }, {} }, max_hit_fraction);
     return out;
   }
 
@@ -203,15 +203,39 @@ namespace
       for (double fraction : { 2.0, -1.0 }) {
         std::string out;
         std::size_t pieces = 0;
-        alf::filter(text, p, threads, [&](std::string_view v) {
+        alf::filter(text, p, threads, { [&](std::string_view v) {
           ASSERT_GE(v.data(), text.data());
           ASSERT_LE(v.data() + v.size(), text.data() + text.size());
           out.append(v);
           ++pieces;
-        }, fraction);
+        }, {} }, fraction);
         EXPECT_EQ(out, naive(text, tokens));
         EXPECT_GT(pieces, 0u);
       }
+    }
+  }
+
+  TEST(Program, views_held_until_flush_stay_valid)
+  {
+    // Like alf's writer: keep the views and only read them in flush() (or, for views into the
+    // input, after filter() returns).  A view into a buffer filter() has already freed would be
+    // a use-after-free here, which AddressSanitizer reports.
+    std::mt19937 rng(11);
+    std::string const text = random_text(rng, 400000);  // dense matches: threads pack their output
+    auto tokens = postfix("'a' & !'b'");
+    alf::Program const p{ tokens };
+    for (unsigned threads : { 1u, 2u, 8u }) {
+      std::vector<std::string_view> held;
+      std::string out;
+      auto const drain = [&] {
+        for (auto v : held) {
+          out.append(v);
+        }
+        held.clear();
+      };
+      alf::filter(text, p, threads, { [&](std::string_view v) { held.push_back(v); }, drain });
+      drain();  // what's left points into `text`, which is still alive
+      EXPECT_EQ(out, naive(text, tokens)) << threads << " threads";
     }
   }
 

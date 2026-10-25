@@ -372,9 +372,10 @@ auto alf::regex_required_prefix(std::string_view pattern) -> std::string
 }
 
 
-void alf::filter(std::string_view data, Program const& program, unsigned threads,
-                 std::function<void(std::string_view)> const& write, double max_hit_fraction)
+void alf::filter(std::string_view data, Program const& program, unsigned threads, Output const& out,
+                 double max_hit_fraction)
 {
+  auto const& write = out.write;
   char const* begin = data.data();
   char const* end = begin + data.size();
 
@@ -479,5 +480,8 @@ void alf::filter(std::string_view data, Program const& program, unsigned threads
         write(v);
       }
     }
+  }
+  if (out.flush) {
+    out.flush();  // views of the packed buffers must be consumed before `outs` is destroyed
   }
 }

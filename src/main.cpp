@@ -33,8 +33,8 @@ namespace
 
   /**
    * Writes views straight from the input's memory with writev: no stdio buffer, no copy in this
-   * process.  Views are batched and must stay valid until flush() (filter_* call it before the
-   * memory behind them goes away).
+   * process.  Views are batched and must stay valid until flush(): filter() calls it before
+   * releasing its own buffers, and filter_* call it before unmapping or reusing the input.
    */
   class Writer
   {
@@ -94,7 +94,7 @@ namespace
     }
     madvise(m, size, MADV_SEQUENTIAL);
     alf::filter(std::string_view(static_cast<char const*>(m), size), program, threads,
-                [&](std::string_view v) { out.add(v); });
+                { [&](std::string_view v) { out.add(v); }, [&] { out.flush(); } });
     out.flush();  // every view points into the mapping: write them all before unmapping
     munmap(m, size);
   }
@@ -107,7 +107,7 @@ namespace
     std::size_t cap = 2 * block;
     std::unique_ptr<char[]> buf(new char[cap]);  // default-initialized: no memset of the buffer
     std::size_t have = 0;
-    auto const write = [&](std::string_view v) { out.add(v); };
+    alf::Output const write{ [&](std::string_view v) { out.add(v); }, [&] { out.flush(); } };
     for (;;) {
       if (cap - have < block) {  // one line longer than everything read so far: grow
         cap *= 2;

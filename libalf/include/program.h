@@ -79,25 +79,36 @@ namespace alf
     std::optional<bool> m_without_literals;
   };
 
+  /** Where filter() sends the kept text. */
+  struct Output
+  {
+    std::function<void(std::string_view)> write;  // one piece of kept text, in order
+    std::function<void()> flush;                  // optional: consume every piece received so far
+  };
+
   /**
    * Filter the complete lines in `data` and pass the kept ones, line endings included and in
-   * their original order, to `write` (possibly in several pieces).  Pieces are views into
-   * `data`, so `data` must stay valid until filter() returns; with several threads, a thread
-   * whose kept lines are many short scattered pieces hands over one packed copy instead (also
-   * valid until filter() returns).  A last line without a
+   * their original order, to `out.write` (possibly in several pieces).  A last line without a
    * trailing '\n' is treated as a line.  Lines are matched without their "\n" or "\r\n".
+   *
+   * Lifetimes: most pieces are views into `data` and stay valid as long as `data` does.  With
+   * several threads, a thread whose kept lines are many short scattered pieces packs them into
+   * a buffer of its own and passes a view of that; such a view is valid only until `out.flush`
+   * is called, which filter() always does before releasing the buffer.  A sink that consumes
+   * each piece inside `write` can leave `flush` empty; one that collects views (to write them
+   * in batches) must write them out in `flush`.
    *
    * When the expression requires one of a few strings (see Program::required_literals), or when
    * every line without its strings gets the same answer, the buffer is searched for those
    * strings instead of being read line by line: only lines with a hit are evaluated, and the
-   * lines in between are skipped or copied in one piece.  A 64 KB sample decides: if more than
+   * lines in between are skipped or kept in one piece.  A 64 KB sample decides: if more than
    * `max_hit_fraction` of its lines would be hits, reading every line is cheaper.
    *
    * With threads > 1 and enough data, the buffer is cut at line breaks into one piece per
    * thread; each piece is filtered on its own thread and the results are written in order.
    */
-  void filter(std::string_view data, Program const& program, unsigned threads,
-              std::function<void(std::string_view)> const& write, double max_hit_fraction = 0.25);
+  void filter(std::string_view data, Program const& program, unsigned threads, Output const& out,
+              double max_hit_fraction = 0.25);
 
   /**
    * The fixed text every match of `pattern` (ECMAScript) starts with, or "" if there is none
