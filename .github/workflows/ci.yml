@@ -6,6 +6,7 @@ on:
 
 jobs:
   build-and-test:
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -38,6 +39,7 @@ jobs:
   # CMAKE_CROSSCOMPILING_EMULATOR, so plain ctest goes through it).  Release build: emulation
   # is slow enough without the sanitizers.
   cross:
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -46,6 +48,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Cross compiler and QEMU
+        timeout-minutes: 10
         run: |
           sudo apt-get update
           sudo apt-get install -y g++-14-${{ matrix.target }} qemu-user
@@ -60,6 +63,7 @@ jobs:
 
   # WebAssembly SIMD128 via Emscripten, tests run under Node.js (emcmake sets the emulator).
   wasm:
+    timeout-minutes: 45
     runs-on: ubuntu-latest
     container: emscripten/emsdk:latest
     steps:
@@ -78,6 +82,7 @@ jobs:
   # Windows with MSVC: sse2/ssse3/avx2 (and avx512 where the runner has it) plus scalar, through
   # the Windows I/O layer (src/io_windows.cpp).
   windows:
+    timeout-minutes: 45
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
