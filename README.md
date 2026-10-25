@@ -96,6 +96,9 @@ group) are reported before any input is read, and alf exits with status 2.
 | `-o FILE`, `--outfile FILE` | write to FILE instead of standard output |
 | `-a EXPR`, `--algebra EXPR` | an algebraic expression (may be combined with basic-mode groups; everything is and-ed) |
 | `--threads N` | filter with N threads (default: one per performance core); output order is always preserved |
+| `--simd-info` | list the SIMD backends this binary has, which run on this CPU and which is in use |
+
+Setting `ALF_SIMD=<name>` (for example `ALF_SIMD=scalar`) forces one SIMD backend; see [SIMD](#simd).
 
 ## Build
 
@@ -112,17 +115,36 @@ ctest --test-dir build        # unit tests (googletest is downloaded at configur
 The executable is `build/alf`; copy it somewhere on your `PATH`. Configure with
 `-DALF_BUILD_TESTS=OFF` to skip the tests and the googletest download.
 
+Other targets, as CI builds them:
+
+```sh
+# Windows (MSVC): the build type is chosen at build time
+cmake -S . -B build
+cmake --build build --config Release
+ctest --test-dir build -C Release
+
+# RISC-V or POWER: a cross compiler (g++-riscv64-linux-gnu / g++-powerpc64le-linux-gnu) and
+# qemu-user; ctest runs the tests through QEMU (-DALF_QEMU_VLEN=128 emulates narrower RVV
+# vectors than the default 256 bits).
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/riscv64-linux-gnu.cmake
+cmake --build build && ctest --test-dir build
+
+# WebAssembly: Emscripten; the result runs under Node.js with access to local files
+emcmake cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build && node build/alf.js --simd-info
+```
+
 ## Performance
 
 alf memory-maps its input, searches the whole buffer for the strings an expression requires
 (all of them in one pass, with Teddy shuffle fingerprints when there are many), evaluates the
 rest without allocating, writes kept lines without copying long runs, and splits large inputs
 across every performance core (`--threads N` to change that). On a 142 MB log on an Apple M4
-Max it finds one string in 8 ms (ripgrep 22, GNU grep 33), answers a nested and/or/not query
-in 9 ms (GNU grep 232) and drops eight kinds of noise in 22 ms (ripgrep 122). Pinned to one
+Max it finds one string in 7 ms (ripgrep 21, GNU grep 33), answers a nested and/or/not query
+in 9 ms (GNU grep 227) and drops eight kinds of noise in 21 ms (ripgrep 120). Pinned to one
 core it still beats grep and ripgrep on every string task, and on exclude lists of up to 16
-strings. Regexes without fixed text, and 32+ strings on one core, are where ripgrep is still
-faster. [`bench/`](bench/) has the harness, the results and how to
+strings; at 32 it is level with ripgrep on macOS and behind it on Linux. Regexes without fixed
+text are where ripgrep is still faster. [`bench/`](bench/) has the harness, the results and how to
 rerun them; the write-up with charts is at <https://goebel-home.net/projects/alf/>.
 
 ### SIMD
@@ -149,8 +171,16 @@ straight from the mapping. If another process truncates the file while alf is re
 2. A small state machine inserts the `&` implied between neighbouring strings and groups.
 3. [Shunting-yard](https://en.wikipedia.org/wiki/Shunting-yard_algorithm) converts the tokens
    to postfix.
-4. Each line is checked with a stack of booleans: a string pushes whether the line contains
-   it, an operator pops its operands and pushes the result.
+4. The postfix tokens become a small tree that each line is evaluated against, stopping as
+   soon as the answer is known: in `'a' & 'b'`, a line without `a` is never searched for `b`.
+5. Before looking at lines one by one, alf works out from the tree which strings every kept
+   line must contain, and searches the whole buffer for those at once (a single string with
+   `memchr` on its rarest byte, a few with a vector search for any of their rare bytes, many
+   with Teddy). Only lines where something turned up are evaluated in full; for exclude lists
+   like `!'a' & !'b'`, the lines in between are kept without being looked at.
+6. Large inputs are split at line boundaries into one piece per thread, and the pieces are
+   written out in order. Kept lines are written as views into the input, so long runs of kept
+   lines are never copied.
 
 The tests include a randomized check that compiles thousands of generated expressions and
 compares alf's answer with a straightforward recursive evaluator on every combination of

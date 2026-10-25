@@ -1,8 +1,9 @@
 //
 // program.h
 //
-// A compiled filter: the postfix token list turned into a flat program that is evaluated per
-// line without allocating, plus a buffer filter that splits large inputs across threads.
+// A compiled filter: the postfix token list turned into a tree that is evaluated per line
+// without allocating, stopping as soon as the answer is known, plus a buffer filter that splits
+// large inputs across threads.
 //
 
 #pragma once

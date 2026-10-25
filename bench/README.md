@@ -11,7 +11,7 @@ filtering tasks over the same generated 2,000,000-line (142 MB) server log.
 | regex | 5xx responses that took over a second | `r'code=5\d\d' & r'latency=\d{4}ms'` |
 | exclude | everything except eight kinds of noise | `!'heartbeat' !'DEBUG' !'cache miss' …` |
 
-alf is timed twice: with its default of one thread per core, and with `--threads 1`.
+alf is timed twice: with its default of one thread per performance core, and with `--threads 1`.
 
 Each tool gets the closest equivalent it has (a pipeline for grep, an awk program, a sed
 script). `run.py` lists every command. Where a tool can't express a task at all, it is
