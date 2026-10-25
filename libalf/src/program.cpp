@@ -15,10 +15,119 @@ namespace
   // Below this much data a second thread costs more than it saves.
   constexpr std::size_t MIN_BYTES_PER_THREAD = 1 << 20;
 
+  // How much input to sample when choosing between searching for the strings and reading every
+  // line (the cut-over share of lines with a hit is filter()'s max_hit_fraction).
+  constexpr std::size_t SAMPLE_BYTES = 1 << 16;
+
   auto line_end(char const* p, char const* end) -> char const*
   {
     auto nl = static_cast<char const*>(std::memchr(p, '\n', static_cast<std::size_t>(end - p)));
     return nl ? nl : end;
+  }
+
+  // A string to search for, and which of its bytes is rarest in the input: memchr finds that
+  // byte (it checks many bytes per instruction), then memcmp checks the rest of the string.
+  // This is the same trick grep uses, and on this kind of data it is several times faster than
+  // memmem or Boyer-Moore-Horspool.
+  struct Needle
+  {
+    std::string_view text;
+    std::size_t rare;
+  };
+
+  auto make_needles(std::vector<std::string> const& literals, std::string_view sample) -> std::vector<Needle>
+  {
+    std::size_t freq[256] = {};
+    for (unsigned char c : sample) {
+      ++freq[c];
+    }
+    std::vector<Needle> needles;
+    for (auto const& lit : literals) {
+      std::size_t rare = 0;
+      for (std::size_t i = 1; i < lit.size(); ++i) {
+        if (freq[static_cast<unsigned char>(lit[i])] < freq[static_cast<unsigned char>(lit[rare])]) {
+          rare = i;
+        }
+      }
+      needles.push_back({ lit, rare });
+    }
+    return needles;
+  }
+
+  // Start of the first occurrence of `n` in [p, last), or `last`.
+  auto find(Needle const& n, char const* p, char const* last) -> char const*
+  {
+    if (static_cast<std::size_t>(last - p) < n.text.size()) {
+      return last;
+    }
+    char const key = n.text[n.rare];
+    char const* q = p + n.rare;
+    char const* const q_end = last - (n.text.size() - n.rare - 1);  // a hit must fit before `last`
+    while (q < q_end) {
+      q = static_cast<char const*>(std::memchr(q, key, static_cast<std::size_t>(q_end - q)));
+      if (q == nullptr) {
+        return last;
+      }
+      char const* start = q - n.rare;
+      if (std::memcmp(start, n.text.data(), n.text.size()) == 0) {
+        return start;
+      }
+      ++q;
+    }
+    return last;
+  }
+
+  // How many lines of `sample` contain at least one needle (estimated: occurrences, capped).
+  auto hit_fraction(std::vector<Needle> const& needles, std::string_view sample) -> double
+  {
+    char const* b = sample.data();
+    char const* e = b + sample.size();
+    std::size_t lines = static_cast<std::size_t>(std::count(b, e, '\n')) + 1, hits = 0;
+    for (auto const& n : needles) {
+      for (char const* p = find(n, b, e); p < e; p = find(n, p + 1, e)) {
+        ++hits;
+      }
+    }
+    return std::min(1.0, static_cast<double>(hits) / static_cast<double>(lines));
+  }
+
+  // Filter [first, last) by searching for the strings: only lines with a hit are evaluated; the
+  // lines in between all get the answer `keep_others` and are skipped or copied in one piece.
+  void filter_range_search(char const* first, char const* last, alf::Program const& program,
+                           std::vector<Needle> const& needles, bool keep_others, std::string& out)
+  {
+    std::vector<char const*> next(needles.size());
+    for (std::size_t i = 0; i < needles.size(); ++i) {
+      next[i] = find(needles[i], first, last);
+    }
+    char const* cursor = first;
+    while (cursor < last) {
+      char const* hit = *std::min_element(next.begin(), next.end());
+      if (hit == last) {
+        if (keep_others) {
+          out.append(cursor, last);
+        }
+        return;
+      }
+      char const* ls = hit;
+      while (ls > cursor and ls[-1] != '\n') {
+        --ls;
+      }
+      if (keep_others) {
+        out.append(cursor, ls);
+      }
+      char const* e = line_end(hit, last);
+      char const* text_end = (e > ls and e[-1] == '\r') ? e - 1 : e;
+      cursor = e < last ? e + 1 : e;
+      if (program.matches(std::string_view(ls, static_cast<std::size_t>(text_end - ls)))) {
+        out.append(ls, cursor);
+      }
+      for (std::size_t i = 0; i < needles.size(); ++i) {
+        if (next[i] < cursor) {
+          next[i] = find(needles[i], cursor, last);
+        }
+      }
+    }
   }
 
   // Filter [first, last) line by line, appending kept lines to `out`.
@@ -68,63 +177,206 @@ alf::Program::Program(std::vector<types::TokenBase> const& postfix)
   if (!postfix.empty() and depth != 1) {
     throw std::runtime_error("malformed expression: operands without an operator between them");
   }
+
+  std::vector<std::size_t> operands;
+  for (std::size_t i = 0; i < m_ops.size(); ++i) {
+    auto const type = m_ops[i].type;
+    Node n{ type, i, 0, 0 };
+    if (type == types::TYPE_TOKEN::OPERATOR_NOT) {
+      n.left = operands.back();
+      operands.pop_back();
+    } else if (types::is_operator(type)) {
+      n.right = operands.back();
+      operands.pop_back();
+      n.left = operands.back();
+      operands.pop_back();
+    }
+    m_nodes.push_back(n);
+    operands.push_back(m_nodes.size() - 1);
+  }
+
+  bool searchable = !m_ops.empty();
+  for (auto const& op : m_ops) {
+    if (op.type == types::TYPE_TOKEN::REGEX or (op.type == types::TYPE_TOKEN::SUBSTR and op.literal.empty())) {
+      searchable = false;
+    }
+    if (op.type == types::TYPE_TOKEN::SUBSTR and std::find(m_literals.begin(), m_literals.end(), op.literal) == m_literals.end()) {
+      m_literals.push_back(op.literal);
+    }
+  }
+  if (searchable) {
+    // evaluate once as if no string were found: a wanted string is false, an unwanted one true
+    std::vector<char> stk;
+    for (auto const& op : m_ops) {
+      switch (op.type) {
+        case types::TYPE_TOKEN::SUBSTR: stk.push_back(!op.required); break;
+        case types::TYPE_TOKEN::OPERATOR_NOT: stk.back() = !stk.back(); break;
+        case types::TYPE_TOKEN::OPERATOR_AND: { char b = stk.back(); stk.pop_back(); stk.back() = stk.back() and b; break; }
+        case types::TYPE_TOKEN::OPERATOR_OR: { char b = stk.back(); stk.pop_back(); stk.back() = stk.back() or b; break; }
+        case types::TYPE_TOKEN::OPERATOR_XOR: { char b = stk.back(); stk.pop_back(); stk.back() = stk.back() != b; break; }
+        default: break;
+      }
+    }
+    m_without_literals = stk.back() != 0;
+  }
 }
 
 
 auto alf::Program::matches(std::string_view line) const -> bool
 {
-  if (m_ops.empty()) {
-    return true;
+  return m_nodes.empty() or eval(m_nodes.size() - 1, line);
+}
+
+
+auto alf::Program::eval(std::size_t node, std::string_view line) const -> bool
+{
+  Node const& n = m_nodes[node];
+  switch (n.type) {
+    case types::TYPE_TOKEN::SUBSTR: {
+      Op const& op = m_ops[n.op];
+      return (line.find(op.literal) != std::string_view::npos) == op.required;
+    }
+    case types::TYPE_TOKEN::REGEX: {
+      Op const& op = m_ops[n.op];
+      return std::regex_search(line.begin(), line.end(), *op.regex) == op.required;
+    }
+    case types::TYPE_TOKEN::OPERATOR_NOT:
+      return !eval(n.left, line);
+    case types::TYPE_TOKEN::OPERATOR_AND:
+      return eval(n.left, line) and eval(n.right, line);
+    case types::TYPE_TOKEN::OPERATOR_OR:
+      return eval(n.left, line) or eval(n.right, line);
+    case types::TYPE_TOKEN::OPERATOR_XOR:
+      return eval(n.left, line) != eval(n.right, line);
+    default:
+      return false;
   }
-  // one stack per thread, sized once: no allocation per line
-  thread_local std::vector<char> stack;
-  if (stack.size() < m_depth) {
-    stack.resize(m_depth);
-  }
-  char* stk = stack.data();
-  std::size_t sp = 0;
+}
+
+
+auto alf::Program::required_literals(std::function<double(std::string_view)> const& cost) const
+  -> std::optional<std::vector<std::string>>
+{
+  using Set = std::optional<std::vector<std::string>>;
+  auto const total = [&](std::vector<std::string> const& v) {
+    double c = 0;
+    for (auto const& s : v) {
+      c += cost(s);
+    }
+    return c;
+  };
+  std::vector<Set> stk;
   for (auto const& op : m_ops) {
     switch (op.type) {
       case types::TYPE_TOKEN::SUBSTR:
-        stk[sp++] = (line.find(op.literal) != std::string_view::npos) == op.required;
+        stk.push_back(op.required and !op.literal.empty() ? Set{ { op.literal } } : std::nullopt);
         break;
-      case types::TYPE_TOKEN::REGEX:
-        stk[sp++] = std::regex_search(line.begin(), line.end(), *op.regex) == op.required;
+      case types::TYPE_TOKEN::REGEX: {
+        std::string prefix = op.required ? regex_required_prefix(op.literal) : std::string{};
+        stk.push_back(prefix.empty() ? std::nullopt : Set{ { prefix } });
         break;
+      }
       case types::TYPE_TOKEN::OPERATOR_NOT:
-        stk[sp - 1] = !stk[sp - 1];
+        stk.back() = std::nullopt;
         break;
-      case types::TYPE_TOKEN::OPERATOR_AND:
-        --sp;
-        stk[sp - 1] = stk[sp - 1] and stk[sp];
+      case types::TYPE_TOKEN::OPERATOR_AND: {  // either side's set will do: keep the cheaper one
+        Set b = std::move(stk.back());
+        stk.pop_back();
+        Set& a = stk.back();
+        if (!a or (b and total(*b) < total(*a))) {
+          a = std::move(b);
+        }
         break;
+      }
       case types::TYPE_TOKEN::OPERATOR_OR:
-        --sp;
-        stk[sp - 1] = stk[sp - 1] or stk[sp];
+      case types::TYPE_TOKEN::OPERATOR_XOR: {  // true only if one side is: needs both sides' sets
+        Set b = std::move(stk.back());
+        stk.pop_back();
+        Set& a = stk.back();
+        if (a and b) {
+          for (auto& s : *b) {
+            if (std::find(a->begin(), a->end(), s) == a->end()) {
+              a->push_back(std::move(s));
+            }
+          }
+        } else {
+          a = std::nullopt;
+        }
         break;
-      case types::TYPE_TOKEN::OPERATOR_XOR:
-        --sp;
-        stk[sp - 1] = stk[sp - 1] != stk[sp];
-        break;
+      }
       default:
         break;
     }
   }
-  return stk[0];
+  return stk.empty() ? std::nullopt : std::move(stk.back());
+}
+
+
+auto alf::regex_required_prefix(std::string_view pattern) -> std::string
+{
+  if (pattern.find('|') != std::string_view::npos) {
+    return {};  // an alternative could match without the prefix
+  }
+  std::size_t i = (!pattern.empty() and pattern[0] == '^') ? 1 : 0;
+  std::string prefix;
+  for (; i < pattern.size(); ++i) {
+    char c = pattern[i];
+    if (std::strchr("\\.^$*+?()[]{}", c) != nullptr) {
+      break;
+    }
+    prefix += c;
+  }
+  // a quantifier that allows zero repeats makes the character before it optional
+  if (i < pattern.size() and std::strchr("*?{", pattern[i]) != nullptr and !prefix.empty()) {
+    prefix.pop_back();
+  }
+  return prefix;
 }
 
 
 void alf::filter(std::string_view data, Program const& program, unsigned threads,
-                 std::function<void(std::string_view)> const& write)
+                 std::function<void(std::string_view)> const& write, double max_hit_fraction)
 {
   char const* begin = data.data();
   char const* end = begin + data.size();
+
+  // Search for strings when that skips most lines, preferring a set of strings every passing
+  // line must contain (the other lines are simply dropped); failing that, all of the
+  // expression's strings, if lines without any of them share one answer.  Read line by line
+  // when most lines would be hits anyway, where searching only adds work.
+  auto const sample = data.substr(0, SAMPLE_BYTES);
+  auto const cost = [&](std::string_view lit) {
+    double n = 1;
+    for (auto p = sample.find(lit); p != std::string_view::npos; p = sample.find(lit, p + 1)) {
+      ++n;
+    }
+    return n;
+  };
+  std::vector<std::string> search_for;  // owns the text the needles point into
+  bool keep_others = false;
+  if (auto required = program.required_literals(cost)) {
+    search_for = std::move(*required);
+  } else if (auto without = program.answer_without_literals(); without and !program.literals().empty()) {
+    search_for = program.literals();
+    keep_others = *without;
+  }
+  std::vector<Needle> needles = make_needles(search_for, sample);
+  if (!needles.empty() and hit_fraction(needles, sample) > max_hit_fraction) {
+    needles.clear();
+  }
+  auto const run = [&](char const* first, char const* last, std::string& out) {
+    if (needles.empty()) {
+      filter_range(first, last, program, out);
+    } else {
+      filter_range_search(first, last, program, needles, keep_others, out);
+    }
+  };
   threads = std::max(1u, std::min<unsigned>(threads, static_cast<unsigned>(data.size() / MIN_BYTES_PER_THREAD)));
 
   if (threads == 1) {
     std::string out;
     out.reserve(std::min<std::size_t>(data.size(), 1 << 20));
-    filter_range(begin, end, program, out);
+    run(begin, end, out);
     write(out);
     return;
   }
@@ -146,7 +398,7 @@ void alf::filter(std::string_view data, Program const& program, unsigned threads
   for (unsigned t = 0; t < threads; ++t) {
     pool.emplace_back([&, t] {
       try {
-        filter_range(cuts[t], cuts[t + 1], program, outs[t]);
+        run(cuts[t], cuts[t + 1], outs[t]);
       } catch (...) {
         errors[t] = std::current_exception();
       }

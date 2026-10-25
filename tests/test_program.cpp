@@ -23,10 +23,12 @@ namespace
     return alf::shunting_yard(std::move(tokens));
   }
 
-  auto run(std::string_view data, alf::Program const& p, unsigned threads) -> std::string
+  // max_hit_fraction 2.0 forces the string-search path wherever it applies, -1.0 forces reading
+  // every line, and the default lets filter() choose.
+  auto run(std::string_view data, alf::Program const& p, unsigned threads, double max_hit_fraction = 0.25) -> std::string
   {
     std::string out;
-    alf::filter(data, p, threads, [&](std::string_view s) { out.append(s); });
+    alf::filter(data, p, threads, [&](std::string_view s) { out.append(s); }, max_hit_fraction);
     return out;
   }
 
@@ -100,6 +102,83 @@ namespace
     for (unsigned threads : { 1u, 2u, 3u, 4u, 7u, 8u, 16u }) {
       EXPECT_EQ(run(text, p, threads), want) << threads << " threads";
     }
+  }
+
+  // Mostly filler, with the letters the expressions look for appearing now and then, so that
+  // few lines contain a string and filter() takes the search path rather than reading every line.
+  auto sparse_text(std::mt19937& rng, std::size_t lines) -> std::string
+  {
+    std::string text;
+    for (std::size_t i = 0; i < lines; ++i) {
+      std::size_t len = rng() % 40;
+      for (std::size_t k = 0; k < len; ++k) {
+        text += (rng() % 60 == 0) ? static_cast<char>('a' + rng() % 4) : static_cast<char>('w' + rng() % 4);
+      }
+      text += (rng() % 7 == 0) ? "\r\n" : "\n";
+    }
+    return text;
+  }
+
+  TEST(Program, string_search_path_agrees_with_line_by_line)
+  {
+    // regex-free expressions take the search path; check it on sparse and dense inputs, with
+    // strings at the very start and end of the data, CRLF, empty lines and no final newline
+    std::mt19937 rng(99);
+    for (int round = 0; round < 400; ++round) {
+      std::string e = random_expression(rng, 3);
+      auto tokens = postfix(e);
+      alf::Program const p{ tokens };
+      std::string text = (rng() % 4 ? sparse_text(rng, 300 + rng() % 300) : random_text(rng, 300 + rng() % 300));
+      if (rng() % 3 == 0) {
+        text = "ab" + text + "cd";  // hits at the very first and very last bytes
+      }
+      if (rng() % 2) {
+        text.pop_back();  // no final newline
+      }
+      std::string const want = naive(text, tokens);
+      for (unsigned threads : { 1u, 4u }) {
+        for (double fraction : { 2.0, -1.0, 0.25 }) {
+          ASSERT_EQ(run(text, p, threads, fraction), want) << e << " threads " << threads << " fraction " << fraction;
+        }
+      }
+    }
+  }
+
+  TEST(Program, required_literals)
+  {
+    auto const len = [](std::string_view s) { return static_cast<double>(s.size()); };
+    using V = std::vector<std::string>;
+    EXPECT_EQ(alf::Program{ postfix("'aa' & 'b' & 'ccc'") }.required_literals(len), V{ "b" });  // cheapest side of &
+    EXPECT_EQ(alf::Program{ postfix("'a' | 'b'") }.required_literals(len), (V{ "a", "b" }));    // both sides of |
+    EXPECT_EQ(alf::Program{ postfix("('a' & !'x') | ('b' & 'yy')") }.required_literals(len), (V{ "a", "b" }));
+    EXPECT_EQ(alf::Program{ postfix("r'code=5\\d\\d' & r'latency=\\d'") }.required_literals(len), V{ "code=5" });
+    EXPECT_FALSE(alf::Program{ postfix("!'a'") }.required_literals(len).has_value());
+    EXPECT_FALSE(alf::Program{ postfix("'a' | !'b'") }.required_literals(len).has_value());
+    EXPECT_FALSE(alf::Program{ postfix("!('a' & 'b')") }.required_literals(len).has_value());
+    EXPECT_FALSE(alf::Program{ postfix("r'x|y'") }.required_literals(len).has_value());
+  }
+
+  TEST(Program, regex_required_prefix)
+  {
+    EXPECT_EQ(alf::regex_required_prefix("code=5\\d\\d"), "code=5");
+    EXPECT_EQ(alf::regex_required_prefix("^abc"), "abc");
+    EXPECT_EQ(alf::regex_required_prefix("ab*c"), "a");
+    EXPECT_EQ(alf::regex_required_prefix("ab?"), "a");
+    EXPECT_EQ(alf::regex_required_prefix("ab{2}"), "a");
+    EXPECT_EQ(alf::regex_required_prefix("ab+"), "ab");
+    EXPECT_EQ(alf::regex_required_prefix("a|b"), "");
+    EXPECT_EQ(alf::regex_required_prefix("(ab)"), "");
+    EXPECT_EQ(alf::regex_required_prefix(".x"), "");
+    EXPECT_EQ(alf::regex_required_prefix("[ab]c"), "");
+  }
+
+  TEST(Program, answer_without_literals)
+  {
+    EXPECT_EQ(alf::Program{ postfix("'a' & !'b'") }.answer_without_literals(), false);
+    EXPECT_EQ(alf::Program{ postfix("!'a' !'b'") }.answer_without_literals(), true);
+    EXPECT_EQ(alf::Program{ postfix("'a' ^ !'b'") }.answer_without_literals(), true);
+    EXPECT_FALSE(alf::Program{ postfix("'a' | r'b'") }.answer_without_literals().has_value());
+    EXPECT_FALSE(alf::Program{ postfix("'a' | ''") }.answer_without_literals().has_value());
   }
 
   TEST(Program, small_inputs_and_edge_lines)
