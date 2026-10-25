@@ -251,6 +251,7 @@ namespace alf::parser
     std::optional<std::string> infile;
     std::optional<std::string> outfile;
     std::vector<alf::types::TokenBase> tokens;
+    unsigned threads = 0;
 
     for (int i{ 1 }; i < argc; ++i) {
       std::string arg{ argv[i] };
@@ -270,6 +271,14 @@ namespace alf::parser
         if (!std::filesystem::exists(*infile)) {
           throw std::runtime_error("infile : " + *infile + " does not exist");
         }
+        ++i;
+        continue;
+      }
+      if (arg == "--threads") {
+        if (i + 1 >= argc or std::strspn(argv[i + 1], "0123456789") != std::strlen(argv[i + 1]) or !*argv[i + 1]) {
+          throw std::runtime_error("--threads must be followed by a number");
+        }
+        threads = static_cast<unsigned>(std::stoul(argv[i + 1]));
         ++i;
         continue;
       }
@@ -313,6 +322,8 @@ namespace alf::parser
       tokens.emplace_back(alf::types::SubStr{ arg, true });
     }
 
-    return { std::move(infile), std::move(outfile), std::move(tokens) };
+    ArgPack pack{ std::move(infile), std::move(outfile), std::move(tokens) };
+    pack.threads = threads;
+    return pack;
   }
 } // end namespace alf

@@ -29,6 +29,7 @@ namespace alf::parser
     FileNameOpt infile;
     FileNameOpt outfile;
     std::vector<alf::types::TokenBase> tokens;
+    unsigned threads{ 0 };  // --threads N; 0 = one per core
   };
 
   [[nodiscard]] auto fill_in_missing_AND_symbols(std::vector<alf::types::TokenBase>& v) -> std::vector<alf::types::TokenBase>;

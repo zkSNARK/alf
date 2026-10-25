@@ -13,7 +13,11 @@ target_sources(algebraic_line_filter
     PRIVATE src/parser.cpp
     PUBLIC include/shunting_yard.h
     PRIVATE src/shunting_yard.cpp
+    PUBLIC include/program.h
+    PRIVATE src/program.cpp
 )
+find_package(Threads REQUIRED)
+target_link_libraries(algebraic_line_filter PUBLIC Threads::Threads)
 
 target_include_directories(algebraic_line_filter
     PUBLIC include

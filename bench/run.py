@@ -25,6 +25,7 @@ from pathlib import Path
 # name -> (executable to look for, label)
 TOOLS = {
     "alf": ("{alf}", "alf"),
+    "alf-1t": ("{alf}", "alf, 1 thread"),
     "gnu-grep": ("ggrep", "GNU grep"),
     "bsd-grep": ("/usr/bin/grep", "BSD grep"),
     "ripgrep": ("rg", "ripgrep"),
@@ -133,13 +134,16 @@ TASKS = [
 ]
 
 
+for _task in TASKS:  # alf pinned to one core, to separate the single-thread result from the multi-core one
+    _task["cmds"]["alf-1t"] = _task["cmds"]["alf"].replace("{alf} ", "{alf} --threads 1 ", 1)
+
 for _task in TASKS:  # mawk takes the same programs as the other awks
     _awk = _task["cmds"]["gawk"]
     _task["cmds"]["mawk"] = _awk.replace("{gawk}", "{mawk}") if _awk else None
 
 
 def tool_version(name: str, exe: str) -> str:
-    if name == "alf":  # alf has no --version; it would read "--version" as a filter and wait on stdin
+    if name in ("alf", "alf-1t"):  # alf has no --version; it would read "--version" as a filter and wait on stdin
         rev = os.environ.get("ALF_REV") or subprocess.run(["git", "-C", str(Path(__file__).parent), "rev-parse", "--short", "HEAD"],
                              capture_output=True, text=True).stdout.strip()
         return f"alf {rev}" if rev else "alf"
@@ -185,6 +189,9 @@ def main() -> None:
     exes = {}
     for name, (exe, _) in TOOLS.items():
         exe = exe.replace("{alf}", str(Path(args.alf).resolve()))
+        if name == "alf-1t":
+            exes[name] = exe
+            continue
         if shutil.which(exe):
             exes[name] = exe
         else:
