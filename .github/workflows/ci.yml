@@ -15,11 +15,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - name: Let AddressSanitizer map its shadow memory (Linux)
-        # Recent Ubuntu kernels randomize addresses with 32 bits of entropy, which collides
-        # with AddressSanitizer's memory layout and makes sanitized tests crawl or hang.
-        if: runner.os == 'Linux'
-        run: sudo sysctl vm.mmap_rnd_bits=28
+      - name: Use Clang on Arm Linux
+        # GCC's AddressSanitizer runtime on the ubuntu-24.04-arm image runs ~100x slower than
+        # elsewhere (TestExpressions: 33 s with GCC 13 or 14, 0.4 s with Clang 18, measured on the
+        # runner), so the sanitized Arm job builds with Clang.
+        if: matrix.os == 'ubuntu-24.04-arm'
+        run: |
+          sudo apt-get install -y clang-18
+          echo "CXX=clang++-18" >> "$GITHUB_ENV"
       - name: Configure (with AddressSanitizer and UBSan)
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-Wall -Wextra -fsanitize=address,undefined"
       - name: Build
