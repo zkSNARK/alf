@@ -5,10 +5,14 @@
 #include "program.h"
 
 #include <algorithm>
+#include <array>
+#include <cstdint>
 #include <cstring>
 #include <exception>
+#include <optional>
 #include <stdexcept>
 #include <thread>
+#include <utility>
 
 namespace
 {
@@ -27,6 +31,33 @@ namespace
   {
     auto nl = static_cast<char const*>(std::memchr(p, '\n', static_cast<std::size_t>(end - p)));
     return nl ? nl : end;
+  }
+
+  // Start of the line containing `p`: just after the last '\n' before it, but not before `floor`
+  // (itself a line start).  Checks 16 bytes at a time going backwards.
+  auto line_start(char const* p, char const* floor) -> char const*
+  {
+    using V = unsigned char __attribute__((vector_size(16)));
+    V nl;
+    for (int b = 0; b < 16; ++b) {
+      nl[b] = '\n';
+    }
+    while (p - floor >= 16) {
+      V v;
+      std::memcpy(&v, p - 16, sizeof v);
+      V const m = static_cast<V>(v == nl);
+      std::uint64_t lo, hi;
+      std::memcpy(&lo, &m, 8);
+      std::memcpy(&hi, reinterpret_cast<char const*>(&m) + 8, 8);
+      if ((lo | hi) != 0) {
+        break;  // the '\n' is in these 16 bytes
+      }
+      p -= 16;
+    }
+    while (p > floor and p[-1] != '\n') {
+      --p;
+    }
+    return p;
   }
 
   // A string to search for, and which of its bytes is rarest in the input: memchr finds that
@@ -94,6 +125,118 @@ namespace
     }
     return std::min(1.0, static_cast<double>(hits) / static_cast<double>(lines));
   }
+
+  // Finds every occurrence of several strings in one pass over the buffer.  A candidate is any
+  // byte that is one of the strings' rare bytes; candidates are found 64 bytes at a time with
+  // vector compares (the compiler's portable vector types: NEON on ARM, SSE on x86), then
+  // checked against the strings that use that byte.  One string falls back to memchr, which the
+  // C library already vectorizes.  (Fingerprinting by two adjacent bytes instead was tried: it
+  // stops less often with 16+ strings but costs twice the compares, and was slower on the
+  // benchmark tasks.)
+  class MultiScanner
+  {
+  public:
+    explicit MultiScanner(std::vector<Needle> const& needles) : m_needles{ needles }
+    {
+      for (std::size_t i = 0; i < needles.size(); ++i) {
+        auto const key = static_cast<unsigned char>(needles[i].text[needles[i].rare]);
+        if (!m_is_key[key]) {
+          m_is_key[key] = true;
+          m_keys.push_back(key);
+          V k;
+          for (int b = 0; b < 16; ++b) {
+            k[b] = key;
+          }
+          m_splats.push_back(k);
+        }
+        m_by_key[key].push_back(static_cast<std::uint16_t>(i));
+      }
+    }
+
+    // The next byte at or after `p` (before `last`) that is some string's rare byte, or `last`.
+    // Bytes up to `limit` (>= last, inside the same buffer) may be read but never reported: that
+    // lets a range shorter than a vector, like the rest of one line, still be checked 16 bytes
+    // at a time.
+    [[nodiscard]] auto next_candidate(char const* p, char const* last, char const* limit) const -> char const*
+    {
+      if (m_keys.size() == 1) {
+        auto q = static_cast<char const*>(std::memchr(p, m_keys[0], static_cast<std::size_t>(last - p)));
+        return q ? q : last;
+      }
+      while (last - p >= 64) {
+        V const a = load(p), b = load(p + 16), c = load(p + 32), d = load(p + 48);
+        V m{};
+        for (V const& k : m_splats) {
+          m |= static_cast<V>(a == k) | static_cast<V>(b == k) | static_cast<V>(c == k) | static_cast<V>(d == k);
+        }
+        if (any(m)) {
+          break;  // something in these 64 bytes: narrow it down 16 at a time below
+        }
+        p += 64;
+      }
+      while (p < last and limit - p >= 16) {
+        V const a = load(p);
+        V m{};
+        for (V const& k : m_splats) {
+          m |= static_cast<V>(a == k);
+        }
+        if (any(m)) {
+          for (char const* e = std::min(p + 16, last); p < e; ++p) {
+            if (m_is_key[static_cast<unsigned char>(*p)]) {
+              return p;
+            }
+          }
+          return last;  // the key byte was at or past `last`
+        }
+        p += 16;
+      }
+      for (; p < last; ++p) {
+        if (m_is_key[static_cast<unsigned char>(*p)]) {
+          return p;
+        }
+      }
+      return last;
+    }
+
+    // Call on_hit(index) for every string whose rare byte is the one at `q` and that occurs
+    // there entirely within [first, last).
+    template <typename F>
+    void verify(char const* q, char const* first, char const* last, F&& on_hit) const
+    {
+      for (std::uint16_t i : m_by_key[static_cast<unsigned char>(*q)]) {
+        Needle const& n = m_needles[i];
+        char const* start = q - n.rare;
+        if (start >= first and static_cast<std::size_t>(last - start) >= n.text.size() and
+            std::memcmp(start, n.text.data(), n.text.size()) == 0) {
+          on_hit(i);
+        }
+      }
+    }
+
+  private:
+    using V = unsigned char __attribute__((vector_size(16)));
+
+    static auto load(char const* p) -> V
+    {
+      V v;
+      std::memcpy(&v, p, sizeof v);
+      return v;
+    }
+
+    static auto any(V v) -> bool
+    {
+      std::uint64_t lo, hi;
+      std::memcpy(&lo, &v, 8);
+      std::memcpy(&hi, reinterpret_cast<char const*>(&v) + 8, 8);
+      return (lo | hi) != 0;
+    }
+
+    std::vector<Needle> const& m_needles;
+    std::vector<unsigned char> m_keys;
+    std::vector<V> m_splats;
+    std::array<bool, 256> m_is_key{};
+    std::array<std::vector<std::uint16_t>, 256> m_by_key;
+  };
 
   // The kept text, as views into the input: touching pieces merge, so a run of kept lines is
   // one view.  With a `sink` (one thread), finished pieces are handed on in batches as the list
@@ -163,42 +306,63 @@ namespace
     std::string m_pack;
   };
 
-  // Filter [first, last) by searching for the strings: only lines with a hit are evaluated; the
-  // lines in between all get the answer `keep_others` and are skipped or kept in one piece.
+  // Filter [first, last) by searching for the strings in one pass: only lines with a hit are
+  // evaluated; the lines in between all get the answer `keep_others` and are skipped or kept in
+  // one piece.  With `use_found`, the scanner is looking for all of the expression's strings, so
+  // it records which ones a hit line contains and the line is evaluated from that, without
+  // searching it again.
   void filter_range_search(char const* first, char const* last, alf::Program const& program,
-                           std::vector<Needle> const& needles, bool keep_others, Spans& out)
+                           MultiScanner const& scan, bool keep_others, bool use_found, Spans& out)
   {
-    std::vector<char const*> next(needles.size());
-    for (std::size_t i = 0; i < needles.size(); ++i) {
-      next[i] = find(needles[i], first, last);
-    }
-    char const* cursor = first;
-    while (cursor < last) {
-      char const* hit = *std::min_element(next.begin(), next.end());
-      if (hit == last) {
+    char const* cursor = first;  // start of the first line not yet handled
+    char const* p = first;       // where the scan continues
+    for (;;) {
+      char const* q = scan.next_candidate(p, last, last);
+      if (q == last) {
         if (keep_others) {
           out.add(cursor, last);
         }
         return;
       }
-      char const* ls = hit;
-      while (ls > cursor and ls[-1] != '\n') {
-        --ls;
+      std::uint64_t found = 0;
+      bool hit = false;
+      scan.verify(q, cursor, last, [&](std::size_t i) {
+        hit = true;
+        found |= std::uint64_t{ 1 } << i;
+      });
+      if (!hit) {
+        p = q + 1;
+        continue;
+      }
+      char const* ls = line_start(q, cursor);
+      char const* e = line_end(q, last);
+      char const* text_end = (e > ls and e[-1] == '\r') ? e - 1 : e;
+      char const* next = e < last ? e + 1 : e;
+      std::string_view const line(ls, static_cast<std::size_t>(text_end - ls));
+      bool keep;
+      if (use_found) {
+        // Scan the rest of the line only while its answer could still change: in an exclude
+        // list the first unwanted string found already settles it.
+        std::optional<bool> answer = program.settled(line, found);
+        for (char const* c = q + 1; !answer and (c = scan.next_candidate(c, e, last)) < e; ++c) {
+          std::uint64_t const before = found;
+          scan.verify(c, ls, e, [&](std::size_t i) { found |= std::uint64_t{ 1 } << i; });
+          if (found != before) {
+            answer = program.settled(line, found);
+          }
+        }
+        keep = answer ? *answer : program.matches_found(line, found);
+      } else {
+        keep = program.matches(line);
       }
       if (keep_others) {
         out.add(cursor, ls);
       }
-      char const* e = line_end(hit, last);
-      char const* text_end = (e > ls and e[-1] == '\r') ? e - 1 : e;
-      cursor = e < last ? e + 1 : e;
-      if (program.matches(std::string_view(ls, static_cast<std::size_t>(text_end - ls)))) {
-        out.add(ls, cursor);
+      if (keep) {
+        out.add(ls, next);
       }
-      for (std::size_t i = 0; i < needles.size(); ++i) {
-        if (next[i] < cursor) {
-          next[i] = find(needles[i], cursor, last);
-        }
-      }
+      cursor = next;
+      p = next;
     }
   }
 
@@ -276,6 +440,11 @@ alf::Program::Program(std::vector<types::TokenBase> const& postfix)
       m_literals.push_back(op.literal);
     }
   }
+  for (auto& op : m_ops) {
+    if (op.type == types::TYPE_TOKEN::SUBSTR) {
+      op.literal_index = static_cast<std::size_t>(std::find(m_literals.begin(), m_literals.end(), op.literal) - m_literals.begin());
+    }
+  }
   if (searchable) {
     // evaluate once as if no string were found: a wanted string is false, an unwanted one true
     std::vector<char> stk;
@@ -322,6 +491,102 @@ auto alf::Program::eval(std::size_t node, std::string_view line) const -> bool
       return eval(n.left, line) != eval(n.right, line);
     default:
       return false;
+  }
+}
+
+
+auto alf::Program::matches_found(std::string_view line, std::uint64_t found) const -> bool
+{
+  return m_nodes.empty() or eval_found(m_nodes.size() - 1, line, found);
+}
+
+
+auto alf::Program::eval_found(std::size_t node, std::string_view line, std::uint64_t found) const -> bool
+{
+  Node const& n = m_nodes[node];
+  switch (n.type) {
+    case types::TYPE_TOKEN::SUBSTR: {
+      Op const& op = m_ops[n.op];
+      return (((found >> op.literal_index) & 1u) != 0) == op.required;
+    }
+    case types::TYPE_TOKEN::REGEX: {
+      Op const& op = m_ops[n.op];
+      return std::regex_search(line.begin(), line.end(), *op.regex) == op.required;
+    }
+    case types::TYPE_TOKEN::OPERATOR_NOT:
+      return !eval_found(n.left, line, found);
+    case types::TYPE_TOKEN::OPERATOR_AND:
+      return eval_found(n.left, line, found) and eval_found(n.right, line, found);
+    case types::TYPE_TOKEN::OPERATOR_OR:
+      return eval_found(n.left, line, found) or eval_found(n.right, line, found);
+    case types::TYPE_TOKEN::OPERATOR_XOR:
+      return eval_found(n.left, line, found) != eval_found(n.right, line, found);
+    default:
+      return false;
+  }
+}
+
+
+auto alf::Program::settled(std::string_view line, std::uint64_t found) const -> std::optional<bool>
+{
+  if (m_nodes.empty()) {
+    return true;
+  }
+  return eval_settled(m_nodes.size() - 1, line, found);
+}
+
+
+// Three-valued (true / false / not yet known) evaluation: a string already found is known to be
+// present; one not found yet might still turn up later in the line, so it is unknown.
+auto alf::Program::eval_settled(std::size_t node, std::string_view line, std::uint64_t found) const
+  -> std::optional<bool>
+{
+  Node const& n = m_nodes[node];
+  switch (n.type) {
+    case types::TYPE_TOKEN::SUBSTR: {
+      Op const& op = m_ops[n.op];
+      if (((found >> op.literal_index) & 1u) != 0) {
+        return op.required;
+      }
+      return std::nullopt;
+    }
+    case types::TYPE_TOKEN::REGEX: {
+      Op const& op = m_ops[n.op];
+      return std::regex_search(line.begin(), line.end(), *op.regex) == op.required;
+    }
+    case types::TYPE_TOKEN::OPERATOR_NOT: {
+      auto a = eval_settled(n.left, line, found);
+      return a ? std::optional<bool>{ !*a } : std::nullopt;
+    }
+    case types::TYPE_TOKEN::OPERATOR_AND: {
+      auto a = eval_settled(n.left, line, found);
+      if (a == false) {
+        return false;
+      }
+      auto b = eval_settled(n.right, line, found);
+      if (b == false) {
+        return false;
+      }
+      return (a and b) ? std::optional<bool>{ true } : std::nullopt;
+    }
+    case types::TYPE_TOKEN::OPERATOR_OR: {
+      auto a = eval_settled(n.left, line, found);
+      if (a == true) {
+        return true;
+      }
+      auto b = eval_settled(n.right, line, found);
+      if (b == true) {
+        return true;
+      }
+      return (a and b) ? std::optional<bool>{ false } : std::nullopt;
+    }
+    case types::TYPE_TOKEN::OPERATOR_XOR: {
+      auto a = eval_settled(n.left, line, found);
+      auto b = eval_settled(n.right, line, found);
+      return (a and b) ? std::optional<bool>{ *a != *b } : std::nullopt;
+    }
+    default:
+      return std::nullopt;
   }
 }
 
@@ -427,21 +692,35 @@ void alf::filter(std::string_view data, Program const& program, unsigned threads
   };
   std::vector<std::string> search_for;  // owns the text the needles point into
   bool keep_others = false;
+  bool all_literals = false;
   if (auto required = program.required_literals(cost)) {
     search_for = std::move(*required);
   } else if (auto without = program.answer_without_literals(); without and !program.literals().empty()) {
     search_for = program.literals();
     keep_others = *without;
+    all_literals = true;
   }
   std::vector<Needle> needles = make_needles(search_for, sample);
-  if (!needles.empty() and hit_fraction(needles, sample) > max_hit_fraction) {
+  // Evaluating a hit line from the strings the scanner found needs every string, at most 64 of
+  // them, and none that could match across a line break (or include the "\r" a line is matched
+  // without).
+  bool const use_found = all_literals and needles.size() <= 64 and
+    std::none_of(search_for.begin(), search_for.end(), [](std::string const& t) {
+      return t.find_first_of("\r\n") != std::string::npos;
+    });
+  // Searching for a few required strings pays when most lines don't have them.  Searching for all
+  // of the strings while recording which ones each hit line has pays even when most lines are
+  // hits (it replaces one search per string per line with one pass), so it is skipped only when
+  // reading every line is forced (max_hit_fraction < 0).
+  if (!needles.empty() and (use_found ? max_hit_fraction < 0 : hit_fraction(needles, sample) > max_hit_fraction)) {
     needles.clear();
   }
+  MultiScanner const scanner{ needles };
   auto const run = [&](char const* first, char const* last, Spans& out) {
     if (needles.empty()) {
       filter_range(first, last, program, out);
     } else {
-      filter_range_search(first, last, program, needles, keep_others, out);
+      filter_range_search(first, last, program, scanner, keep_others, use_found, out);
     }
   };
   threads = std::max(1u, std::min<unsigned>(threads, static_cast<unsigned>(data.size() / MIN_BYTES_PER_THREAD)));

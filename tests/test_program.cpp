@@ -144,6 +144,82 @@ namespace
     }
   }
 
+  // Text over a tiny alphabet so multi-character strings overlap and repeat a lot.
+  auto ab_text(std::mt19937& rng, std::size_t lines) -> std::string
+  {
+    std::string text;
+    for (std::size_t i = 0; i < lines; ++i) {
+      std::size_t len = rng() % 30;
+      for (std::size_t k = 0; k < len; ++k) {
+        text += "abx"[rng() % 3];
+      }
+      text += (rng() % 9 == 0) ? "\r\n" : "\n";
+    }
+    return text;
+  }
+
+  TEST(Program, multi_string_search_with_overlapping_strings)
+  {
+    std::mt19937 rng(17);
+    std::vector<std::string> words{ "ab", "ba", "aba", "bab", "xx", "abab", "x", "bxb" };
+    for (int round = 0; round < 300; ++round) {
+      std::string e;
+      int terms = 1 + static_cast<int>(rng() % 6);
+      for (int t = 0; t < terms; ++t) {
+        if (t) {
+          e += (rng() % 3 == 0) ? " | " : " & ";
+        }
+        e += (rng() % 2 ? "!'" : "'") + words[rng() % words.size()] + "'";
+      }
+      auto tokens = postfix(e);
+      alf::Program const p{ tokens };
+      std::string text = ab_text(rng, 200 + rng() % 200);
+      if (rng() % 2) {
+        text = "abab" + text + "bab";  // hits in the first and last bytes, outside any 64-byte block
+      }
+      std::string const want = naive(text, tokens);
+      for (unsigned threads : { 1u, 3u }) {
+        for (double fraction : { 2.0, -1.0, 0.25 }) {
+          ASSERT_EQ(run(text, p, threads, fraction), want) << e << " threads " << threads << " fraction " << fraction;
+        }
+      }
+    }
+  }
+
+  TEST(Program, many_strings_and_strings_with_line_breaks)
+  {
+    std::mt19937 rng(23);
+    std::string const text = ab_text(rng, 2000);
+    std::string many;  // 70 excluded strings: more than the 64 a bitset can hold
+    for (int i = 0; i < 70; ++i) {
+      many += "!'" + std::string(1, "ab"[i % 2]) + std::string(static_cast<std::size_t>(i % 5 + 1), 'x') + std::to_string(i) + "' ";
+    }
+    for (std::string e : { many, std::string("!'b\nab' & !'x'"), std::string("'a\r' | !'bb'"), std::string("'ab' & !'b\na'") }) {
+      auto tokens = postfix(e);
+      alf::Program const p{ tokens };
+      std::string const want = naive(text, tokens);
+      for (double fraction : { 2.0, -1.0, 0.25 }) {
+        ASSERT_EQ(run(text, p, 2, fraction), want) << e.substr(0, 40) << " fraction " << fraction;
+      }
+    }
+  }
+
+  TEST(Program, settled)
+  {
+    // bit i = literals()[i] found so far; literals() are numbered in order of appearance
+    alf::Program const excl{ postfix("!'a' & !'b'") };
+    EXPECT_FALSE(excl.settled("", 0).has_value());  // nothing found yet: 'a' or 'b' could still appear
+    EXPECT_EQ(excl.settled("", 0b01), false);        // found 'a': dropped whatever follows
+    alf::Program const any{ postfix("'a' | 'b'") };
+    EXPECT_EQ(any.settled("", 0b10), true);          // found 'b': kept
+    EXPECT_FALSE(any.settled("", 0).has_value());
+    alf::Program const both{ postfix("'a' & 'b'") };
+    EXPECT_FALSE(both.settled("", 0b01).has_value()); // 'b' still needed
+    EXPECT_EQ(both.settled("", 0b11), true);
+    alf::Program const x{ postfix("'a' ^ 'b'") };
+    EXPECT_FALSE(x.settled("", 0b01).has_value());   // 'b' turning up later would flip it
+  }
+
   TEST(Program, required_literals)
   {
     auto const len = [](std::string_view s) { return static_cast<double>(s.size()); };
