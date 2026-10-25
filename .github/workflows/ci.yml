@@ -53,3 +53,18 @@ jobs:
       - name: Test under QEMU (SIMD backends are listed in the TestSimd output)
         run: ctest --test-dir build --output-on-failure --timeout 1800 && ctest --test-dir build -R TestSimd -V | grep "backend runs here"
 
+  # WebAssembly SIMD128 via Emscripten, tests run under Node.js (emcmake sets the emulator).
+  wasm:
+    runs-on: ubuntu-latest
+    container: emscripten/emsdk:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: emcmake cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --parallel
+      - name: SIMD backends
+        run: node build/alf.js --simd-info
+      - name: Test under Node.js
+        run: ctest --test-dir build --output-on-failure --timeout 1800
+

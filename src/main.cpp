@@ -17,6 +17,7 @@
 #include <vector>
 
 #include <fcntl.h>
+#include <poll.h>
 #if defined(__APPLE__)
 #include <sys/sysctl.h>
 #endif
@@ -51,6 +52,15 @@ namespace
     return std::runtime_error(what + ": " + std::strerror(errno));
   }
 
+  // Block until `fd` can take more output (it was opened non-blocking by someone else: a pipe
+  // set up by a parent process, or stdout under Node.js).
+  void wait_writable(int fd)
+  {
+    pollfd p{ fd, POLLOUT, 0 };
+    while (poll(&p, 1, -1) < 0 and errno == EINTR) {
+    }
+  }
+
   /**
    * Writes views straight from the input's memory with writev: no stdio buffer, no copy in this
    * process.  Views are batched and must stay valid until flush(): filter() calls it before
@@ -77,6 +87,10 @@ namespace
         ssize_t n = writev(m_fd, iov, left);
         if (n < 0) {
           if (errno == EINTR) {
+            continue;
+          }
+          if (errno == EAGAIN or errno == EWOULDBLOCK) {  // a non-blocking output that's full
+            wait_writable(m_fd);
             continue;
           }
           throw error("write failed");
@@ -204,10 +218,15 @@ auto apply_filters(alf::parser::ArgPack const& p, alf::Program const& program) -
 // SIGPIPE keeps its default action, so `alf ... | head` ends quietly once head has its lines.
 int main(int argc, const char **argv) {
   if (argc == 2 and std::string_view(argv[1]) == "--simd-info") {  // which SIMD backends this binary has
+    std::string text;
     for (alf::simd::Backend const* b : alf::simd::compiled()) {
-      std::printf("%-7s %s%s\n", b->name, b->runs_here() ? "runs here" : "not on this CPU",
-                  b == &alf::simd::active() ? "  (in use)" : "");
+      std::string name = b->name;
+      name.resize(8, ' ');
+      text += name + (b->runs_here() ? "runs here" : "not on this CPU") + (b == &alf::simd::active() ? "  (in use)" : "") + "\n";
     }
+    Writer out{ STDOUT_FILENO };
+    out.add(text);
+    out.flush();
     return 0;
   }
   try {

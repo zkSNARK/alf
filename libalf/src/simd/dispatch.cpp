@@ -79,6 +79,9 @@ namespace alf::simd
     Backend const ssse3{ "ssse3", has_ssse3, has_ssse3, find_any_sse2, teddy_ssse3, line_start_sse2, true };
     Backend const sse2{ "sse2", has_sse2, has_sse2, find_any_sse2, teddy_scalar, line_start_sse2, false };
 #endif
+#if defined(ALF_SIMD_WASM)
+    Backend const wasm{ "wasm", yes, yes, find_any_wasm, teddy_wasm, line_start_wasm, true };
+#endif
 #if defined(ALF_SIMD_RVV)
     Backend const rvv{ "rvv", has_rvv, has_rvv, find_any_rvv, teddy_rvv, line_start_rvv, true };
 #endif
@@ -105,6 +108,9 @@ namespace alf::simd
 #endif
 #if defined(ALF_SIMD_RVV)
       &rvv,
+#endif
+#if defined(ALF_SIMD_WASM)
+      &wasm,
 #endif
 #if defined(ALF_SIMD_VSX)
       &vsx,

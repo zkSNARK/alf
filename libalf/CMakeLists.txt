@@ -45,7 +45,15 @@ function(alf_simd_source file flags)
   set_source_files_properties(${file} PROPERTIES COMPILE_OPTIONS "${flags}")
 endfunction()
 
-if (alf_gnu_like AND alf_cpu MATCHES "^(x86_64|amd64|i[3-6]86)$")
+if (EMSCRIPTEN)
+  # WebAssembly: SIMD can't be detected at run time, so it's a build-time choice (on by default;
+  # -DALF_WASM_SIMD=OFF builds a module that also loads in engines without SIMD).
+  option(ALF_WASM_SIMD "Use WebAssembly SIMD128" ON)
+  if (ALF_WASM_SIMD)
+    alf_simd_source(src/simd/wasm_simd128.cpp "-msimd128")
+    target_compile_definitions(algebraic_line_filter PRIVATE ALF_SIMD_WASM)
+  endif ()
+elseif (alf_gnu_like AND alf_cpu MATCHES "^(x86_64|amd64|i[3-6]86)$")
   alf_simd_source(src/simd/x86_sse2.cpp "-msse2")
   alf_simd_source(src/simd/x86_ssse3.cpp "-mssse3")
   alf_simd_source(src/simd/x86_avx2.cpp "-mavx2")

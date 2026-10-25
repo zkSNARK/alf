@@ -15,6 +15,7 @@ each instruction set has its own implementation of all three, chosen once at run
 | `neon` | AArch64 (all) | 16 bytes | yes | yes |
 | `rvv` | RISC-V with the V extension (RVV 1.0) | VLEN / 8 bytes | yes | yes |
 | `vsx` | little-endian POWER8+ | 16 bytes | yes | yes |
+| `wasm` | WebAssembly SIMD128 (Emscripten) | 16 bytes | yes | always, when built in (see below) |
 | `scalar` | anything | 1 byte | scalar | last resort |
 
 `alf --simd-info` prints which backends a binary has, which run on this CPU and which is in use.
@@ -89,10 +90,19 @@ files: the same kernel source, compiled once per target. Two things keep this la
 When the compilers alf supports ship both, each backend file becomes the same `std::simd`
 kernel built for a different target, and `dispatch.cpp` and the tests stay as they are.
 
+## WebAssembly
+
+WebAssembly can't test for SIMD at run time: a module that contains SIMD instructions needs an
+engine that supports them, which every current browser and runtime does. So the `wasm` backend
+is a build-time choice, on by default; `-DALF_WASM_SIMD=OFF` builds a module without it. alf
+builds with Emscripten (`emcmake cmake ...`) and runs under Node.js with exceptions, threads (a
+pool of Web Workers) and direct access to the host's files; see the top-level `CMakeLists.txt`.
+
 ## Testing architectures you don't have
 
 `cmake/toolchains/` has cross-compile toolchain files for RISC-V (`riscv64-linux-gnu`) and
 POWER (`powerpc64le-linux-gnu`). They set `CMAKE_CROSSCOMPILING_EMULATOR` to QEMU, so `ctest`
 runs every test on an emulated CPU (RISC-V with vectors, `ALF_QEMU_VLEN` bits wide; POWER9).
-CI does this on every push. RVV code must be correct at every vector length; the kernel tests
+CI does this on every push, and also builds the WebAssembly version and runs its tests under
+Node.js. RVV code must be correct at every vector length; the kernel tests
 have been run at 128, 256, 512 and 1024 bits, and on a RISC-V CPU without vectors (scalar).
