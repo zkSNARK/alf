@@ -1,0 +1,389 @@
+{
+  "machine": {
+    "system": "Linux-6.8.0-117-generic-aarch64-with-glibc2.41",
+    "cpu": "aarch64",
+    "python": "3.13.5"
+  },
+  "log": {
+    "bytes": 142201519,
+    "lines": 2000000
+  },
+  "tools": {
+    "alf": {
+      "label": "alf",
+      "version": "alf fe6c433"
+    },
+    "gnu-grep": {
+      "label": "GNU grep",
+      "version": "grep (GNU grep) 3.11"
+    },
+    "ripgrep": {
+      "label": "ripgrep",
+      "version": "ripgrep 14.1.1"
+    },
+    "gnu-sed": {
+      "label": "GNU sed",
+      "version": "sed (GNU sed) 4.9"
+    },
+    "gawk": {
+      "label": "GNU awk",
+      "version": "GNU Awk 5.2.1, API 3.2, PMA Avon 8-g1, (GNU MPFR 4.2.2, GNU MP 6.3.0)"
+    },
+    "mawk": {
+      "label": "mawk",
+      "version": "mawk 1.3.4 20250131"
+    }
+  },
+  "tasks": [
+    {
+      "id": "substring",
+      "title": "One string",
+      "question": "lines containing ERROR",
+      "alf_expr": "ERROR",
+      "matching_lines": 99700,
+      "unsupported": [],
+      "results": [
+        {
+          "tool": "alf",
+          "command": "alf -i server.log ERROR",
+          "mean_s": 0.10567554066000003,
+          "stddev_s": 0.0009324736418824047,
+          "median_s": 0.10555139906000001,
+          "min_s": 0.10450529056,
+          "max_s": 0.10792323756000001,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "gnu-grep",
+          "command": "grep -F ERROR server.log",
+          "mean_s": 0.03193019716,
+          "stddev_s": 0.00015900045800716593,
+          "median_s": 0.03194036906,
+          "min_s": 0.03171072356,
+          "max_s": 0.03215201156,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "ripgrep",
+          "command": "rg -N --no-filename -F ERROR server.log",
+          "mean_s": 0.01565685536,
+          "stddev_s": 0.00016637168672570236,
+          "median_s": 0.015654820559999998,
+          "min_s": 0.015404136560000002,
+          "max_s": 0.01593206756,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "gnu-sed",
+          "command": "sed -n '/ERROR/p' server.log",
+          "mean_s": 0.14232640696,
+          "stddev_s": 0.0017428691870652847,
+          "median_s": 0.14208809956000001,
+          "min_s": 0.13940551056,
+          "max_s": 0.14620149156,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "gawk",
+          "command": "gawk '/ERROR/' server.log",
+          "mean_s": 0.20194885836000004,
+          "stddev_s": 0.0038525124755602706,
+          "median_s": 0.20056132056000003,
+          "min_s": 0.19740655156,
+          "max_s": 0.20847383256000002,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "mawk",
+          "command": "mawk '/ERROR/' server.log",
+          "mean_s": 0.07096942416,
+          "stddev_s": 0.0008548375247022978,
+          "median_s": 0.07084690356000001,
+          "min_s": 0.06989725856000001,
+          "max_s": 0.07248450056,
+          "peak_rss_bytes": null
+        }
+      ]
+    },
+    {
+      "id": "and-not",
+      "title": "Either, but not",
+      "question": "ERROR or WARN lines that aren't heartbeats",
+      "alf_expr": "('ERROR' | 'WARN') & !'heartbeat'",
+      "matching_lines": 269773,
+      "unsupported": [],
+      "results": [
+        {
+          "tool": "alf",
+          "command": "alf -i server.log -a \"('ERROR' | 'WARN') & !'heartbeat'\"",
+          "mean_s": 0.183563704,
+          "stddev_s": 0.0007543406053627179,
+          "median_s": 0.1835773961,
+          "min_s": 0.1825274111,
+          "max_s": 0.18458712710000003,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "gnu-grep",
+          "command": "grep -E 'ERROR|WARN' server.log | grep -v heartbeat",
+          "mean_s": 0.0462816439,
+          "stddev_s": 0.0001450892596911745,
+          "median_s": 0.0462921696,
+          "min_s": 0.0460072251,
+          "max_s": 0.0465196101,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "ripgrep",
+          "command": "rg -N --no-filename -e ERROR -e WARN server.log | rg -v heartbeat",
+          "mean_s": 0.048154376500000005,
+          "stddev_s": 0.0002625056231826081,
+          "median_s": 0.048115914100000004,
+          "min_s": 0.0476542631,
+          "max_s": 0.0487015791,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "gnu-sed",
+          "command": "sed -n '/heartbeat/d;/ERROR\\|WARN/p' server.log",
+          "mean_s": 0.24804581640000004,
+          "stddev_s": 0.0018551753820886584,
+          "median_s": 0.24846986460000003,
+          "min_s": 0.2432745021,
+          "max_s": 0.24980360510000002,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "gawk",
+          "command": "gawk '(/ERROR/ || /WARN/) && !/heartbeat/' server.log",
+          "mean_s": 0.3243915674,
+          "stddev_s": 0.0027965642857712626,
+          "median_s": 0.3248875741,
+          "min_s": 0.3194096361,
+          "max_s": 0.3281906941,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "mawk",
+          "command": "mawk '(/ERROR/ || /WARN/) && !/heartbeat/' server.log",
+          "mean_s": 0.11874011510000002,
+          "stddev_s": 0.0021328793583639213,
+          "median_s": 0.11803762610000001,
+          "min_s": 0.11643676010000001,
+          "max_s": 0.12228368010000001,
+          "peak_rss_bytes": null
+        }
+      ]
+    },
+    {
+      "id": "nested",
+      "title": "Nested",
+      "question": "db or cache errors, plus slow warnings that aren't retries",
+      "alf_expr": "('ERROR' & ('[db]' | '[cache]')) | ('WARN' & 'latency' & !'retry')",
+      "matching_lines": 85138,
+      "unsupported": [],
+      "results": [
+        {
+          "tool": "alf",
+          "command": "alf -i server.log -a \"('ERROR' & ('[db]' | '[cache]')) | ('WARN' & 'latency' & !'retry')\"",
+          "mean_s": 0.24670716490000003,
+          "stddev_s": 0.0020206381124014167,
+          "median_s": 0.24670240050000003,
+          "min_s": 0.24385581550000002,
+          "max_s": 0.2513489635,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "gnu-grep",
+          "command": "grep -P '^(?=.*ERROR)(?=.*\\[(db|cache)\\])|^(?=.*WARN)(?=.*latency)(?!.*retry)' server.log",
+          "mean_s": 0.26712952209999996,
+          "stddev_s": 0.01108223302791859,
+          "median_s": 0.26531758000000005,
+          "min_s": 0.25223243850000004,
+          "max_s": 0.2829664475,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "ripgrep",
+          "command": "rg -N --no-filename -P '^(?=.*ERROR)(?=.*\\[(db|cache)\\])|^(?=.*WARN)(?=.*latency)(?!.*retry)' server.log",
+          "mean_s": 0.22506052210000002,
+          "stddev_s": 0.011696621677961273,
+          "median_s": 0.2253654465,
+          "min_s": 0.21064544350000003,
+          "max_s": 0.23848615250000002,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "gnu-sed",
+          "command": "sed -n -e '/ERROR/{/\\[db\\]\\|\\[cache\\]/p;d}' -e '/WARN/{/retry/d;/latency/p}' server.log",
+          "mean_s": 0.24624753920000003,
+          "stddev_s": 0.0016740466124985313,
+          "median_s": 0.246941921,
+          "min_s": 0.2432645555,
+          "max_s": 0.24894654950000003,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "gawk",
+          "command": "gawk '(/ERROR/ && (/\\[db\\]/ || /\\[cache\\]/)) || (/WARN/ && /latency/ && !/retry/)' server.log",
+          "mean_s": 0.3206653789,
+          "stddev_s": 0.01664208632035592,
+          "median_s": 0.315817668,
+          "min_s": 0.3096036475,
+          "max_s": 0.36729661750000003,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "mawk",
+          "command": "mawk '(/ERROR/ && (/\\[db\\]/ || /\\[cache\\]/)) || (/WARN/ && /latency/ && !/retry/)' server.log",
+          "mean_s": 0.11564753600000002,
+          "stddev_s": 0.0029022125262341265,
+          "median_s": 0.1148330035,
+          "min_s": 0.11221401750000001,
+          "max_s": 0.1204476205,
+          "peak_rss_bytes": null
+        }
+      ]
+    },
+    {
+      "id": "regex",
+      "title": "Two regexes",
+      "question": "5xx responses that took over a second",
+      "alf_expr": "r'code=5\\d\\d' & r'latency=\\d{4}ms'",
+      "matching_lines": 15808,
+      "unsupported": [],
+      "results": [
+        {
+          "tool": "alf",
+          "command": "alf -i server.log -a \"r'code=5\\d\\d' & r'latency=\\d{4}ms'\"",
+          "mean_s": 1.6872953966200002,
+          "stddev_s": 0.012125012318441266,
+          "median_s": 1.68128499912,
+          "min_s": 1.67727649562,
+          "max_s": 1.70914686962,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "gnu-grep",
+          "command": "grep -E 'code=5[0-9]{2}' server.log | grep -E 'latency=[0-9]{4}ms'",
+          "mean_s": 0.06765578822,
+          "stddev_s": 0.00012232593293347386,
+          "median_s": 0.06764379762,
+          "min_s": 0.06749396562,
+          "max_s": 0.06786512262000001,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "ripgrep",
+          "command": "rg -N --no-filename 'code=5[0-9]{2}' server.log | rg 'latency=[0-9]{4}ms'",
+          "mean_s": 0.01137490892,
+          "stddev_s": 7.181772029249558e-05,
+          "median_s": 0.011366532620000001,
+          "min_s": 0.01124078262,
+          "max_s": 0.011498740620000001,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "gnu-sed",
+          "command": "sed -E -n '/code=5[0-9]{2}/{/latency=[0-9]{4}ms/p}' server.log",
+          "mean_s": 0.14921809932000002,
+          "stddev_s": 0.0006848331945813209,
+          "median_s": 0.14933328712000002,
+          "min_s": 0.14807495262,
+          "max_s": 0.14999163762,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "gawk",
+          "command": "gawk '/code=5[0-9][0-9]/ && /latency=[0-9][0-9][0-9][0-9]ms/' server.log",
+          "mean_s": 0.20856240592000003,
+          "stddev_s": 0.006075322492329439,
+          "median_s": 0.20766148062,
+          "min_s": 0.20046270662000001,
+          "max_s": 0.22160116262000001,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "mawk",
+          "command": "mawk '/code=5[0-9][0-9]/ && /latency=[0-9][0-9][0-9][0-9]ms/' server.log",
+          "mean_s": 0.08759768552000001,
+          "stddev_s": 0.0009691225875215932,
+          "median_s": 0.08766283412,
+          "min_s": 0.08590323362,
+          "max_s": 0.08931716862000001,
+          "peak_rss_bytes": null
+        }
+      ]
+    },
+    {
+      "id": "exclude",
+      "title": "Drop the noise",
+      "question": "everything except eight kinds of noise",
+      "alf_expr": "!'heartbeat' !'DEBUG' !'cache miss' !'token refreshed' !'code=200' !'code=304' !'[scheduler]' !'job '",
+      "matching_lines": 639427,
+      "unsupported": [],
+      "results": [
+        {
+          "tool": "alf",
+          "command": "alf -i server.log -a '!'\"'\"'heartbeat'\"'\"' !'\"'\"'DEBUG'\"'\"' !'\"'\"'cache miss'\"'\"' !'\"'\"'token refreshed'\"'\"' !'\"'\"'code=200'\"'\"' !'\"'\"'code=304'\"'\"' !'\"'\"'[scheduler]'\"'\"' !'\"'\"'job '\"'\"''",
+          "mean_s": 0.35499758098,
+          "stddev_s": 0.000775102972662957,
+          "median_s": 0.35494730188,
+          "min_s": 0.35400077638,
+          "max_s": 0.35630275238000003,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "gnu-grep",
+          "command": "grep -v -F -e heartbeat -e DEBUG -e 'cache miss' -e 'token refreshed' -e code=200 -e code=304 -e '[scheduler]' -e 'job ' server.log",
+          "mean_s": 0.17073293898,
+          "stddev_s": 0.0008582969780409719,
+          "median_s": 0.17081955788,
+          "min_s": 0.16933147238000001,
+          "max_s": 0.17224400638,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "ripgrep",
+          "command": "rg -N --no-filename -v -F -e heartbeat -e DEBUG -e 'cache miss' -e 'token refreshed' -e code=200 -e code=304 -e '[scheduler]' -e 'job ' server.log",
+          "mean_s": 0.12907340488,
+          "stddev_s": 0.004592849149229807,
+          "median_s": 0.12667986638,
+          "min_s": 0.12540172338,
+          "max_s": 0.13617352638,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "gnu-sed",
+          "command": "sed -e /heartbeat/d -e /DEBUG/d -e '/cache miss/d' -e '/token refreshed/d' -e /code=200/d -e /code=304/d -e '/\\[scheduler\\]/d' -e '/job /d' server.log",
+          "mean_s": 0.59090420988,
+          "stddev_s": 0.006443982488944798,
+          "median_s": 0.58967550238,
+          "min_s": 0.58524968838,
+          "max_s": 0.6082168653800001,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "gawk",
+          "command": "gawk '!/heartbeat/ && !/DEBUG/ && !/cache miss/ && !/token refreshed/ && !/code=200/ && !/code=304/ && !/\\[scheduler\\]/ && !/job /' server.log",
+          "mean_s": 0.6451021561800002,
+          "stddev_s": 0.004628888521133194,
+          "median_s": 0.64460080738,
+          "min_s": 0.63891155738,
+          "max_s": 0.65604109738,
+          "peak_rss_bytes": null
+        },
+        {
+          "tool": "mawk",
+          "command": "mawk '!/heartbeat/ && !/DEBUG/ && !/cache miss/ && !/token refreshed/ && !/code=200/ && !/code=304/ && !/\\[scheduler\\]/ && !/job /' server.log",
+          "mean_s": 0.29103359878,
+          "stddev_s": 0.005952443617484063,
+          "median_s": 0.29147666638,
+          "min_s": 0.28235994638,
+          "max_s": 0.30068567238,
+          "peak_rss_bytes": null
+        }
+      ]
+    }
+  ]
+}

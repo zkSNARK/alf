@@ -1390,3 +1390,6 @@ healthchecksdb
 MigrationBackup/
 
 # End of https://www.gitignore.io/api/c,c++,web,cuda,node,java,react,cmake,clion,flask,django,python,pycharm,eclipse,reactnative,webstorm+all,visualstudio,jetbrains+all,jupyternotebooks
+
+# alternate build directories (build-release, build-asan, ...)
+build-*/

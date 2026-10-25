@@ -109,6 +109,13 @@ ctest --test-dir build        # unit tests (googletest is downloaded at configur
 The executable is `build/alf`; copy it somewhere on your `PATH`. Configure with
 `-DALF_BUILD_TESTS=OFF` to skip the tests and the googletest download.
 
+## Performance
+
+alf reads about 400–900 MB/s on substring filters (Apple M4 Max): slower than GNU grep and
+ripgrep, faster than sed and awk on macOS, and behind mawk on Linux. Regexes use `std::regex`
+and are much slower. [`bench/`](bench/) has the harness, the results and how to rerun them;
+the write-up with charts is at <https://goebel-home.net/projects/alf/>.
+
 ## How it works
 
 1. The expression is split into tokens: strings and regexes (each marked wanted or not wanted,
