@@ -31,6 +31,8 @@ jobs:
         run: build/alf --simd-info
       - name: Test (every SIMD backend this runner can run; the rest are skipped)
         run: ctest --test-dir build --output-on-failure --timeout 900
+      - name: Command line, end to end (same bytes from a file, a pipe, -o, 1 thread, scalar)
+        run: python3 bench/cli_check.py build/alf
 
   # RISC-V Vector and POWER VSX: cross-compiled, tests run under QEMU (the toolchain files set
   # CMAKE_CROSSCOMPILING_EMULATOR, so plain ctest goes through it).  Release build: emulation
@@ -70,6 +72,8 @@ jobs:
         run: node build/alf.js --simd-info
       - name: Test under Node.js
         run: ctest --test-dir build --output-on-failure --timeout 1800
+      - name: Command line, end to end, under Node.js
+        run: python3 bench/cli_check.py "node build/alf.js"
 
   # Windows with MSVC: sse2/ssse3/avx2 (and avx512 where the runner has it) plus scalar, through
   # the Windows I/O layer (src/io_windows.cpp).
@@ -85,4 +89,6 @@ jobs:
         run: build\Debug\alf.exe --simd-info
       - name: Test
         run: ctest --test-dir build -C Debug --output-on-failure --timeout 900
+      - name: Command line, end to end (same bytes from a file, a pipe, -o, 1 thread, scalar)
+        run: python bench/cli_check.py build\\Debug\\alf.exe
 
