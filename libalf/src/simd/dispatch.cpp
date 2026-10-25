@@ -13,7 +13,7 @@
 #include <cstdlib>
 #include <string_view>
 
-#if defined(ALF_SIMD_SVE) && defined(__linux__)
+#if (defined(ALF_SIMD_SVE) || defined(ALF_SIMD_RVV) || defined(ALF_SIMD_VSX)) && defined(__linux__)
 #include <sys/auxv.h>
 #endif
 
@@ -48,6 +48,27 @@ namespace alf::simd
     auto sve_wider() noexcept -> bool { return has_sve() and sve_vector_bytes() > 16; }
 #endif
 
+#if defined(ALF_SIMD_RVV)
+    auto has_rvv() noexcept -> bool
+    {
+#if defined(__linux__) && defined(AT_HWCAP)
+      return (getauxval(AT_HWCAP) & (1ul << ('V' - 'A'))) != 0;  // COMPAT_HWCAP_ISA_V
+#else
+      return false;
+#endif
+    }
+#endif
+#if defined(ALF_SIMD_VSX)
+    auto has_vsx() noexcept -> bool
+    {
+#if defined(__linux__) && defined(AT_HWCAP)
+      return (getauxval(AT_HWCAP) & 0x00000080ul) != 0;  // PPC_FEATURE_HAS_VSX
+#else
+      return true;  // little-endian POWER requires POWER8, which has VSX
+#endif
+    }
+#endif
+
     // Best first.  "preferred" is what automatic selection uses; any backend that runs here can
     // still be forced with ALF_SIMD.
 #if defined(ALF_SIMD_AVX512)
@@ -57,6 +78,12 @@ namespace alf::simd
     Backend const avx2{ "avx2", has_avx2, has_avx2, find_any_avx2, teddy_avx2, line_start_avx2, true };
     Backend const ssse3{ "ssse3", has_ssse3, has_ssse3, find_any_sse2, teddy_ssse3, line_start_sse2, true };
     Backend const sse2{ "sse2", has_sse2, has_sse2, find_any_sse2, teddy_scalar, line_start_sse2, false };
+#endif
+#if defined(ALF_SIMD_RVV)
+    Backend const rvv{ "rvv", has_rvv, has_rvv, find_any_rvv, teddy_rvv, line_start_rvv, true };
+#endif
+#if defined(ALF_SIMD_VSX)
+    Backend const vsx{ "vsx", has_vsx, has_vsx, find_any_vsx, teddy_vsx, line_start_vsx, true };
 #endif
 #if defined(ALF_SIMD_SVE)
     Backend const sve{ "sve", has_sve, sve_wider, find_any_sve, teddy_sve, line_start_neon, true };
@@ -75,6 +102,12 @@ namespace alf::simd
 #endif
 #if defined(ALF_SIMD_SVE)
       &sve,
+#endif
+#if defined(ALF_SIMD_RVV)
+      &rvv,
+#endif
+#if defined(ALF_SIMD_VSX)
+      &vsx,
 #endif
 #if defined(ALF_SIMD_NEON)
       &neon,

@@ -28,3 +28,28 @@ jobs:
         run: build/alf --simd-info
       - name: Test (every SIMD backend this runner can run; the rest are skipped)
         run: ctest --test-dir build --output-on-failure --timeout 900
+
+  # RISC-V Vector and POWER VSX: cross-compiled, tests run under QEMU (the toolchain files set
+  # CMAKE_CROSSCOMPILING_EMULATOR, so plain ctest goes through it).  Release build: emulation
+  # is slow enough without the sanitizers.
+  cross:
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [riscv64-linux-gnu, powerpc64le-linux-gnu]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cross compiler and QEMU
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++-14-${{ matrix.target }} qemu-user
+          sudo ln -sf /usr/bin/${{ matrix.target }}-g++-14 /usr/bin/${{ matrix.target }}-g++
+          sudo ln -sf /usr/bin/${{ matrix.target }}-gcc-14 /usr/bin/${{ matrix.target }}-gcc
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/${{ matrix.target }}.cmake
+      - name: Build
+        run: cmake --build build --parallel
+      - name: Test under QEMU (SIMD backends are listed in the TestSimd output)
+        run: ctest --test-dir build --output-on-failure --timeout 1800 && ctest --test-dir build -R TestSimd -V | grep "backend runs here"
+

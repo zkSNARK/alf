@@ -28,6 +28,16 @@ namespace alf::simd
   auto teddy_neon(TeddyTables const&, char const*, char const*, char const*) noexcept -> char const*;
   auto line_start_neon(char const*, char const*) noexcept -> char const*;
 #endif
+#if defined(ALF_SIMD_RVV)
+  auto find_any_rvv(ByteSet const&, char const*, char const*, char const*) noexcept -> char const*;
+  auto teddy_rvv(TeddyTables const&, char const*, char const*, char const*) noexcept -> char const*;
+  auto line_start_rvv(char const*, char const*) noexcept -> char const*;
+#endif
+#if defined(ALF_SIMD_VSX)
+  auto find_any_vsx(ByteSet const&, char const*, char const*, char const*) noexcept -> char const*;
+  auto teddy_vsx(TeddyTables const&, char const*, char const*, char const*) noexcept -> char const*;
+  auto line_start_vsx(char const*, char const*) noexcept -> char const*;
+#endif
 #if defined(ALF_SIMD_SVE)
   auto find_any_sve(ByteSet const&, char const*, char const*, char const*) noexcept -> char const*;
   auto teddy_sve(TeddyTables const&, char const*, char const*, char const*) noexcept -> char const*;

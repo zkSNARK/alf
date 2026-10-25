@@ -13,6 +13,8 @@ each instruction set has its own implementation of all three, chosen once at run
 | `sse2` | x86-64 (all) | 16 bytes | scalar | yes |
 | `sve` | AArch64 with SVE / SVE2 | 16–256 bytes | yes | when its vectors are wider than 16 bytes |
 | `neon` | AArch64 (all) | 16 bytes | yes | yes |
+| `rvv` | RISC-V with the V extension (RVV 1.0) | VLEN / 8 bytes | yes | yes |
+| `vsx` | little-endian POWER8+ | 16 bytes | yes | yes |
 | `scalar` | anything | 1 byte | scalar | last resort |
 
 `alf --simd-info` prints which backends a binary has, which run on this CPU and which is in use.
@@ -87,5 +89,10 @@ files: the same kernel source, compiled once per target. Two things keep this la
 When the compilers alf supports ship both, each backend file becomes the same `std::simd`
 kernel built for a different target, and `dispatch.cpp` and the tests stay as they are.
 
-Not covered yet: RISC-V Vector, WebAssembly SIMD, POWER (VSX), and MSVC (which builds the scalar
-backend only, because the flags in `libalf/CMakeLists.txt` are GCC/Clang spellings).
+## Testing architectures you don't have
+
+`cmake/toolchains/` has cross-compile toolchain files for RISC-V (`riscv64-linux-gnu`) and
+POWER (`powerpc64le-linux-gnu`). They set `CMAKE_CROSSCOMPILING_EMULATOR` to QEMU, so `ctest`
+runs every test on an emulated CPU (RISC-V with vectors, `ALF_QEMU_VLEN` bits wide; POWER9).
+CI does this on every push. RVV code must be correct at every vector length; the kernel tests
+have been run at 128, 256, 512 and 1024 bits, and on a RISC-V CPU without vectors (scalar).
