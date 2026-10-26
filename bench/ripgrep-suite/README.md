@@ -6,10 +6,16 @@ runs someone else's: ripgrep's own benchmark suite
 pinned to the commit used for ripgrep's published run of 2022-12-16, on the OpenSubtitles 2016
 corpora it downloads.
 
-`alf.patch` adds alf to the single-file benchmarks it can answer and changes nothing else: same
-commands for the other tools, same corpora, same runner, same CSV. alf runs twice, with its
-default (one thread per performance core) and with `--threads 1`, because ripgrep and grep
-search a single file on one core.
+`alf.patch` adds alf to the single-file benchmarks it can answer: same commands for the other
+tools, same corpora, same runner, same CSV. alf runs twice, with its default (one thread per
+performance core) and with `--threads 1`, because ripgrep and grep search a single file on one
+core.
+
+The patch makes one other change. The suite runs grep with `LC_ALL=C` by passing an environment
+that contains only that setting; with no `PATH`, the command `grep` is then looked up in
+`/bin:/usr/bin`, which on macOS is BSD grep, 15 to 20 times slower than the GNU grep the suite
+means. The patch adds the setting to the inherited environment instead. On Linux, where
+`/usr/bin/grep` is GNU grep, this changes nothing.
 
 | Benchmark | Pattern | alf expression |
 | --- | --- | --- |
