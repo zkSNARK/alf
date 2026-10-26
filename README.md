@@ -48,6 +48,9 @@ find / -name pyconfig.h 2>&1 | alf -"Permission denied" -"Operation not permitte
 | --- | --- |
 | `'text'` or `"text"` | the line contains `text` (quotes are needed for anything with spaces or symbols) |
 | `-'text'` or `!'text'` | the line does **not** contain `text` |
+| `i'text'` | the line contains `text` in any mix of upper and lower case |
+| `w'text'` | the line contains `text` as a whole word, not as part of a longer one |
+| `iw'text'` | both: a whole word, in any case |
 | `r'pattern'` or `r"pattern"` | the regular expression matches somewhere in the line |
 | `-r'pattern'` or `!r'pattern'` | the regular expression does **not** match |
 | `-( … )` or `!( … )` | the group is **not** true |
@@ -60,6 +63,24 @@ find / -name pyconfig.h 2>&1 | alf -"Permission denied" -"Operation not permitte
 `&` binds tighter than `^`, which binds tighter than `|`, so `'a' & 'b' | 'c'` means
 `('a' & 'b') | 'c'`. A negation applies to the one string or group right after it, and two
 negations cancel.
+
+### Case and whole words
+
+`i'error'` matches `error`, `Error` and `ERROR`; `w'cat'` matches `cat` and `(cat)` but not
+`concatenate` or `cat_food`; `iw'cat'` is both. They negate and combine like any other string,
+so `i'error' & !w'retry'` keeps lines with any capitalisation of "error" and without the word
+"retry".
+
+Both follow Unicode, as ripgrep's `-i` and `-w` do. Case-insensitive strings use Unicode's simple
+case folding, so `i'шерлок'` finds `ШЕРЛОК`, `i'σ'` finds `Σ` and `ς`, and `i'k'` also finds the
+Kelvin sign `K` (a match can be longer or shorter in bytes than the string). `ß` and `ẞ` match
+each other but not `ss`, because simple folding maps one character to one. A word character is a
+letter, mark, digit or connector such as `_` in any script, so `w'Холмс'` doesn't match inside
+`Холмсу`, and a combining accent belongs to the word it follows. The input is read as UTF-8; a
+byte that isn't part of a well-formed character matches only itself and isn't a word character.
+A whole-word string is tried at every place it occurs, so `w'foo'` matches `foobar foo`. Only
+`i`, `w`, `iw` and `wi` (and `r`) written against a quote are prefixes; any other letters there
+are a string of their own, as before.
 
 ### Regular expressions
 

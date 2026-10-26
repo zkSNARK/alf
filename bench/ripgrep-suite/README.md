@@ -26,14 +26,15 @@ means. The patch adds the setting to the inherited environment instead. On Linux
 | `subtitles_en_literal_word` | `Sherlock Holmes`, `-w` | `w'Sherlock Holmes'` |
 | `subtitles_ru_literal` | `Шерлок Холмс` | `'Шерлок Холмс'` |
 | `subtitles_ru_alternate` | five Russian names joined by `\|` | `'Шерлок Холмс' \| …` |
+| `subtitles_ru_literal_casei` | `Шерлок Холмс`, `-i` | `i'Шерлок Холмс'` |
+| `subtitles_ru_alternate_casei` | five Russian names, `-i` | `i'Шерлок Холмс' \| …` |
 | `subtitles_ru_literal_word` | `Шерлок Холмс`, `-w` | `w'Шерлок Холмс'` |
 
-alf's `i'...'` and `w'...'` follow ASCII rules, so on the case-insensitive and whole-word
-benchmarks its answer is the one the suite's "(ASCII)" commands give. On the English corpus that
-is also ripgrep's Unicode answer. On the Russian whole-word benchmark it isn't: ripgrep counts
-Cyrillic letters as word characters and finds 579 lines, alf and ASCII grep 583 (four lines have
-the name right next to a Cyrillic letter). The Russian case-insensitive benchmarks are left out:
-alf doesn't fold Cyrillic letters, so it would be answering a different question.
+alf's `i'...'` and `w'...'` follow Unicode (simple case folding, Unicode word characters), as rg's
+`-i` and `-w` do, so on every one of these alf prints exactly what rg prints. GNU grep's answer
+depends on its locale: with `LC_ALL=C` it folds and recognises only ASCII letters and finds fewer
+Russian lines (583 instead of 604 for the case-insensitive name, 583 instead of 579 for the whole
+word, where an ASCII rule counts a neighbouring Cyrillic letter as a boundary).
 
 The rest of the suite needs features alf doesn't have: real regexes (`std::regex` would be
 measured, and replacing it is planned) or searching a directory tree

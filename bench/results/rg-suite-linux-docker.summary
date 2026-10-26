@@ -1,45 +1,109 @@
 subtitles_en_literal (pattern: Sherlock Holmes)
 -----------------------------------------------
-alf*             0.029 +/- 0.001 (lines: 830)*
-alf (1 thread)   0.090 +/- 0.001 (lines: 830)
-rg               0.095 +/- 0.003 (lines: 830)
-rg (no mmap)     0.171 +/- 0.006 (lines: 830)
-grep             0.538 +/- 0.005 (lines: 830)
-rg (lines)       0.124 +/- 0.003 (lines: 830)
-ag (lines)       1.823 +/- 0.043 (lines: 830)
-grep (lines)     1.082 +/- 0.015 (lines: 830)
-ugrep (lines)    0.203 +/- 0.004 (lines: 830)
+alf*             0.031 +/- 0.000 (lines: 830)*
+alf (1 thread)   0.093 +/- 0.001 (lines: 830)
+rg               0.096 +/- 0.001 (lines: 830)
+rg (no mmap)     0.175 +/- 0.001 (lines: 830)
+grep             0.550 +/- 0.002 (lines: 830)
+rg (lines)       0.127 +/- 0.001 (lines: 830)
+ag (lines)       1.850 +/- 0.049 (lines: 830)
+grep (lines)     1.110 +/- 0.004 (lines: 830)
+ugrep (lines)    0.206 +/- 0.001 (lines: 830)
+
+subtitles_en_literal_casei (pattern: Sherlock Holmes)
+-----------------------------------------------------
+alf*                 0.040 +/- 0.000 (lines: 871)*
+alf (1 thread)       0.175 +/- 0.001 (lines: 871)
+rg                   0.188 +/- 0.002 (lines: 871)
+grep                 2.021 +/- 0.012 (lines: 871)
+grep (ASCII)         0.574 +/- 0.001 (lines: 871)
+rg (lines)           0.216 +/- 0.001 (lines: 871)
+ag (lines) (ASCII)   1.931 +/- 0.047 (lines: 871)
+ugrep (lines)        0.216 +/- 0.001 (lines: 871)
+
+subtitles_en_literal_word (pattern: Sherlock Holmes)
+----------------------------------------------------
+alf*             0.031 +/- 0.000 (lines: 830)*
+alf (1 thread)   0.093 +/- 0.000 (lines: 830)
+rg (ASCII)       0.128 +/- 0.001 (lines: 830)
+ag (ASCII)       1.837 +/- 0.048 (lines: 830)
+grep (ASCII)     1.101 +/- 0.002 (lines: 830)
+ugrep (ASCII)    0.207 +/- 0.001 (lines: 830)
+rg               0.128 +/- 0.001 (lines: 830)
+grep             1.111 +/- 0.017 (lines: 830)
 
 subtitles_en_alternate (pattern: Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty)
 ---------------------------------------------------------------------------------------------------------------
-alf*             0.039 +/- 0.001 (lines: 1094)*
-alf (1 thread)   0.169 +/- 0.001 (lines: 1094)
-rg (lines)       0.212 +/- 0.001 (lines: 1094)
-ag (lines)       2.154 +/- 0.056 (lines: 1094)
-grep (lines)     2.168 +/- 0.017 (lines: 1094)
-ugrep (lines)    0.260 +/- 0.004 (lines: 1094)
-rg               0.183 +/- 0.004 (lines: 1094)
-grep             1.600 +/- 0.008 (lines: 1094)
+alf*             0.041 +/- 0.000 (lines: 1094)*
+alf (1 thread)   0.174 +/- 0.001 (lines: 1094)
+rg (lines)       0.216 +/- 0.001 (lines: 1094)
+ag (lines)       2.167 +/- 0.046 (lines: 1094)
+grep (lines)     2.237 +/- 0.041 (lines: 1094)
+ugrep (lines)    0.269 +/- 0.001 (lines: 1094)
+rg               0.186 +/- 0.001 (lines: 1094)
+grep             1.643 +/- 0.006 (lines: 1094)
+
+subtitles_en_alternate_casei (pattern: Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty)
+---------------------------------------------------------------------------------------------------------------------
+alf*             0.062 +/- 0.000 (lines: 1136)*
+alf (1 thread)   0.320 +/- 0.001 (lines: 1136)
+ag (ASCII)       3.023 +/- 0.047 (lines: 1136)
+grep (ASCII)     3.159 +/- 0.005 (lines: 1136)
+ugrep (ASCII)    0.567 +/- 0.008 (lines: 1136)
+rg               0.395 +/- 0.001 (lines: 1136)
+grep             3.155 +/- 0.005 (lines: 1136)
 
 subtitles_ru_literal (pattern: Шерлок Холмс)
 --------------------------------------------
-alf*             0.027 +/- 0.000 (lines: 583)*
-alf (1 thread)   0.079 +/- 0.000 (lines: 583)
-rg               0.090 +/- 0.000 (lines: 583)
-rg (no mmap)     0.150 +/- 0.000 (lines: 583)
-grep             0.425 +/- 0.001 (lines: 583)
-rg (lines)       0.124 +/- 0.001 (lines: 583)
-ag (lines)       1.690 +/- 0.034 (lines: 583)
-grep (lines)     0.787 +/- 0.007 (lines: 583)
-ugrep (lines)    1.792 +/- 0.052 (lines: 583)
+alf*             0.028 +/- 0.001 (lines: 583)*
+alf (1 thread)   0.084 +/- 0.002 (lines: 583)
+rg               0.094 +/- 0.001 (lines: 583)
+rg (no mmap)     0.158 +/- 0.001 (lines: 583)
+grep             0.437 +/- 0.006 (lines: 583)
+rg (lines)       0.127 +/- 0.000 (lines: 583)
+ag (lines)       1.714 +/- 0.046 (lines: 583)
+grep (lines)     0.797 +/- 0.008 (lines: 583)
+ugrep (lines)    1.783 +/- 0.009 (lines: 583)
+
+subtitles_ru_literal_casei (pattern: Шерлок Холмс)
+--------------------------------------------------
+alf*                    0.042 +/- 0.000 (lines: 604)*
+alf (1 thread)          0.199 +/- 0.001 (lines: 604)
+rg                      0.222 +/- 0.001 (lines: 604)
+grep                    3.908 +/- 0.021 (lines: 604)
+grep (ASCII)            0.435 +/- 0.002 (lines: 583)
+rg (lines)              0.256 +/- 0.001 (lines: 604)
+ag (lines) (ASCII)      1.723 +/- 0.032 (lines: 583)
+ugrep (lines) (ASCII)   1.941 +/- 0.006 (lines: 604)
+
+subtitles_ru_literal_word (pattern: Шерлок Холмс)
+-------------------------------------------------
+alf*             0.029 +/- 0.001 (lines: 579)*
+alf (1 thread)   0.084 +/- 0.001 (lines: 579)
+rg (ASCII)       0.129 +/- 0.001 (lines: 583)
+ag (ASCII)       0.447 +/- 0.002 (lines: 0)
+grep (ASCII)     0.817 +/- 0.025 (lines: 583)
+ugrep (ASCII)    1.788 +/- 0.010 (lines: 579)
+rg               0.128 +/- 0.003 (lines: 579)
+grep             0.798 +/- 0.006 (lines: 579)
 
 subtitles_ru_alternate (pattern: Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти)
 -----------------------------------------------------------------------------------------------------------
-alf*             0.054 +/- 0.001 (lines: 691)*
-alf (1 thread)   0.278 +/- 0.002 (lines: 691)
-rg (lines)       0.328 +/- 0.001 (lines: 691)
-ag (lines)       2.361 +/- 0.036 (lines: 691)
-grep (lines)     5.531 +/- 0.029 (lines: 691)
-ugrep (lines)    2.770 +/- 0.002 (lines: 691)
-rg               0.296 +/- 0.001 (lines: 691)
-grep             5.155 +/- 0.028 (lines: 691)
+alf*             0.054 +/- 0.000 (lines: 691)*
+alf (1 thread)   0.285 +/- 0.006 (lines: 691)
+rg (lines)       0.332 +/- 0.006 (lines: 691)
+ag (lines)       2.357 +/- 0.040 (lines: 691)
+grep (lines)     5.501 +/- 0.032 (lines: 691)
+ugrep (lines)    2.766 +/- 0.014 (lines: 691)
+rg               0.297 +/- 0.002 (lines: 691)
+grep             5.125 +/- 0.048 (lines: 691)
+
+subtitles_ru_alternate_casei (pattern: Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти)
+-----------------------------------------------------------------------------------------------------------------
+alf*             0.097 +/- 0.002 (lines: 735)*
+alf (1 thread)   0.602 +/- 0.013 (lines: 735)
+ag (ASCII)       2.358 +/- 0.066 (lines: 691)
+grep (ASCII)     5.541 +/- 0.019 (lines: 691)
+ugrep (ASCII)    2.541 +/- 0.006 (lines: 735)
+rg               0.961 +/- 0.004 (lines: 735)
+grep             5.245 +/- 0.022 (lines: 735)
