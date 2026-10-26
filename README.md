@@ -172,11 +172,12 @@ ripgrep's 137-153. Regexes without fixed text are where ripgrep is still clearly
 ### ripgrep's own benchmarks
 
 [`bench/ripgrep-suite/`](bench/ripgrep-suite/) runs ripgrep's benchmark suite, unchanged except
-for added alf commands, on its 1.6 GB English and 1.7 GB Russian subtitle corpora. On the four
-benchmarks alf can express (one name, or any of five, in each language), alf on one core is
-faster than ripgrep on all four, on macOS (0.087 s vs 0.142 for `Sherlock Holmes`) and Linux
-(0.090 vs 0.095); with every core it takes 27 to 81 ms. The rest of the suite needs
-case-insensitive search, whole words, regexes or directory trees, which alf doesn't have yet.
+for added alf commands, on its 1.6 GB English and 1.7 GB Russian subtitle corpora. alf runs the
+ten benchmarks it can express (one name or any of five, plain, case-insensitive and whole-word,
+in each language) and prints exactly ripgrep's lines on every one. On one core it is faster on
+all ten, on macOS (`Sherlock Holmes`: 0.077 s vs 0.133; case-insensitive 0.171 vs 0.232) and
+Linux (0.093 vs 0.096; 0.175 vs 0.188); with every core it takes 28 to 102 ms. The rest of the
+suite needs real regexes or searching a directory tree, which alf doesn't have yet.
 Raw samples: [`bench/results/rg-suite-*.csv`](bench/results/).
 
 [`bench/`](bench/) has the harness, the results and how to rerun them; the write-up with charts
