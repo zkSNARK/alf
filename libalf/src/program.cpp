@@ -4,12 +4,14 @@
 
 #include "program.h"
 
+#include "aho_corasick.h"
 #include "simd.h"
 
 #include <algorithm>
 #include <array>
 #include <bit>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <exception>
 #include <optional>
@@ -163,6 +165,9 @@ namespace
       }
       return m_simd.find_any(m_set, p, last, limit);
     }
+
+    /** Teddy's measured cost on the sample: stops plus strings compared, per byte; 0 if not Teddy. */
+    [[nodiscard]] auto teddy_cost() const -> double { return m_teddy ? m_teddy_cost : 0; }
 
     // Start of the line containing `p` (not before `floor`, itself a line start).
     [[nodiscard]] auto line_start(char const* p, char const* floor) const -> char const*
@@ -364,6 +369,7 @@ namespace
           best_layout = std::move(layout);
         }
       }
+      m_teddy_cost = sample.empty() ? 0 : best_cost / static_cast<double>(sample.size());
       fill_tables(best_layout, fp, fp_of);
       for (std::size_t i = 0; i < m_needles.size(); ++i) {
         m_groups[best_layout[fp_of[i]]].push_back(static_cast<std::uint16_t>(i));
@@ -406,6 +412,7 @@ namespace
     std::size_t m_pair_first{ 0 };  // offset of the pair's first byte within the string
     // Teddy mode
     bool m_teddy{ false };
+    double m_teddy_cost{ 0 };
     alf::simd::TeddyTables m_tables{};
     std::array<std::vector<std::uint16_t>, GROUPS> m_groups;
     std::vector<std::size_t> m_window;  // offset of each string's fingerprint within it
@@ -571,6 +578,73 @@ namespace
       }
       cursor = next;
       p = next;
+    }
+  }
+
+  // Teddy's cost on the sample (stops plus strings compared, per byte) above which the DFA is
+  // faster.  The DFA costs the same per byte for any list (one core, 142 MB benchmark log: about
+  // 141 ms from 32 to 256 strings); Teddy grows with its measured cost: 0.51 at 64 strings took
+  // 105 ms, 1.95 at 128 took 162.  They cross at about 1.4.
+  constexpr double AHO_ABOVE_COST = 1.4;
+
+  // filter_range_search with an Aho-Corasick DFA instead of the scanner: every byte is one table
+  // step, whatever the number of strings.  None of the strings contains '\n', so every match lies
+  // within one line and the DFA can restart at each line.  Lines without a match get
+  // `keep_others`; a line with one is decided as in filter_range_search (from the strings found
+  // when `use_found`, reading on only until the answer is settled).
+  template <typename Found>
+  void filter_range_aho(char const* first, char const* last, alf::Program const& program,
+                        alf::detail::AhoCorasick const& ac, bool keep_others, bool use_found, std::size_t words, Spans& out)
+  {
+    alf::simd::Backend const& simd = alf::simd::active();
+    Found found{ words };
+    char const* cursor = first;  // start of the first line not yet handled
+    std::uint32_t state = alf::detail::AhoCorasick::start;
+    for (char const* p = first; p < last; ++p) {
+      state = ac.step(state, static_cast<unsigned char>(*p));
+      if (!ac.matches(state)) {
+        continue;
+      }
+      char const* ls = simd.line_start(p, cursor);
+      char const* e = line_end(p, last);
+      char const* text_end = (e > ls and e[-1] == '\r') ? e - 1 : e;
+      char const* next = e < last ? e + 1 : e;
+      std::string_view const line(ls, static_cast<std::size_t>(text_end - ls));
+      bool keep;
+      if (use_found) {
+        found.clear();
+        for (std::uint32_t i : ac.ending(state)) {
+          found.set(i);
+        }
+        std::optional<bool> answer = program.settled(line, found.words());
+        for (char const* c = p + 1; !answer and c < e; ++c) {
+          state = ac.step(state, static_cast<unsigned char>(*c));
+          if (ac.matches(state)) {
+            bool changed = false;
+            for (std::uint32_t i : ac.ending(state)) {
+              changed |= found.set(i);
+            }
+            if (changed) {
+              answer = program.settled(line, found.words());
+            }
+          }
+        }
+        keep = answer ? *answer : program.matches_found(line, found.words());
+      } else {
+        keep = program.matches(line);
+      }
+      if (keep_others) {
+        out.add(cursor, ls);
+      }
+      if (keep) {
+        out.add(ls, next);
+      }
+      cursor = next;
+      p = next - 1;  // the loop's ++p moves to the next line
+      state = alf::detail::AhoCorasick::start;
+    }
+    if (keep_others) {
+      out.add(cursor, last);
     }
   }
 
@@ -962,6 +1036,22 @@ void alf::filter(std::string_view data, Program const& program, unsigned threads
     needles.clear();
   }
   MultiScanner const scanner{ needles, sample };
+  // A long list: a DFA instead of Teddy once Teddy's measured cost on the sample says it's slower
+  // (ALF_MULTI=aho / teddy forces the choice, for tests and measurement).
+  std::optional<alf::detail::AhoCorasick> aho;
+  if (!needles.empty() and std::none_of(needles.begin(), needles.end(), [](Needle const& n) {
+        return n.text.find('\n') != std::string_view::npos;
+      })) {
+    char const* force = std::getenv("ALF_MULTI");
+    std::string_view const forced = force ? force : "";
+    if (forced == "aho" or (forced != "teddy" and scanner.teddy_cost() > AHO_ABOVE_COST)) {
+      std::vector<std::string_view> texts;
+      for (Needle const& n : needles) {
+        texts.push_back(n.text);
+      }
+      aho.emplace(texts);
+    }
+  }
   auto const run = [&](char const* first, char const* last, Spans& out) {
     if (needles.empty()) {
       filter_range(first, last, program, out);
@@ -969,7 +1059,11 @@ void alf::filter(std::string_view data, Program const& program, unsigned threads
       // the needles are the program's literals in order when use_found; otherwise they are
       // required strings (possibly regex prefixes) and `found` is only a hit marker
       std::size_t const words = std::max(program.found_words(), (needles.size() + 63) / 64);
-      if (words <= 1) {
+      if (aho and words <= 1) {
+        filter_range_aho<OneWord>(first, last, program, *aho, keep_others, use_found, words, out);
+      } else if (aho) {
+        filter_range_aho<ManyWords>(first, last, program, *aho, keep_others, use_found, words, out);
+      } else if (words <= 1) {
         filter_range_search<OneWord>(first, last, program, scanner, keep_others, use_found, words, out);
       } else {
         filter_range_search<ManyWords>(first, last, program, scanner, keep_others, use_found, words, out);

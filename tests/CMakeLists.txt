@@ -26,10 +26,19 @@ alf_test(TestExpressions test_expressions.cpp)
 alf_test(TestProgram test_program.cpp)
 alf_test(TestSimd test_simd.cpp)
 target_include_directories(TestSimd PRIVATE ${PROJECT_SOURCE_DIR}/libalf/src/simd)
+alf_test(TestAhoCorasick test_aho.cpp)
+target_include_directories(TestAhoCorasick PRIVATE ${PROJECT_SOURCE_DIR}/libalf/src)
 
 # The whole filter test suite once per SIMD backend (ALF_SIMD forces it; a backend this machine
 # can't run skips itself, see SimdEnvironment in test_program.cpp).
 foreach (backend scalar sse2 ssse3 avx2 avx512 neon sve rvv vsx wasm)
   add_test(NAME TestProgram_${backend} COMMAND TestProgram WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
   set_tests_properties(TestProgram_${backend} PROPERTIES ENVIRONMENT "ALF_SIMD=${backend}" SKIP_REGULAR_EXPRESSION "doesn't run on this machine")
+endforeach ()
+
+# And once with each multi-string search forced (ALF_MULTI), so the Aho-Corasick DFA and Teddy
+# both see every test, whatever the number of strings.
+foreach (multi aho teddy)
+  add_test(NAME TestProgram_${multi} COMMAND TestProgram WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
+  set_tests_properties(TestProgram_${multi} PROPERTIES ENVIRONMENT "ALF_MULTI=${multi}")
 endforeach ()

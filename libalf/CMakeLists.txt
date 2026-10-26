@@ -15,6 +15,7 @@ target_sources(algebraic_line_filter
     PRIVATE src/shunting_yard.cpp
     PUBLIC include/program.h
     PRIVATE src/program.cpp
+    PRIVATE src/aho_corasick.cpp
     PRIVATE src/simd/dispatch.cpp
     PRIVATE src/simd/scalar.cpp
 )
