@@ -160,9 +160,14 @@ namespace
     std::deque<Folded> folds;
   };
 
-  // An i'...' string's anchor: the window of 1-3 characters whose spellings are rarest in the
-  // sample, among windows with at most this many spellings.
+  // An i'...' string's anchor: the window of up to MAX_ANCHOR characters whose spellings are rarest
+  // in the sample, among windows with at most MAX_SPELLINGS spellings.  Measured on ripgrep's
+  // subtitle benchmarks (one core): windows of up to 3 characters left the five-name searches
+  // slow (Russian 1,268 ms); up to 6, which lets a window take in spaces and punctuation (one
+  // spelling each), 598.  More spellings per window cost more than they saved (32: English five
+  // names 317 -> 566 ms).
   constexpr std::size_t MAX_SPELLINGS = 16;
+  constexpr std::size_t MAX_ANCHOR = 6;
 
   auto make_needles(std::vector<alf::Literal> const& literals, std::string_view sample) -> Needles
   {
@@ -202,7 +207,7 @@ namespace
       }
       std::size_t best_at = 0, best_len = 1;
       double best_cost = -1;
-      for (std::size_t len = 1; len <= std::min<std::size_t>(3, f.size()); ++len) {
+      for (std::size_t len = 1; len <= std::min(MAX_ANCHOR, f.size()); ++len) {
         for (std::size_t at = 0; at + len <= f.size(); ++at) {
           std::size_t count = 1;
           for (std::size_t k = at; k < at + len; ++k) {
@@ -211,13 +216,14 @@ namespace
           if (count > MAX_SPELLINGS) {
             continue;
           }
-          // expected stops: over the spellings, the product of their bytes' frequencies (+1)
+          // expected stops per byte of text: over the spellings, the product of their bytes'
+          // probabilities in the sample (smoothed, so a byte the sample lacks isn't free)
           double cost = 0;
           for (std::size_t v = 0; v < count; ++v) {
             double c = 1;
             for (std::size_t k = at, r = v; k < at + len; r /= spell[k].size(), ++k) {
               for (char ch : spell[k][r % spell[k].size()]) {
-                c *= 1.0 + static_cast<double>(freq[static_cast<unsigned char>(ch)]);
+                c *= (1.0 + static_cast<double>(freq[static_cast<unsigned char>(ch)])) / (256.0 + static_cast<double>(sample.size()));
               }
             }
             cost += c;
@@ -331,7 +337,9 @@ namespace
     MultiScanner(std::vector<Needle> const& needles, std::string_view sample)
       : m_needles{ needles }, m_simd{ alf::simd::active() }
     {
-      m_teddy = needles.size() >= 2 and m_simd.fast_teddy and rare_byte_stop_interval(needles, sample) < TEDDY_BELOW_INTERVAL;
+      bool const spellings = std::any_of(needles.begin(), needles.end(), [](Needle const& n) { return n.folded != nullptr; });
+      m_teddy = needles.size() >= 2 and m_simd.fast_teddy and
+                rare_byte_stop_interval(needles, sample) < (spellings ? TEDDY_BELOW_INTERVAL_SPELLINGS : TEDDY_BELOW_INTERVAL);
       if (m_teddy) {
         build_teddy(sample);
         return;
@@ -418,6 +426,12 @@ namespace
     // favoured the rare-byte scanner (33 vs 37 ms), every 105 bytes or less favoured Teddy (49
     // vs 67 ms for two strings, 113 vs 213 for sixteen).
     static constexpr double TEDDY_BELOW_INTERVAL = 128;
+
+    // The spellings of an i'...' anchor often have one that is common (the all-lowercase one:
+    // ш's second byte every 229 bytes of Russian text), so their rare bytes together stop often;
+    // Teddy's 3-byte fingerprints don't.  Measured: i'Шерлок Холмс' in 1.7 GB, one core, 502 ms
+    // with the rare-byte scanner, 196 with Teddy (rare bytes every ~150 bytes).
+    static constexpr double TEDDY_BELOW_INTERVAL_SPELLINGS = 512;
 
     // One string: memchr on a single byte runs at about twice the speed of a two-byte scan while
     // it rarely stops, but each stop costs about 10 ns; the two-byte scan costs the same whatever
