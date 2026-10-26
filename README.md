@@ -138,15 +138,14 @@ cmake --build build && node build/alf.js --simd-info
 
 alf memory-maps its input, searches the whole buffer for the strings an expression requires
 (one string by its rarest byte or rarest pair of bytes, many in one pass with Teddy shuffle
-fingerprints), decides most lines without evaluating the whole expression, writes kept lines
+fingerprints, long lists with an Aho-Corasick automaton), decides most lines without evaluating the whole expression, writes kept lines
 without copying long runs, and splits large inputs across every performance core (`--threads N`
 to change that). On a 142 MB log on an Apple M4 Max it finds one string in 7 ms (ripgrep 21,
 GNU grep 33), answers a nested and/or/not query in 9 ms (GNU grep 238) and drops eight kinds of
 noise in 21 ms (ripgrep 119). Pinned to one core it still beats grep and ripgrep on every
-string task, and on exclude lists of up to 64 strings on macOS and Linux. Where ripgrep is still
-faster on one core: regexes without fixed text, and lists of more than about 100 strings (at
-256, 272 ms against 146), where ripgrep switches to Aho-Corasick and alf keeps using Teddy
-([#10](https://github.com/zkSNARK/alf/issues/10)).
+string task and on exclude lists of up to about 100 strings; past that it switches from Teddy
+to an Aho-Corasick automaton, so its time stays flat (142 ms at 128 strings, 148 at 1,024;
+ripgrep 134-145). Regexes without fixed text are where ripgrep is still clearly faster.
 
 ### ripgrep's own benchmarks
 
