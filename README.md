@@ -137,15 +137,27 @@ cmake --build build && node build/alf.js --simd-info
 ## Performance
 
 alf memory-maps its input, searches the whole buffer for the strings an expression requires
-(all of them in one pass, with Teddy shuffle fingerprints when there are many), evaluates the
-rest without allocating, writes kept lines without copying long runs, and splits large inputs
-across every performance core (`--threads N` to change that). On a 142 MB log on an Apple M4
-Max it finds one string in 7 ms (ripgrep 22, GNU grep 33), answers a nested and/or/not query
-in 9 ms (GNU grep 230) and drops eight kinds of noise in 21 ms (ripgrep 117). Pinned to one
-core it still beats grep and ripgrep on every string task, and on exclude lists of every
-length measured (1 to 32 strings) on macOS and Linux. Regexes without fixed text are where
-ripgrep is still faster. [`bench/`](bench/) has the harness, the results and how to
-rerun them; the write-up with charts is at <https://goebel-home.net/projects/alf/>.
+(one string by its rarest byte or rarest pair of bytes, many in one pass with Teddy shuffle
+fingerprints), decides most lines without evaluating the whole expression, writes kept lines
+without copying long runs, and splits large inputs across every performance core (`--threads N`
+to change that). On a 142 MB log on an Apple M4 Max it finds one string in 7 ms (ripgrep 21,
+GNU grep 33), answers a nested and/or/not query in 9 ms (GNU grep 238) and drops eight kinds of
+noise in 21 ms (ripgrep 119). Pinned to one core it still beats grep and ripgrep on every
+string task, and on exclude lists of every length measured (1 to 32 strings) on macOS and
+Linux. Regexes without fixed text are where ripgrep is still faster.
+
+### ripgrep's own benchmarks
+
+[`bench/ripgrep-suite/`](bench/ripgrep-suite/) runs ripgrep's benchmark suite, unchanged except
+for added alf commands, on its 1.6 GB English and 1.7 GB Russian subtitle corpora. On the four
+benchmarks alf can express (one name, or any of five, in each language), alf on one core is
+faster than ripgrep on all four, on macOS (0.087 s vs 0.142 for `Sherlock Holmes`) and Linux
+(0.090 vs 0.095); with every core it takes 27 to 81 ms. The rest of the suite needs
+case-insensitive search, whole words, regexes or directory trees, which alf doesn't have yet.
+Raw samples: [`bench/results/rg-suite-*.csv`](bench/results/).
+
+[`bench/`](bench/) has the harness, the results and how to rerun them; the write-up with charts
+is at <https://goebel-home.net/projects/alf/>.
 
 ### SIMD
 

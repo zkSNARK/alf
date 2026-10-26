@@ -1,0 +1,341 @@
+benchmark,warmup_iter,iter,name,command,duration,lines,env
+subtitles_en_literal,3,10,alf,alf -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes',0.028790950775146484,830,
+subtitles_en_literal,3,10,alf,alf -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes',0.028862476348876953,830,
+subtitles_en_literal,3,10,alf,alf -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes',0.02902698516845703,830,
+subtitles_en_literal,3,10,alf,alf -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes',0.029363155364990234,830,
+subtitles_en_literal,3,10,alf,alf -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes',0.02910590171813965,830,
+subtitles_en_literal,3,10,alf,alf -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes',0.028499603271484375,830,
+subtitles_en_literal,3,10,alf,alf -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes',0.028554916381835938,830,
+subtitles_en_literal,3,10,alf,alf -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes',0.02884221076965332,830,
+subtitles_en_literal,3,10,alf,alf -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes',0.0288236141204834,830,
+subtitles_en_literal,3,10,alf,alf -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes',0.03180193901062012,830,
+subtitles_en_literal,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes',0.09132790565490723,830,
+subtitles_en_literal,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes',0.09263896942138672,830,
+subtitles_en_literal,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes',0.09125852584838867,830,
+subtitles_en_literal,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes',0.0921018123626709,830,
+subtitles_en_literal,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes',0.09032845497131348,830,
+subtitles_en_literal,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes',0.09081220626831055,830,
+subtitles_en_literal,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes',0.08868718147277832,830,
+subtitles_en_literal,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes',0.08947253227233887,830,
+subtitles_en_literal,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes',0.08892107009887695,830,
+subtitles_en_literal,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes',0.08923959732055664,830,
+subtitles_en_literal,3,10,rg,rg Sherlock Holmes /data/subtitles/en.sample.txt,0.09280538558959961,830,
+subtitles_en_literal,3,10,rg,rg Sherlock Holmes /data/subtitles/en.sample.txt,0.09357404708862305,830,
+subtitles_en_literal,3,10,rg,rg Sherlock Holmes /data/subtitles/en.sample.txt,0.09210801124572754,830,
+subtitles_en_literal,3,10,rg,rg Sherlock Holmes /data/subtitles/en.sample.txt,0.09173369407653809,830,
+subtitles_en_literal,3,10,rg,rg Sherlock Holmes /data/subtitles/en.sample.txt,0.09214138984680176,830,
+subtitles_en_literal,3,10,rg,rg Sherlock Holmes /data/subtitles/en.sample.txt,0.09153270721435547,830,
+subtitles_en_literal,3,10,rg,rg Sherlock Holmes /data/subtitles/en.sample.txt,0.0968177318572998,830,
+subtitles_en_literal,3,10,rg,rg Sherlock Holmes /data/subtitles/en.sample.txt,0.10017895698547363,830,
+subtitles_en_literal,3,10,rg,rg Sherlock Holmes /data/subtitles/en.sample.txt,0.09998202323913574,830,
+subtitles_en_literal,3,10,rg,rg Sherlock Holmes /data/subtitles/en.sample.txt,0.09412837028503418,830,
+subtitles_en_literal,3,10,rg (no mmap),rg --no-mmap Sherlock Holmes /data/subtitles/en.sample.txt,0.16979050636291504,830,
+subtitles_en_literal,3,10,rg (no mmap),rg --no-mmap Sherlock Holmes /data/subtitles/en.sample.txt,0.16858506202697754,830,
+subtitles_en_literal,3,10,rg (no mmap),rg --no-mmap Sherlock Holmes /data/subtitles/en.sample.txt,0.17491698265075684,830,
+subtitles_en_literal,3,10,rg (no mmap),rg --no-mmap Sherlock Holmes /data/subtitles/en.sample.txt,0.18134522438049316,830,
+subtitles_en_literal,3,10,rg (no mmap),rg --no-mmap Sherlock Holmes /data/subtitles/en.sample.txt,0.1693892478942871,830,
+subtitles_en_literal,3,10,rg (no mmap),rg --no-mmap Sherlock Holmes /data/subtitles/en.sample.txt,0.16420817375183105,830,
+subtitles_en_literal,3,10,rg (no mmap),rg --no-mmap Sherlock Holmes /data/subtitles/en.sample.txt,0.16529250144958496,830,
+subtitles_en_literal,3,10,rg (no mmap),rg --no-mmap Sherlock Holmes /data/subtitles/en.sample.txt,0.16488265991210938,830,
+subtitles_en_literal,3,10,rg (no mmap),rg --no-mmap Sherlock Holmes /data/subtitles/en.sample.txt,0.17816853523254395,830,
+subtitles_en_literal,3,10,rg (no mmap),rg --no-mmap Sherlock Holmes /data/subtitles/en.sample.txt,0.17111468315124512,830,
+subtitles_en_literal,3,10,grep,grep Sherlock Holmes /data/subtitles/en.sample.txt,0.549238920211792,830,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_literal,3,10,grep,grep Sherlock Holmes /data/subtitles/en.sample.txt,0.5349233150482178,830,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_literal,3,10,grep,grep Sherlock Holmes /data/subtitles/en.sample.txt,0.5341372489929199,830,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_literal,3,10,grep,grep Sherlock Holmes /data/subtitles/en.sample.txt,0.533179521560669,830,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_literal,3,10,grep,grep Sherlock Holmes /data/subtitles/en.sample.txt,0.538902997970581,830,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_literal,3,10,grep,grep Sherlock Holmes /data/subtitles/en.sample.txt,0.5339884757995605,830,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_literal,3,10,grep,grep Sherlock Holmes /data/subtitles/en.sample.txt,0.5427412986755371,830,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_literal,3,10,grep,grep Sherlock Holmes /data/subtitles/en.sample.txt,0.5416262149810791,830,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_literal,3,10,grep,grep Sherlock Holmes /data/subtitles/en.sample.txt,0.5331892967224121,830,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_literal,3,10,grep,grep Sherlock Holmes /data/subtitles/en.sample.txt,0.5347912311553955,830,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_literal,3,10,rg (lines),rg -n Sherlock Holmes /data/subtitles/en.sample.txt,0.12418580055236816,830,
+subtitles_en_literal,3,10,rg (lines),rg -n Sherlock Holmes /data/subtitles/en.sample.txt,0.12204980850219727,830,
+subtitles_en_literal,3,10,rg (lines),rg -n Sherlock Holmes /data/subtitles/en.sample.txt,0.12178540229797363,830,
+subtitles_en_literal,3,10,rg (lines),rg -n Sherlock Holmes /data/subtitles/en.sample.txt,0.1229097843170166,830,
+subtitles_en_literal,3,10,rg (lines),rg -n Sherlock Holmes /data/subtitles/en.sample.txt,0.12254929542541504,830,
+subtitles_en_literal,3,10,rg (lines),rg -n Sherlock Holmes /data/subtitles/en.sample.txt,0.12132430076599121,830,
+subtitles_en_literal,3,10,rg (lines),rg -n Sherlock Holmes /data/subtitles/en.sample.txt,0.12234973907470703,830,
+subtitles_en_literal,3,10,rg (lines),rg -n Sherlock Holmes /data/subtitles/en.sample.txt,0.12267589569091797,830,
+subtitles_en_literal,3,10,rg (lines),rg -n Sherlock Holmes /data/subtitles/en.sample.txt,0.13021540641784668,830,
+subtitles_en_literal,3,10,rg (lines),rg -n Sherlock Holmes /data/subtitles/en.sample.txt,0.12989497184753418,830,
+subtitles_en_literal,3,10,ag (lines),ag -s Sherlock Holmes /data/subtitles/en.sample.txt,1.8161952495574951,830,
+subtitles_en_literal,3,10,ag (lines),ag -s Sherlock Holmes /data/subtitles/en.sample.txt,1.8262042999267578,830,
+subtitles_en_literal,3,10,ag (lines),ag -s Sherlock Holmes /data/subtitles/en.sample.txt,1.8770368099212646,830,
+subtitles_en_literal,3,10,ag (lines),ag -s Sherlock Holmes /data/subtitles/en.sample.txt,1.8410251140594482,830,
+subtitles_en_literal,3,10,ag (lines),ag -s Sherlock Holmes /data/subtitles/en.sample.txt,1.7624497413635254,830,
+subtitles_en_literal,3,10,ag (lines),ag -s Sherlock Holmes /data/subtitles/en.sample.txt,1.8426637649536133,830,
+subtitles_en_literal,3,10,ag (lines),ag -s Sherlock Holmes /data/subtitles/en.sample.txt,1.8261222839355469,830,
+subtitles_en_literal,3,10,ag (lines),ag -s Sherlock Holmes /data/subtitles/en.sample.txt,1.73799729347229,830,
+subtitles_en_literal,3,10,ag (lines),ag -s Sherlock Holmes /data/subtitles/en.sample.txt,1.862210750579834,830,
+subtitles_en_literal,3,10,ag (lines),ag -s Sherlock Holmes /data/subtitles/en.sample.txt,1.8348500728607178,830,
+subtitles_en_literal,3,10,grep (lines),grep -n Sherlock Holmes /data/subtitles/en.sample.txt,1.0760600566864014,830,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_literal,3,10,grep (lines),grep -n Sherlock Holmes /data/subtitles/en.sample.txt,1.0767755508422852,830,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_literal,3,10,grep (lines),grep -n Sherlock Holmes /data/subtitles/en.sample.txt,1.0864717960357666,830,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_literal,3,10,grep (lines),grep -n Sherlock Holmes /data/subtitles/en.sample.txt,1.0845153331756592,830,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_literal,3,10,grep (lines),grep -n Sherlock Holmes /data/subtitles/en.sample.txt,1.0778732299804688,830,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_literal,3,10,grep (lines),grep -n Sherlock Holmes /data/subtitles/en.sample.txt,1.0731959342956543,830,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_literal,3,10,grep (lines),grep -n Sherlock Holmes /data/subtitles/en.sample.txt,1.0756797790527344,830,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_literal,3,10,grep (lines),grep -n Sherlock Holmes /data/subtitles/en.sample.txt,1.0711760520935059,830,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_literal,3,10,grep (lines),grep -n Sherlock Holmes /data/subtitles/en.sample.txt,1.123098611831665,830,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_literal,3,10,grep (lines),grep -n Sherlock Holmes /data/subtitles/en.sample.txt,1.0790703296661377,830,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_literal,3,10,ugrep (lines),ugrep -n Sherlock Holmes /data/subtitles/en.sample.txt,0.20855116844177246,830,
+subtitles_en_literal,3,10,ugrep (lines),ugrep -n Sherlock Holmes /data/subtitles/en.sample.txt,0.2023935317993164,830,
+subtitles_en_literal,3,10,ugrep (lines),ugrep -n Sherlock Holmes /data/subtitles/en.sample.txt,0.20419931411743164,830,
+subtitles_en_literal,3,10,ugrep (lines),ugrep -n Sherlock Holmes /data/subtitles/en.sample.txt,0.19949126243591309,830,
+subtitles_en_literal,3,10,ugrep (lines),ugrep -n Sherlock Holmes /data/subtitles/en.sample.txt,0.1977996826171875,830,
+subtitles_en_literal,3,10,ugrep (lines),ugrep -n Sherlock Holmes /data/subtitles/en.sample.txt,0.1977989673614502,830,
+subtitles_en_literal,3,10,ugrep (lines),ugrep -n Sherlock Holmes /data/subtitles/en.sample.txt,0.20760011672973633,830,
+subtitles_en_literal,3,10,ugrep (lines),ugrep -n Sherlock Holmes /data/subtitles/en.sample.txt,0.20397233963012695,830,
+subtitles_en_literal,3,10,ugrep (lines),ugrep -n Sherlock Holmes /data/subtitles/en.sample.txt,0.19939017295837402,830,
+subtitles_en_literal,3,10,ugrep (lines),ugrep -n Sherlock Holmes /data/subtitles/en.sample.txt,0.2074110507965088,830,
+subtitles_en_alternate,3,10,alf,alf -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes' | 'John Watson' | 'Irene Adler' | 'Inspector Lestrade' | 'Professor Moriarty',0.04191756248474121,1094,
+subtitles_en_alternate,3,10,alf,alf -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes' | 'John Watson' | 'Irene Adler' | 'Inspector Lestrade' | 'Professor Moriarty',0.03943490982055664,1094,
+subtitles_en_alternate,3,10,alf,alf -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes' | 'John Watson' | 'Irene Adler' | 'Inspector Lestrade' | 'Professor Moriarty',0.039130449295043945,1094,
+subtitles_en_alternate,3,10,alf,alf -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes' | 'John Watson' | 'Irene Adler' | 'Inspector Lestrade' | 'Professor Moriarty',0.03886890411376953,1094,
+subtitles_en_alternate,3,10,alf,alf -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes' | 'John Watson' | 'Irene Adler' | 'Inspector Lestrade' | 'Professor Moriarty',0.03913593292236328,1094,
+subtitles_en_alternate,3,10,alf,alf -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes' | 'John Watson' | 'Irene Adler' | 'Inspector Lestrade' | 'Professor Moriarty',0.03937888145446777,1094,
+subtitles_en_alternate,3,10,alf,alf -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes' | 'John Watson' | 'Irene Adler' | 'Inspector Lestrade' | 'Professor Moriarty',0.038756608963012695,1094,
+subtitles_en_alternate,3,10,alf,alf -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes' | 'John Watson' | 'Irene Adler' | 'Inspector Lestrade' | 'Professor Moriarty',0.03889107704162598,1094,
+subtitles_en_alternate,3,10,alf,alf -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes' | 'John Watson' | 'Irene Adler' | 'Inspector Lestrade' | 'Professor Moriarty',0.03950357437133789,1094,
+subtitles_en_alternate,3,10,alf,alf -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes' | 'John Watson' | 'Irene Adler' | 'Inspector Lestrade' | 'Professor Moriarty',0.03902602195739746,1094,
+subtitles_en_alternate,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes' | 'John Watson' | 'Irene Adler' | 'Inspector Lestrade' | 'Professor Moriarty',0.16952180862426758,1094,
+subtitles_en_alternate,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes' | 'John Watson' | 'Irene Adler' | 'Inspector Lestrade' | 'Professor Moriarty',0.1683661937713623,1094,
+subtitles_en_alternate,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes' | 'John Watson' | 'Irene Adler' | 'Inspector Lestrade' | 'Professor Moriarty',0.17027068138122559,1094,
+subtitles_en_alternate,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes' | 'John Watson' | 'Irene Adler' | 'Inspector Lestrade' | 'Professor Moriarty',0.16893935203552246,1094,
+subtitles_en_alternate,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes' | 'John Watson' | 'Irene Adler' | 'Inspector Lestrade' | 'Professor Moriarty',0.16919517517089844,1094,
+subtitles_en_alternate,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes' | 'John Watson' | 'Irene Adler' | 'Inspector Lestrade' | 'Professor Moriarty',0.16935229301452637,1094,
+subtitles_en_alternate,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes' | 'John Watson' | 'Irene Adler' | 'Inspector Lestrade' | 'Professor Moriarty',0.16825103759765625,1094,
+subtitles_en_alternate,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes' | 'John Watson' | 'Irene Adler' | 'Inspector Lestrade' | 'Professor Moriarty',0.17052745819091797,1094,
+subtitles_en_alternate,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes' | 'John Watson' | 'Irene Adler' | 'Inspector Lestrade' | 'Professor Moriarty',0.16893458366394043,1094,
+subtitles_en_alternate,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/en.sample.txt -a 'Sherlock Holmes' | 'John Watson' | 'Irene Adler' | 'Inspector Lestrade' | 'Professor Moriarty',0.16835570335388184,1094,
+subtitles_en_alternate,3,10,rg (lines),rg -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.21228647232055664,1094,
+subtitles_en_alternate,3,10,rg (lines),rg -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.21077728271484375,1094,
+subtitles_en_alternate,3,10,rg (lines),rg -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.21254682540893555,1094,
+subtitles_en_alternate,3,10,rg (lines),rg -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.2111797332763672,1094,
+subtitles_en_alternate,3,10,rg (lines),rg -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.21164393424987793,1094,
+subtitles_en_alternate,3,10,rg (lines),rg -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.21118783950805664,1094,
+subtitles_en_alternate,3,10,rg (lines),rg -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.21152544021606445,1094,
+subtitles_en_alternate,3,10,rg (lines),rg -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.2118082046508789,1094,
+subtitles_en_alternate,3,10,rg (lines),rg -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.21193718910217285,1094,
+subtitles_en_alternate,3,10,rg (lines),rg -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.21161103248596191,1094,
+subtitles_en_alternate,3,10,ag (lines),ag -s Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,2.106416702270508,1094,
+subtitles_en_alternate,3,10,ag (lines),ag -s Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,2.1400749683380127,1094,
+subtitles_en_alternate,3,10,ag (lines),ag -s Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,2.196284294128418,1094,
+subtitles_en_alternate,3,10,ag (lines),ag -s Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,2.0726118087768555,1094,
+subtitles_en_alternate,3,10,ag (lines),ag -s Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,2.089878559112549,1094,
+subtitles_en_alternate,3,10,ag (lines),ag -s Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,2.164971351623535,1094,
+subtitles_en_alternate,3,10,ag (lines),ag -s Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,2.189751625061035,1094,
+subtitles_en_alternate,3,10,ag (lines),ag -s Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,2.261775493621826,1094,
+subtitles_en_alternate,3,10,ag (lines),ag -s Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,2.1447055339813232,1094,
+subtitles_en_alternate,3,10,ag (lines),ag -s Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,2.1765801906585693,1094,
+subtitles_en_alternate,3,10,grep (lines),grep -E -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,2.151012420654297,1094,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_alternate,3,10,grep (lines),grep -E -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,2.159313917160034,1094,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_alternate,3,10,grep (lines),grep -E -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,2.1576666831970215,1094,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_alternate,3,10,grep (lines),grep -E -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,2.156588315963745,1094,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_alternate,3,10,grep (lines),grep -E -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,2.1625452041625977,1094,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_alternate,3,10,grep (lines),grep -E -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,2.1762490272521973,1094,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_alternate,3,10,grep (lines),grep -E -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,2.1764631271362305,1094,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_alternate,3,10,grep (lines),grep -E -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,2.1795260906219482,1094,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_alternate,3,10,grep (lines),grep -E -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,2.156402587890625,1094,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_alternate,3,10,grep (lines),grep -E -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,2.208347797393799,1094,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_alternate,3,10,ugrep (lines),ugrep -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.25615692138671875,1094,
+subtitles_en_alternate,3,10,ugrep (lines),ugrep -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.2570533752441406,1094,
+subtitles_en_alternate,3,10,ugrep (lines),ugrep -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.2578580379486084,1094,
+subtitles_en_alternate,3,10,ugrep (lines),ugrep -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.25665736198425293,1094,
+subtitles_en_alternate,3,10,ugrep (lines),ugrep -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.2576119899749756,1094,
+subtitles_en_alternate,3,10,ugrep (lines),ugrep -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.25734424591064453,1094,
+subtitles_en_alternate,3,10,ugrep (lines),ugrep -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.26032423973083496,1094,
+subtitles_en_alternate,3,10,ugrep (lines),ugrep -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.2656238079071045,1094,
+subtitles_en_alternate,3,10,ugrep (lines),ugrep -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.2652420997619629,1094,
+subtitles_en_alternate,3,10,ugrep (lines),ugrep -n Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.26813507080078125,1094,
+subtitles_en_alternate,3,10,rg,rg Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.18133163452148438,1094,
+subtitles_en_alternate,3,10,rg,rg Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.18139910697937012,1094,
+subtitles_en_alternate,3,10,rg,rg Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.1826179027557373,1094,
+subtitles_en_alternate,3,10,rg,rg Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.17957139015197754,1094,
+subtitles_en_alternate,3,10,rg,rg Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.17857623100280762,1094,
+subtitles_en_alternate,3,10,rg,rg Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.18332815170288086,1094,
+subtitles_en_alternate,3,10,rg,rg Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.1800844669342041,1094,
+subtitles_en_alternate,3,10,rg,rg Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.18598365783691406,1094,
+subtitles_en_alternate,3,10,rg,rg Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.18950629234313965,1094,
+subtitles_en_alternate,3,10,rg,rg Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,0.1899857521057129,1094,
+subtitles_en_alternate,3,10,grep,grep -E Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,1.597379207611084,1094,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_alternate,3,10,grep,grep -E Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,1.6022868156433105,1094,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_alternate,3,10,grep,grep -E Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,1.60231351852417,1094,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_alternate,3,10,grep,grep -E Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,1.5940678119659424,1094,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_alternate,3,10,grep,grep -E Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,1.5946600437164307,1094,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_alternate,3,10,grep,grep -E Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,1.5950140953063965,1094,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_alternate,3,10,grep,grep -E Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,1.5932154655456543,1094,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_alternate,3,10,grep,grep -E Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,1.5941431522369385,1094,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_alternate,3,10,grep,grep -E Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,1.6184413433074951,1094,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_en_alternate,3,10,grep,grep -E Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty /data/subtitles/en.sample.txt,1.6054103374481201,1094,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_literal,3,10,alf,alf -i /data/subtitles/ru.txt -a 'Шерлок Холмс',0.026900768280029297,583,
+subtitles_ru_literal,3,10,alf,alf -i /data/subtitles/ru.txt -a 'Шерлок Холмс',0.02792954444885254,583,
+subtitles_ru_literal,3,10,alf,alf -i /data/subtitles/ru.txt -a 'Шерлок Холмс',0.02695155143737793,583,
+subtitles_ru_literal,3,10,alf,alf -i /data/subtitles/ru.txt -a 'Шерлок Холмс',0.027301788330078125,583,
+subtitles_ru_literal,3,10,alf,alf -i /data/subtitles/ru.txt -a 'Шерлок Холмс',0.027348756790161133,583,
+subtitles_ru_literal,3,10,alf,alf -i /data/subtitles/ru.txt -a 'Шерлок Холмс',0.027074575424194336,583,
+subtitles_ru_literal,3,10,alf,alf -i /data/subtitles/ru.txt -a 'Шерлок Холмс',0.027333498001098633,583,
+subtitles_ru_literal,3,10,alf,alf -i /data/subtitles/ru.txt -a 'Шерлок Холмс',0.027383089065551758,583,
+subtitles_ru_literal,3,10,alf,alf -i /data/subtitles/ru.txt -a 'Шерлок Холмс',0.027247905731201172,583,
+subtitles_ru_literal,3,10,alf,alf -i /data/subtitles/ru.txt -a 'Шерлок Холмс',0.027151823043823242,583,
+subtitles_ru_literal,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/ru.txt -a 'Шерлок Холмс',0.07899785041809082,583,
+subtitles_ru_literal,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/ru.txt -a 'Шерлок Холмс',0.07945489883422852,583,
+subtitles_ru_literal,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/ru.txt -a 'Шерлок Холмс',0.07882261276245117,583,
+subtitles_ru_literal,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/ru.txt -a 'Шерлок Холмс',0.07907795906066895,583,
+subtitles_ru_literal,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/ru.txt -a 'Шерлок Холмс',0.0796194076538086,583,
+subtitles_ru_literal,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/ru.txt -a 'Шерлок Холмс',0.07932901382446289,583,
+subtitles_ru_literal,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/ru.txt -a 'Шерлок Холмс',0.0798037052154541,583,
+subtitles_ru_literal,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/ru.txt -a 'Шерлок Холмс',0.07874345779418945,583,
+subtitles_ru_literal,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/ru.txt -a 'Шерлок Холмс',0.0799863338470459,583,
+subtitles_ru_literal,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/ru.txt -a 'Шерлок Холмс',0.0792536735534668,583,
+subtitles_ru_literal,3,10,rg,rg Шерлок Холмс /data/subtitles/ru.txt,0.09067153930664062,583,
+subtitles_ru_literal,3,10,rg,rg Шерлок Холмс /data/subtitles/ru.txt,0.08978438377380371,583,
+subtitles_ru_literal,3,10,rg,rg Шерлок Холмс /data/subtitles/ru.txt,0.0902094841003418,583,
+subtitles_ru_literal,3,10,rg,rg Шерлок Холмс /data/subtitles/ru.txt,0.08994817733764648,583,
+subtitles_ru_literal,3,10,rg,rg Шерлок Холмс /data/subtitles/ru.txt,0.09010934829711914,583,
+subtitles_ru_literal,3,10,rg,rg Шерлок Холмс /data/subtitles/ru.txt,0.09101343154907227,583,
+subtitles_ru_literal,3,10,rg,rg Шерлок Холмс /data/subtitles/ru.txt,0.09105706214904785,583,
+subtitles_ru_literal,3,10,rg,rg Шерлок Холмс /data/subtitles/ru.txt,0.09040093421936035,583,
+subtitles_ru_literal,3,10,rg,rg Шерлок Холмс /data/subtitles/ru.txt,0.09026741981506348,583,
+subtitles_ru_literal,3,10,rg,rg Шерлок Холмс /data/subtitles/ru.txt,0.09080624580383301,583,
+subtitles_ru_literal,3,10,rg (no mmap),rg --no-mmap Шерлок Холмс /data/subtitles/ru.txt,0.15048861503601074,583,
+subtitles_ru_literal,3,10,rg (no mmap),rg --no-mmap Шерлок Холмс /data/subtitles/ru.txt,0.1495513916015625,583,
+subtitles_ru_literal,3,10,rg (no mmap),rg --no-mmap Шерлок Холмс /data/subtitles/ru.txt,0.14901494979858398,583,
+subtitles_ru_literal,3,10,rg (no mmap),rg --no-mmap Шерлок Холмс /data/subtitles/ru.txt,0.1486809253692627,583,
+subtitles_ru_literal,3,10,rg (no mmap),rg --no-mmap Шерлок Холмс /data/subtitles/ru.txt,0.14933228492736816,583,
+subtitles_ru_literal,3,10,rg (no mmap),rg --no-mmap Шерлок Холмс /data/subtitles/ru.txt,0.14947152137756348,583,
+subtitles_ru_literal,3,10,rg (no mmap),rg --no-mmap Шерлок Холмс /data/subtitles/ru.txt,0.14953255653381348,583,
+subtitles_ru_literal,3,10,rg (no mmap),rg --no-mmap Шерлок Холмс /data/subtitles/ru.txt,0.14934062957763672,583,
+subtitles_ru_literal,3,10,rg (no mmap),rg --no-mmap Шерлок Холмс /data/subtitles/ru.txt,0.14998960494995117,583,
+subtitles_ru_literal,3,10,rg (no mmap),rg --no-mmap Шерлок Холмс /data/subtitles/ru.txt,0.14971661567687988,583,
+subtitles_ru_literal,3,10,grep,grep Шерлок Холмс /data/subtitles/ru.txt,0.42374253273010254,583,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_literal,3,10,grep,grep Шерлок Холмс /data/subtitles/ru.txt,0.4249534606933594,583,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_literal,3,10,grep,grep Шерлок Холмс /data/subtitles/ru.txt,0.4244110584259033,583,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_literal,3,10,grep,grep Шерлок Холмс /data/subtitles/ru.txt,0.424835205078125,583,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_literal,3,10,grep,grep Шерлок Холмс /data/subtitles/ru.txt,0.4233865737915039,583,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_literal,3,10,grep,grep Шерлок Холмс /data/subtitles/ru.txt,0.42429327964782715,583,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_literal,3,10,grep,grep Шерлок Холмс /data/subtitles/ru.txt,0.42527055740356445,583,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_literal,3,10,grep,grep Шерлок Холмс /data/subtitles/ru.txt,0.42485547065734863,583,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_literal,3,10,grep,grep Шерлок Холмс /data/subtitles/ru.txt,0.42482686042785645,583,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_literal,3,10,grep,grep Шерлок Холмс /data/subtitles/ru.txt,0.42568039894104004,583,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_literal,3,10,rg (lines),rg -n Шерлок Холмс /data/subtitles/ru.txt,0.12412762641906738,583,
+subtitles_ru_literal,3,10,rg (lines),rg -n Шерлок Холмс /data/subtitles/ru.txt,0.12373828887939453,583,
+subtitles_ru_literal,3,10,rg (lines),rg -n Шерлок Холмс /data/subtitles/ru.txt,0.12374210357666016,583,
+subtitles_ru_literal,3,10,rg (lines),rg -n Шерлок Холмс /data/subtitles/ru.txt,0.12304329872131348,583,
+subtitles_ru_literal,3,10,rg (lines),rg -n Шерлок Холмс /data/subtitles/ru.txt,0.12332582473754883,583,
+subtitles_ru_literal,3,10,rg (lines),rg -n Шерлок Холмс /data/subtitles/ru.txt,0.12375450134277344,583,
+subtitles_ru_literal,3,10,rg (lines),rg -n Шерлок Холмс /data/subtitles/ru.txt,0.12382793426513672,583,
+subtitles_ru_literal,3,10,rg (lines),rg -n Шерлок Холмс /data/subtitles/ru.txt,0.12286734580993652,583,
+subtitles_ru_literal,3,10,rg (lines),rg -n Шерлок Холмс /data/subtitles/ru.txt,0.12564873695373535,583,
+subtitles_ru_literal,3,10,rg (lines),rg -n Шерлок Холмс /data/subtitles/ru.txt,0.12433767318725586,583,
+subtitles_ru_literal,3,10,ag (lines),ag -s Шерлок Холмс /data/subtitles/ru.txt,1.7043204307556152,583,
+subtitles_ru_literal,3,10,ag (lines),ag -s Шерлок Холмс /data/subtitles/ru.txt,1.7314608097076416,583,
+subtitles_ru_literal,3,10,ag (lines),ag -s Шерлок Холмс /data/subtitles/ru.txt,1.6738531589508057,583,
+subtitles_ru_literal,3,10,ag (lines),ag -s Шерлок Холмс /data/subtitles/ru.txt,1.7174057960510254,583,
+subtitles_ru_literal,3,10,ag (lines),ag -s Шерлок Холмс /data/subtitles/ru.txt,1.7463858127593994,583,
+subtitles_ru_literal,3,10,ag (lines),ag -s Шерлок Холмс /data/subtitles/ru.txt,1.6866796016693115,583,
+subtitles_ru_literal,3,10,ag (lines),ag -s Шерлок Холмс /data/subtitles/ru.txt,1.6688826084136963,583,
+subtitles_ru_literal,3,10,ag (lines),ag -s Шерлок Холмс /data/subtitles/ru.txt,1.6500303745269775,583,
+subtitles_ru_literal,3,10,ag (lines),ag -s Шерлок Холмс /data/subtitles/ru.txt,1.644437313079834,583,
+subtitles_ru_literal,3,10,ag (lines),ag -s Шерлок Холмс /data/subtitles/ru.txt,1.677523136138916,583,
+subtitles_ru_literal,3,10,grep (lines),grep -n Шерлок Холмс /data/subtitles/ru.txt,0.7993793487548828,583,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_literal,3,10,grep (lines),grep -n Шерлок Холмс /data/subtitles/ru.txt,0.7837734222412109,583,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_literal,3,10,grep (lines),grep -n Шерлок Холмс /data/subtitles/ru.txt,0.7970507144927979,583,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_literal,3,10,grep (lines),grep -n Шерлок Холмс /data/subtitles/ru.txt,0.7801895141601562,583,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_literal,3,10,grep (lines),grep -n Шерлок Холмс /data/subtitles/ru.txt,0.7890052795410156,583,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_literal,3,10,grep (lines),grep -n Шерлок Холмс /data/subtitles/ru.txt,0.7960124015808105,583,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_literal,3,10,grep (lines),grep -n Шерлок Холмс /data/subtitles/ru.txt,0.7817034721374512,583,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_literal,3,10,grep (lines),grep -n Шерлок Холмс /data/subtitles/ru.txt,0.7815008163452148,583,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_literal,3,10,grep (lines),grep -n Шерлок Холмс /data/subtitles/ru.txt,0.7826869487762451,583,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_literal,3,10,grep (lines),grep -n Шерлок Холмс /data/subtitles/ru.txt,0.7834017276763916,583,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_literal,3,10,ugrep (lines),ugrep -a -n Шерлок Холмс /data/subtitles/ru.txt,1.7710893154144287,583,
+subtitles_ru_literal,3,10,ugrep (lines),ugrep -a -n Шерлок Холмс /data/subtitles/ru.txt,1.7651259899139404,583,
+subtitles_ru_literal,3,10,ugrep (lines),ugrep -a -n Шерлок Холмс /data/subtitles/ru.txt,1.7677912712097168,583,
+subtitles_ru_literal,3,10,ugrep (lines),ugrep -a -n Шерлок Холмс /data/subtitles/ru.txt,1.7677032947540283,583,
+subtitles_ru_literal,3,10,ugrep (lines),ugrep -a -n Шерлок Холмс /data/subtitles/ru.txt,1.9360499382019043,583,
+subtitles_ru_literal,3,10,ugrep (lines),ugrep -a -n Шерлок Холмс /data/subtitles/ru.txt,1.7678227424621582,583,
+subtitles_ru_literal,3,10,ugrep (lines),ugrep -a -n Шерлок Холмс /data/subtitles/ru.txt,1.777803897857666,583,
+subtitles_ru_literal,3,10,ugrep (lines),ugrep -a -n Шерлок Холмс /data/subtitles/ru.txt,1.7898311614990234,583,
+subtitles_ru_literal,3,10,ugrep (lines),ugrep -a -n Шерлок Холмс /data/subtitles/ru.txt,1.775266170501709,583,
+subtitles_ru_literal,3,10,ugrep (lines),ugrep -a -n Шерлок Холмс /data/subtitles/ru.txt,1.7965283393859863,583,
+subtitles_ru_alternate,3,10,alf,alf -i /data/subtitles/ru.txt -a 'Шерлок Холмс' | 'Джон Уотсон' | 'Ирен Адлер' | 'инспектор Лестрейд' | 'профессор Мориарти',0.053095340728759766,691,
+subtitles_ru_alternate,3,10,alf,alf -i /data/subtitles/ru.txt -a 'Шерлок Холмс' | 'Джон Уотсон' | 'Ирен Адлер' | 'инспектор Лестрейд' | 'профессор Мориарти',0.05404853820800781,691,
+subtitles_ru_alternate,3,10,alf,alf -i /data/subtitles/ru.txt -a 'Шерлок Холмс' | 'Джон Уотсон' | 'Ирен Адлер' | 'инспектор Лестрейд' | 'профессор Мориарти',0.0531458854675293,691,
+subtitles_ru_alternate,3,10,alf,alf -i /data/subtitles/ru.txt -a 'Шерлок Холмс' | 'Джон Уотсон' | 'Ирен Адлер' | 'инспектор Лестрейд' | 'профессор Мориарти',0.05539083480834961,691,
+subtitles_ru_alternate,3,10,alf,alf -i /data/subtitles/ru.txt -a 'Шерлок Холмс' | 'Джон Уотсон' | 'Ирен Адлер' | 'инспектор Лестрейд' | 'профессор Мориарти',0.053069353103637695,691,
+subtitles_ru_alternate,3,10,alf,alf -i /data/subtitles/ru.txt -a 'Шерлок Холмс' | 'Джон Уотсон' | 'Ирен Адлер' | 'инспектор Лестрейд' | 'профессор Мориарти',0.054270029067993164,691,
+subtitles_ru_alternate,3,10,alf,alf -i /data/subtitles/ru.txt -a 'Шерлок Холмс' | 'Джон Уотсон' | 'Ирен Адлер' | 'инспектор Лестрейд' | 'профессор Мориарти',0.05302739143371582,691,
+subtitles_ru_alternate,3,10,alf,alf -i /data/subtitles/ru.txt -a 'Шерлок Холмс' | 'Джон Уотсон' | 'Ирен Адлер' | 'инспектор Лестрейд' | 'профессор Мориарти',0.05438828468322754,691,
+subtitles_ru_alternate,3,10,alf,alf -i /data/subtitles/ru.txt -a 'Шерлок Холмс' | 'Джон Уотсон' | 'Ирен Адлер' | 'инспектор Лестрейд' | 'профессор Мориарти',0.05492973327636719,691,
+subtitles_ru_alternate,3,10,alf,alf -i /data/subtitles/ru.txt -a 'Шерлок Холмс' | 'Джон Уотсон' | 'Ирен Адлер' | 'инспектор Лестрейд' | 'профессор Мориарти',0.052762508392333984,691,
+subtitles_ru_alternate,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/ru.txt -a 'Шерлок Холмс' | 'Джон Уотсон' | 'Ирен Адлер' | 'инспектор Лестрейд' | 'профессор Мориарти',0.2771275043487549,691,
+subtitles_ru_alternate,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/ru.txt -a 'Шерлок Холмс' | 'Джон Уотсон' | 'Ирен Адлер' | 'инспектор Лестрейд' | 'профессор Мориарти',0.27746105194091797,691,
+subtitles_ru_alternate,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/ru.txt -a 'Шерлок Холмс' | 'Джон Уотсон' | 'Ирен Адлер' | 'инспектор Лестрейд' | 'профессор Мориарти',0.27547240257263184,691,
+subtitles_ru_alternate,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/ru.txt -a 'Шерлок Холмс' | 'Джон Уотсон' | 'Ирен Адлер' | 'инспектор Лестрейд' | 'профессор Мориарти',0.27600574493408203,691,
+subtitles_ru_alternate,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/ru.txt -a 'Шерлок Холмс' | 'Джон Уотсон' | 'Ирен Адлер' | 'инспектор Лестрейд' | 'профессор Мориарти',0.27785229682922363,691,
+subtitles_ru_alternate,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/ru.txt -a 'Шерлок Холмс' | 'Джон Уотсон' | 'Ирен Адлер' | 'инспектор Лестрейд' | 'профессор Мориарти',0.27634334564208984,691,
+subtitles_ru_alternate,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/ru.txt -a 'Шерлок Холмс' | 'Джон Уотсон' | 'Ирен Адлер' | 'инспектор Лестрейд' | 'профессор Мориарти',0.2781798839569092,691,
+subtitles_ru_alternate,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/ru.txt -a 'Шерлок Холмс' | 'Джон Уотсон' | 'Ирен Адлер' | 'инспектор Лестрейд' | 'профессор Мориарти',0.2788410186767578,691,
+subtitles_ru_alternate,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/ru.txt -a 'Шерлок Холмс' | 'Джон Уотсон' | 'Ирен Адлер' | 'инспектор Лестрейд' | 'профессор Мориарти',0.2795405387878418,691,
+subtitles_ru_alternate,3,10,alf (1 thread),alf --threads 1 -i /data/subtitles/ru.txt -a 'Шерлок Холмс' | 'Джон Уотсон' | 'Ирен Адлер' | 'инспектор Лестрейд' | 'профессор Мориарти',0.280963659286499,691,
+subtitles_ru_alternate,3,10,rg (lines),rg -n Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,0.32719922065734863,691,
+subtitles_ru_alternate,3,10,rg (lines),rg -n Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,0.32713866233825684,691,
+subtitles_ru_alternate,3,10,rg (lines),rg -n Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,0.3295266628265381,691,
+subtitles_ru_alternate,3,10,rg (lines),rg -n Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,0.3279097080230713,691,
+subtitles_ru_alternate,3,10,rg (lines),rg -n Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,0.32762598991394043,691,
+subtitles_ru_alternate,3,10,rg (lines),rg -n Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,0.3293616771697998,691,
+subtitles_ru_alternate,3,10,rg (lines),rg -n Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,0.32805585861206055,691,
+subtitles_ru_alternate,3,10,rg (lines),rg -n Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,0.3289930820465088,691,
+subtitles_ru_alternate,3,10,rg (lines),rg -n Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,0.328291654586792,691,
+subtitles_ru_alternate,3,10,rg (lines),rg -n Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,0.3277556896209717,691,
+subtitles_ru_alternate,3,10,ag (lines),ag -s Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,2.3322091102600098,691,
+subtitles_ru_alternate,3,10,ag (lines),ag -s Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,2.3567709922790527,691,
+subtitles_ru_alternate,3,10,ag (lines),ag -s Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,2.380749464035034,691,
+subtitles_ru_alternate,3,10,ag (lines),ag -s Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,2.3938467502593994,691,
+subtitles_ru_alternate,3,10,ag (lines),ag -s Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,2.337867021560669,691,
+subtitles_ru_alternate,3,10,ag (lines),ag -s Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,2.310105800628662,691,
+subtitles_ru_alternate,3,10,ag (lines),ag -s Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,2.432901382446289,691,
+subtitles_ru_alternate,3,10,ag (lines),ag -s Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,2.3378021717071533,691,
+subtitles_ru_alternate,3,10,ag (lines),ag -s Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,2.3753278255462646,691,
+subtitles_ru_alternate,3,10,ag (lines),ag -s Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,2.3530592918395996,691,
+subtitles_ru_alternate,3,10,grep (lines),grep -E -n Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,5.543719530105591,691,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_alternate,3,10,grep (lines),grep -E -n Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,5.5085060596466064,691,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_alternate,3,10,grep (lines),grep -E -n Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,5.508460283279419,691,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_alternate,3,10,grep (lines),grep -E -n Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,5.495875120162964,691,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_alternate,3,10,grep (lines),grep -E -n Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,5.56536078453064,691,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_alternate,3,10,grep (lines),grep -E -n Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,5.52106785774231,691,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_alternate,3,10,grep (lines),grep -E -n Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,5.506257772445679,691,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_alternate,3,10,grep (lines),grep -E -n Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,5.5204126834869385,691,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_alternate,3,10,grep (lines),grep -E -n Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,5.573955774307251,691,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_alternate,3,10,grep (lines),grep -E -n Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,5.564259052276611,691,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_alternate,3,10,ugrep (lines),ugrep -an Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,2.7722277641296387,691,
+subtitles_ru_alternate,3,10,ugrep (lines),ugrep -an Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,2.7685937881469727,691,
+subtitles_ru_alternate,3,10,ugrep (lines),ugrep -an Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,2.7672696113586426,691,
+subtitles_ru_alternate,3,10,ugrep (lines),ugrep -an Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,2.772080659866333,691,
+subtitles_ru_alternate,3,10,ugrep (lines),ugrep -an Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,2.7685506343841553,691,
+subtitles_ru_alternate,3,10,ugrep (lines),ugrep -an Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,2.770317316055298,691,
+subtitles_ru_alternate,3,10,ugrep (lines),ugrep -an Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,2.771556854248047,691,
+subtitles_ru_alternate,3,10,ugrep (lines),ugrep -an Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,2.773841142654419,691,
+subtitles_ru_alternate,3,10,ugrep (lines),ugrep -an Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,2.770622491836548,691,
+subtitles_ru_alternate,3,10,ugrep (lines),ugrep -an Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,2.7670650482177734,691,
+subtitles_ru_alternate,3,10,rg,rg Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,0.2948129177093506,691,
+subtitles_ru_alternate,3,10,rg,rg Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,0.2967233657836914,691,
+subtitles_ru_alternate,3,10,rg,rg Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,0.29575085639953613,691,
+subtitles_ru_alternate,3,10,rg,rg Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,0.2952284812927246,691,
+subtitles_ru_alternate,3,10,rg,rg Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,0.29588961601257324,691,
+subtitles_ru_alternate,3,10,rg,rg Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,0.29515695571899414,691,
+subtitles_ru_alternate,3,10,rg,rg Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,0.295912504196167,691,
+subtitles_ru_alternate,3,10,rg,rg Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,0.29711294174194336,691,
+subtitles_ru_alternate,3,10,rg,rg Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,0.2984943389892578,691,
+subtitles_ru_alternate,3,10,rg,rg Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,0.2958943843841553,691,
+subtitles_ru_alternate,3,10,grep,grep -E Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,5.149043321609497,691,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_alternate,3,10,grep,grep -E Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,5.137333154678345,691,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_alternate,3,10,grep,grep -E Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,5.121340036392212,691,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_alternate,3,10,grep,grep -E Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,5.143855571746826,691,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_alternate,3,10,grep,grep -E Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,5.221056938171387,691,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_alternate,3,10,grep,grep -E Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,5.16547155380249,691,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_alternate,3,10,grep,grep -E Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,5.168548345565796,691,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_alternate,3,10,grep,grep -E Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,5.167632579803467,691,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_alternate,3,10,grep,grep -E Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,5.139647006988525,691,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C
+subtitles_ru_alternate,3,10,grep,grep -E Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти /data/subtitles/ru.txt,5.1333513259887695,691,HOSTNAME=3dd3aa7836c9 HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PWD=/alf LC_CTYPE=C.UTF-8 LC_ALL=C

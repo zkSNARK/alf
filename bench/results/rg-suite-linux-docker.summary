@@ -1,0 +1,45 @@
+subtitles_en_literal (pattern: Sherlock Holmes)
+-----------------------------------------------
+alf*             0.029 +/- 0.001 (lines: 830)*
+alf (1 thread)   0.090 +/- 0.001 (lines: 830)
+rg               0.095 +/- 0.003 (lines: 830)
+rg (no mmap)     0.171 +/- 0.006 (lines: 830)
+grep             0.538 +/- 0.005 (lines: 830)
+rg (lines)       0.124 +/- 0.003 (lines: 830)
+ag (lines)       1.823 +/- 0.043 (lines: 830)
+grep (lines)     1.082 +/- 0.015 (lines: 830)
+ugrep (lines)    0.203 +/- 0.004 (lines: 830)
+
+subtitles_en_alternate (pattern: Sherlock Holmes|John Watson|Irene Adler|Inspector Lestrade|Professor Moriarty)
+---------------------------------------------------------------------------------------------------------------
+alf*             0.039 +/- 0.001 (lines: 1094)*
+alf (1 thread)   0.169 +/- 0.001 (lines: 1094)
+rg (lines)       0.212 +/- 0.001 (lines: 1094)
+ag (lines)       2.154 +/- 0.056 (lines: 1094)
+grep (lines)     2.168 +/- 0.017 (lines: 1094)
+ugrep (lines)    0.260 +/- 0.004 (lines: 1094)
+rg               0.183 +/- 0.004 (lines: 1094)
+grep             1.600 +/- 0.008 (lines: 1094)
+
+subtitles_ru_literal (pattern: Шерлок Холмс)
+--------------------------------------------
+alf*             0.027 +/- 0.000 (lines: 583)*
+alf (1 thread)   0.079 +/- 0.000 (lines: 583)
+rg               0.090 +/- 0.000 (lines: 583)
+rg (no mmap)     0.150 +/- 0.000 (lines: 583)
+grep             0.425 +/- 0.001 (lines: 583)
+rg (lines)       0.124 +/- 0.001 (lines: 583)
+ag (lines)       1.690 +/- 0.034 (lines: 583)
+grep (lines)     0.787 +/- 0.007 (lines: 583)
+ugrep (lines)    1.792 +/- 0.052 (lines: 583)
+
+subtitles_ru_alternate (pattern: Шерлок Холмс|Джон Уотсон|Ирен Адлер|инспектор Лестрейд|профессор Мориарти)
+-----------------------------------------------------------------------------------------------------------
+alf*             0.054 +/- 0.001 (lines: 691)*
+alf (1 thread)   0.278 +/- 0.002 (lines: 691)
+rg (lines)       0.328 +/- 0.001 (lines: 691)
+ag (lines)       2.361 +/- 0.036 (lines: 691)
+grep (lines)     5.531 +/- 0.029 (lines: 691)
+ugrep (lines)    2.770 +/- 0.002 (lines: 691)
+rg               0.296 +/- 0.001 (lines: 691)
+grep             5.155 +/- 0.028 (lines: 691)

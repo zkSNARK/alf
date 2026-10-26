@@ -1,0 +1,6 @@
+Darwin 25.6.0 arm64
+neon    runs here  (in use)
+ripgrep 15.2.0
+grep (GNU grep) 3.12
+ag version 2.2.0
+ugrep 7.8.5 aarch64-apple-darwin25.6.0 +neon/AArch64; -P:pcre2jit; -z:zlib,bzip2,lzma,lz4,zstd,brotli,7z,tar/pax/cpio/zip

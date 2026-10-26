@@ -1,0 +1,58 @@
+--- a/benchsuite/benchsuite
++++ b/benchsuite/benchsuite
+@@ -390,6 +390,10 @@
+     pat = 'Sherlock Holmes'
+ 
+     return Benchmark(pattern=pat, commands=[
++        # alf (https://github.com/zkSNARK/alf): the same strings as an expression; by
++        # default one thread per performance core, and pinned to one like the others
++        Command('alf', ['alf', '-i', en, '-a', "'%s'" % pat]),
++        Command('alf (1 thread)', ['alf', '--threads', '1', '-i', en, '-a', "'%s'" % pat]),
+         Command('rg', ['rg', pat, en]),
+         Command('rg (no mmap)', ['rg', '--no-mmap', pat, en]),
+         Command('grep', ['grep', pat, en], env=GREP_ASCII),
+@@ -453,6 +457,10 @@
+     ])
+ 
+     return Benchmark(pattern=pat, commands=[
++        # alf (https://github.com/zkSNARK/alf): the same strings as an expression; by
++        # default one thread per performance core, and pinned to one like the others
++        Command('alf', ['alf', '-i', en, '-a', ' | '.join("'%s'" % p for p in pat.split('|'))]),
++        Command('alf (1 thread)', ['alf', '--threads', '1', '-i', en, '-a', ' | '.join("'%s'" % p for p in pat.split('|'))]),
+         Command('rg (lines)', ['rg', '-n', pat, en]),
+         Command('ag (lines)', ['ag', '-s', pat, en]),
+         Command('grep (lines)', ['grep', '-E', '-n', pat, en], env=GREP_ASCII),
+@@ -538,6 +546,10 @@
+     pat = 'Шерлок Холмс'  # Sherlock Holmes
+ 
+     return Benchmark(pattern=pat, commands=[
++        # alf (https://github.com/zkSNARK/alf): the same strings as an expression; by
++        # default one thread per performance core, and pinned to one like the others
++        Command('alf', ['alf', '-i', ru, '-a', "'%s'" % pat]),
++        Command('alf (1 thread)', ['alf', '--threads', '1', '-i', ru, '-a', "'%s'" % pat]),
+         Command('rg', ['rg', pat, ru]),
+         Command('rg (no mmap)', ['rg', '--no-mmap', pat, ru]),
+         Command('grep', ['grep', pat, ru], env=GREP_ASCII),
+@@ -613,6 +625,10 @@
+     ])
+ 
+     return Benchmark(pattern=pat, commands=[
++        # alf (https://github.com/zkSNARK/alf): the same strings as an expression; by
++        # default one thread per performance core, and pinned to one like the others
++        Command('alf', ['alf', '-i', ru, '-a', ' | '.join("'%s'" % p for p in pat.split('|'))]),
++        Command('alf (1 thread)', ['alf', '--threads', '1', '-i', ru, '-a', ' | '.join("'%s'" % p for p in pat.split('|'))]),
+         Command('rg (lines)', ['rg', '-n', pat, ru]),
+         Command('ag (lines)', ['ag', '-s', pat, ru]),
+         Command('grep (lines)', ['grep', '-E', '-n', pat, ru], env=GREP_ASCII),
+@@ -982,6 +998,11 @@
+         self.cmd = cmd
+         self.args = args
+         self.kwargs = kwargs
++        # alf: add `env` to the inherited environment instead of replacing it.  Replaced, PATH
++        # is gone and the command is looked up in /bin:/usr/bin, which on macOS runs BSD grep
++        # for every 'grep' command with LC_ALL set.  On Linux it's the same either way.
++        if 'env' in self.kwargs:
++            self.kwargs['env'] = dict(os.environ, **self.kwargs['env'])
+ 
+     def exists(self):
+         'Returns true if and only if this command exists.'

@@ -49,3 +49,10 @@ docker run --rm -v "$PWD/bench/results:/results" alf-bench
 <https://goebel-home.net/projects/alf/>: an Apple M4 Max under macOS, and the same machine
 running the Linux container in a colima VM (8 vCPUs). The container numbers show the Linux
 tools' relative speed; they are not a bare-metal Linux measurement.
+
+## Someone else's benchmarks
+
+These five tasks were written by alf's author. [`ripgrep-suite/`](ripgrep-suite/) runs ripgrep's
+own benchmark suite with alf added to the benchmarks it can answer; its results are
+`results/rg-suite-macos.*` and `results/rg-suite-linux-docker.*`.
+

@@ -1,0 +1,6 @@
+Linux 6.8.0-117-generic aarch64
+neon    runs here  (in use)
+ripgrep 14.1.1
+grep (GNU grep) 3.11
+ag version 2.2.0
+ugrep 7.4.2 aarch64-unknown-linux-gnu +neon/AArch64; -P:pcre2jit; -z:zlib,bzip2,lzma,lz4,zstd,brotli,7z,tar/pax/cpio/zip
