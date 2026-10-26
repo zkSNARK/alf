@@ -50,9 +50,9 @@ auto alf::handle_operator(std::stack<bool>& stk, types::TYPE_TOKEN tt) -> void
 
 namespace
 {
-  // The reference rules for i'...' and w'...', written as plainly as possible (every start
-  // position, byte by byte): the fast paths in program.cpp are tested against these.
-  auto ascii_lower(char c) -> char { return (c >= 'A' and c <= 'Z') ? static_cast<char>(c - 'A' + 'a') : c; }
+  // The reference rules for i'...' and w'...', written as plainly as possible (the line decoded
+  // into characters front to back, every table searched entry by entry): the fast paths in
+  // program.cpp, which do it differently, are tested against these.
 
   // Word characters as Unicode defines them, looked up the slow way (every range in turn).
   auto is_word_char(char32_t c) -> bool
@@ -102,6 +102,18 @@ namespace
     return out;
   }
 
+  // Simple case folding; a byte that isn't a well-formed character (0xFFFFFFFF here) is only
+  // ever equal to the same byte.
+  auto fold_char(char32_t c) -> char32_t
+  {
+    for (auto const& f : alf::unicode::fold_table) {
+      if (f.from == c) {
+        return f.to;
+      }
+    }
+    return c;
+  }
+
   // Is there a word character ending exactly at byte `pos` (before) / starting exactly there (after)?
   auto word_ends_at(std::vector<Char> const& cs, std::size_t pos) -> bool
   {
@@ -126,15 +138,32 @@ namespace
   auto contains(std::string const& line, alf::types::TokenBase const& t) -> bool
   {
     std::string const& s = t.value;
+    std::vector<Char> const cs = characters(line);
+    if (t.nocase) {
+      // compare characters after folding, from every character of the line on
+      std::vector<Char> const want = characters(s);
+      auto const key = [&](std::string const& text, Char const& ch) -> std::pair<char32_t, unsigned char> {
+        return ch.c == 0xFFFFFFFF ? std::pair<char32_t, unsigned char>{ 0xFFFFFFFF, static_cast<unsigned char>(text[ch.at]) }
+                                  : std::pair<char32_t, unsigned char>{ fold_char(ch.c), 0 };
+      };
+      for (std::size_t i = 0; i + want.size() <= cs.size(); ++i) {
+        bool same = true;
+        for (std::size_t k = 0; k < want.size() and same; ++k) {
+          same = key(line, cs[i + k]) == key(s, want[k]);
+        }
+        std::size_t const from = i < cs.size() ? cs[i].at : line.size();
+        std::size_t const to = i + want.size() < cs.size() ? cs[i + want.size()].at : line.size();
+        if (same and (!t.word or (!word_ends_at(cs, from) and !word_starts_at(cs, to)))) {
+          return true;
+        }
+      }
+      return false;
+    }
     if (s.size() > line.size()) {
       return false;
     }
-    std::vector<Char> const cs = t.word ? characters(line) : std::vector<Char>{};
     for (std::size_t at = 0; at + s.size() <= line.size(); ++at) {
-      bool same = true;
-      for (std::size_t k = 0; k < s.size() and same; ++k) {
-        same = t.nocase ? ascii_lower(line[at + k]) == ascii_lower(s[k]) : line[at + k] == s[k];
-      }
+      bool same = line.compare(at, s.size(), s) == 0;
       if (same and t.word) {
         same = !word_ends_at(cs, at) and !word_starts_at(cs, at + s.size());
       }

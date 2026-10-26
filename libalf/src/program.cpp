@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <deque>
 #include <exception>
 #include <optional>
 #include <stdexcept>
@@ -39,10 +40,8 @@ namespace
     return nl ? nl : end;
   }
 
-  // i'...' and w'...': ASCII case folding and word bytes, the same rules as passes_filters.
-  inline auto lower(unsigned char b) -> unsigned char { return (b >= 'A' and b <= 'Z') ? static_cast<unsigned char>(b - 'A' + 'a') : b; }
-  inline auto lower(char c) -> unsigned char { return lower(static_cast<unsigned char>(c)); }
-  inline auto upper(unsigned char b) -> unsigned char { return (b >= 'a' and b <= 'z') ? static_cast<unsigned char>(b - 'a' + 'A') : b; }
+  // i'...' and w'...': the rules are in unicode/unicode.h (passes_filters checks the same ones,
+  // written independently).
 
   // Do the `len` bytes at `start` stand alone as a word: is neither the character before them nor
   // the one after them a word character (Unicode, decoded as UTF-8; see unicode/unicode.h)?
@@ -53,77 +52,228 @@ namespace
     return !alf::unicode::word_before(start, first) and !alf::unicode::word_after(start + len, last);
   }
 
-  inline auto same_text(char const* p, std::string_view s, bool nocase) -> bool
+  // Does the text spell the folded characters [c, c_end) starting at `at` (and before `end`)?  The
+  // end of what it read, or nullptr.
+  inline auto folded_forward(char const* at, char const* end, char32_t const* c, char32_t const* c_end) -> char const*
   {
-    if (!nocase) {
-      return std::memcmp(p, s.data(), s.size()) == 0;
-    }
-    for (std::size_t k = 0; k < s.size(); ++k) {
-      if (lower(p[k]) != lower(s[k])) {
-        return false;
+    for (; c != c_end; ++c) {
+      if (at == end) {
+        return nullptr;
       }
+      std::size_t len;
+      if (alf::unicode::fold(alf::unicode::char_at(at, end, len)) != *c) {
+        return nullptr;
+      }
+      at += len;
     }
-    return true;
+    return at;
+  }
+
+  // The same backwards: does the text spell [c_begin, c) ending just before `at` (not before
+  // `floor`)?  Where that starts, or nullptr.
+  inline auto folded_backward(char const* at, char const* floor, char32_t const* c_begin, char32_t const* c) -> char const*
+  {
+    while (c != c_begin) {
+      --c;
+      if (at == floor) {
+        return nullptr;
+      }
+      std::size_t len;
+      if (alf::unicode::fold(alf::unicode::char_before(at, floor, len)) != *c) {
+        return nullptr;
+      }
+      at -= len;
+    }
+    return at;
   }
 
   // Does `line` contain `s` (with i'...' / w'...' rules)?  Every occurrence is tried: in
-  // "foobar foo", w'foo' fails at the first and matches at the second.
+  // "foobar foo", w'foo' fails at the first and matches at the second.  A case-insensitive
+  // string is tried at every character of the line and compared character by character after
+  // folding, so a match can be longer or shorter in bytes than `s`.
   auto contains(std::string_view line, std::string_view s, bool nocase, bool word) -> bool
   {
-    if (!nocase and !word) {
-      return line.find(s) != std::string_view::npos;
-    }
     char const* const b = line.data();
     char const* const e = b + line.size();
-    auto const eq = [nocase](char x, char y) { return nocase ? lower(x) == lower(y) : x == y; };
-    for (char const* at = b; static_cast<std::size_t>(e - at) >= s.size(); ++at) {
-      at = std::search(at, e, s.begin(), s.end(), eq);
+    if (!nocase) {
+      if (!word) {
+        return line.find(s) != std::string_view::npos;
+      }
+      for (char const* at = b; static_cast<std::size_t>(e - at) >= s.size(); ++at) {
+        at = std::search(at, e, s.begin(), s.end());
+        if (at == e) {
+          return false;
+        }
+        if (whole_word(at, s.size(), b, e)) {
+          return true;
+        }
+      }
+      return false;
+    }
+    std::vector<char32_t> const f = alf::unicode::folded(s);
+    for (char const* at = b;;) {
+      char const* m = folded_forward(at, e, f.data(), f.data() + f.size());
+      if (m and (!word or whole_word(at, static_cast<std::size_t>(m - at), b, e))) {
+        return true;
+      }
       if (at == e) {
         return false;
       }
-      if (!word or whole_word(at, s.size(), b, e)) {
-        return true;
-      }
+      std::size_t len;
+      (void)alf::unicode::char_at(at, e, len);
+      at += len;
     }
-    return false;
   }
+
+  // An i'...' string folded, and where the needle that stands for it (one exact spelling of a few
+  // of its characters, the anchor) sits in it.
+  struct Folded
+  {
+    std::vector<char32_t> chars;
+    std::size_t before;  // characters before the anchor
+    std::size_t anchor;  // characters in the anchor
+  };
 
   // A string to search for, and which of its bytes is rarest in the input: memchr finds that
   // byte (it checks many bytes per instruction), then memcmp checks the rest of the string.
   // This is the same trick grep uses, and on this kind of data it is several times faster than
-  // memmem or Boyer-Moore-Horspool.  For an i'...' string a letter's frequency is both cases'.
+  // memmem or Boyer-Moore-Horspool.
+  //
+  // A needle is always exact bytes.  For a plain or w'...' string it is the string itself.  An
+  // i'...' string gets several needles: a short window of it (its anchor) spelled in every way
+  // case folding allows (k, K and the Kelvin sign for a k, ...), and a hit on one is only a
+  // candidate: confirm() reads outwards from it, folding, to see whether the whole string is
+  // there.  So every scanner (rare byte, pair, Teddy, the DFA) works with exact bytes only.
   struct Needle
   {
     std::string_view text;
     std::size_t rare;
-    bool nocase{ false };
+    std::size_t literal;              // which of the strings searched for this needle stands for
     bool word{ false };
+    Folded const* folded{ nullptr };  // i'...' only
   };
 
-  auto make_needles(std::vector<alf::Literal> const& literals, std::string_view sample) -> std::vector<Needle>
+  struct Needles
+  {
+    std::vector<Needle> list;
+    std::deque<std::string> texts;  // the anchors' spellings (deques: needles point into them)
+    std::deque<Folded> folds;
+  };
+
+  // An i'...' string's anchor: the window of 1-3 characters whose spellings are rarest in the
+  // sample, among windows with at most this many spellings.
+  constexpr std::size_t MAX_SPELLINGS = 16;
+
+  auto make_needles(std::vector<alf::Literal> const& literals, std::string_view sample) -> Needles
   {
     std::size_t freq[256] = {};
     for (unsigned char c : sample) {
       ++freq[c];
     }
-    std::vector<Needle> needles;
-    for (auto const& lit : literals) {
-      auto const f = [&](char c) {
-        auto const b = static_cast<unsigned char>(c);
-        return lit.nocase and lower(b) != upper(b) ? freq[lower(b)] + freq[upper(b)] : freq[b];
-      };
+    auto const rarest = [&](std::string_view t) {
       std::size_t rare = 0;
-      for (std::size_t i = 1; i < lit.text.size(); ++i) {
-        if (f(lit.text[i]) < f(lit.text[rare])) {
+      for (std::size_t i = 1; i < t.size(); ++i) {
+        if (freq[static_cast<unsigned char>(t[i])] < freq[static_cast<unsigned char>(t[rare])]) {
           rare = i;
         }
       }
-      needles.push_back({ lit.text, rare, lit.nocase, lit.word });
+      return rare;
+    };
+    Needles out;
+    for (std::size_t li = 0; li < literals.size(); ++li) {
+      alf::Literal const& lit = literals[li];
+      if (!lit.nocase) {
+        out.list.push_back({ lit.text, rarest(lit.text), li, lit.word, nullptr });
+        continue;
+      }
+      std::vector<char32_t> f = alf::unicode::folded(lit.text);
+      // every character's spellings: the characters that fold to it, as UTF-8
+      std::vector<std::vector<std::string>> spell(f.size());
+      for (std::size_t k = 0; k < f.size(); ++k) {
+        if (f[k] >= alf::unicode::RAW) {
+          spell[k].push_back(std::string(1, static_cast<char>(f[k] - alf::unicode::RAW)));
+          continue;
+        }
+        alf::unicode::each_folding_to(f[k], [&](char32_t c) {
+          std::string u;
+          alf::unicode::append_utf8(u, c);
+          spell[k].push_back(u);
+        });
+      }
+      std::size_t best_at = 0, best_len = 1;
+      double best_cost = -1;
+      for (std::size_t len = 1; len <= std::min<std::size_t>(3, f.size()); ++len) {
+        for (std::size_t at = 0; at + len <= f.size(); ++at) {
+          std::size_t count = 1;
+          for (std::size_t k = at; k < at + len; ++k) {
+            count *= spell[k].size();
+          }
+          if (count > MAX_SPELLINGS) {
+            continue;
+          }
+          // expected stops: over the spellings, the product of their bytes' frequencies (+1)
+          double cost = 0;
+          for (std::size_t v = 0; v < count; ++v) {
+            double c = 1;
+            for (std::size_t k = at, r = v; k < at + len; r /= spell[k].size(), ++k) {
+              for (char ch : spell[k][r % spell[k].size()]) {
+                c *= 1.0 + static_cast<double>(freq[static_cast<unsigned char>(ch)]);
+              }
+            }
+            cost += c;
+          }
+          if (best_cost < 0 or cost < best_cost) {
+            best_cost = cost, best_at = at, best_len = len;
+          }
+        }
+      }
+      out.folds.push_back({ std::move(f), best_at, best_len });
+      Folded const& fd = out.folds.back();
+      std::size_t count = 1;
+      for (std::size_t k = best_at; k < best_at + best_len; ++k) {
+        count *= spell[k].size();
+      }
+      for (std::size_t v = 0; v < count; ++v) {
+        std::string t;
+        for (std::size_t k = best_at, r = v; k < best_at + best_len; r /= spell[k].size(), ++k) {
+          t += spell[k][r % spell[k].size()];
+        }
+        out.texts.push_back(std::move(t));
+        std::string_view const tv = out.texts.back();
+        out.list.push_back({ tv, rarest(tv), li, lit.word, &fd });
+      }
     }
-    return needles;
+    return out;
   }
 
-  // Start of the first occurrence of `n` in [p, last), or `last`.
+  // Is the needle `n` found at `start` (its exact bytes) a real occurrence of its string within
+  // [first, last)?  Plain strings: the bytes are the string.  i'...': the rest of the string has to
+  // be there, folded, before and after the anchor.  w'...': and the whole occurrence has to stand
+  // alone as a word.
+  inline auto confirm(Needle const& n, char const* start, char const* first, char const* last) -> bool
+  {
+    if (start < first or static_cast<std::size_t>(last - start) < n.text.size() or
+        std::memcmp(start, n.text.data(), n.text.size()) != 0) {
+      return false;
+    }
+    char const* s = start;
+    char const* e = start + n.text.size();
+    if (n.folded) {
+      Folded const& f = *n.folded;
+      s = folded_backward(start, first, f.chars.data(), f.chars.data() + f.before);
+      if (!s) {
+        return false;
+      }
+      e = folded_forward(e, last, f.chars.data() + f.before + f.anchor, f.chars.data() + f.chars.size());
+      if (!e) {
+        return false;
+      }
+    }
+    return !n.word or whole_word(s, static_cast<std::size_t>(e - s), first, last);
+  }
+
+  // Start of the first occurrence of `n`'s exact bytes in [p, last) that confirm() accepts, or
+  // `last` (for the hit-rate estimate on the sample).
   auto find(Needle const& n, char const* p, char const* last) -> char const*
   {
     if (static_cast<std::size_t>(last - p) < n.text.size()) {
@@ -133,21 +283,12 @@ namespace
     char const* q = p + n.rare;
     char const* const q_end = last - (n.text.size() - n.rare - 1);  // a hit must fit before `last`
     while (q < q_end) {
-      if (n.nocase) {  // (only for the 64 KB sample estimate: a plain loop is fine)
-        while (q < q_end and lower(*q) != lower(key)) {
-          ++q;
-        }
-      } else {
-        q = static_cast<char const*>(std::memchr(q, key, static_cast<std::size_t>(q_end - q)));
-        if (q == nullptr) {
-          return last;
-        }
-      }
-      if (q >= q_end) {
+      q = static_cast<char const*>(std::memchr(q, key, static_cast<std::size_t>(q_end - q)));
+      if (q == nullptr) {
         return last;
       }
       char const* start = q - n.rare;
-      if (same_text(start, n.text, n.nocase) and (!n.word or whole_word(start, n.text.size(), p, last))) {
+      if (confirm(n, start, p, last)) {
         return start;
       }
       ++q;
@@ -195,8 +336,7 @@ namespace
         build_teddy(sample);
         return;
       }
-      if (needles.size() == 1 and !needles[0].nocase and needles[0].text.size() >= 2 and
-          rare_byte_stop_interval(needles, sample) < PAIR_BELOW_INTERVAL) {
+      if (needles.size() == 1 and needles[0].text.size() >= 2 and rare_byte_stop_interval(needles, sample) < PAIR_BELOW_INTERVAL) {
         build_pair(sample);
         return;
       }
@@ -205,18 +345,12 @@ namespace
         b = false;
       }
       for (std::size_t i = 0; i < needles.size(); ++i) {
-        auto const b = static_cast<unsigned char>(needles[i].text[needles[i].rare]);
-        unsigned char const keys[2] = { needles[i].nocase ? lower(b) : b, needles[i].nocase ? upper(b) : b };
-        for (unsigned char key : keys) {
-          if (!m_set.member[key]) {
-            m_set.member[key] = true;
-            m_set.bytes[m_set.count++] = key;
-            m_by_key[key].push_back(static_cast<std::uint16_t>(i));
-          }
-          else if (m_by_key[key].empty() or m_by_key[key].back() != i) {
-            m_by_key[key].push_back(static_cast<std::uint16_t>(i));
-          }
+        auto const key = static_cast<unsigned char>(needles[i].text[needles[i].rare]);
+        if (!m_set.member[key]) {
+          m_set.member[key] = true;
+          m_set.bytes[m_set.count++] = key;
         }
+        m_by_key[key].push_back(static_cast<std::uint16_t>(i));
       }
     }
 
@@ -247,24 +381,21 @@ namespace
       return m_simd.line_start(p, floor);
     }
 
-    // Call on_hit(index) for every string whose fingerprint is at `q` and that occurs there
-    // entirely within [first, last).
+    // Call on_hit(literal) for every needle whose fingerprint is at `q` and whose string really
+    // occurs there (confirm()) within [first, last): `literal` is the string's index.
     template <typename F>
     void verify(char const* q, char const* first, char const* last, F&& on_hit) const
     {
       auto const check = [&](std::uint16_t i, std::size_t offset) {
         Needle const& n = m_needles[i];
-        char const* start = q - offset;
-        if (start >= first and static_cast<std::size_t>(last - start) >= n.text.size() and
-            same_text(start, n.text, n.nocase) and (!n.word or whole_word(start, n.text.size(), first, last))) {
-          on_hit(i);
+        if (confirm(n, q - offset, first, last)) {
+          on_hit(n.literal);
         }
       };
       if (m_teddy) {
         for (unsigned g = groups_at(q, last); g != 0; g &= g - 1) {
           for (std::uint16_t i : m_groups[static_cast<std::size_t>(std::countr_zero(g))]) {
-            Needle const& n = m_needles[i];
-            if (n.nocase ? lower(*q) == lower(n.text[m_window[i]]) : *q == n.text[m_window[i]]) {  // a group passes many near misses
+            if (*q == m_needles[i].text[m_window[i]]) {  // a group passes many near misses
               check(i, m_window[i]);
             }
           }
@@ -364,10 +495,7 @@ namespace
         std::string_view const t = m_needles[i].text;
         std::size_t best = 0;
         double best_cost = -1;
-        auto const fq = [&](char ch) {
-          auto const b = static_cast<unsigned char>(ch);
-          return m_needles[i].nocase and lower(b) != upper(b) ? freq[lower(b)] + freq[upper(b)] - 1 : freq[b];
-        };
+        auto const fq = [&](char ch) { return freq[static_cast<unsigned char>(ch)]; };
         for (std::size_t o = 0; o + 3 <= t.size(); ++o) {
           double const c = fq(t[o]) * fq(t[o + 1]) * fq(t[o + 2]);
           if (best_cost < 0 or c < best_cost) {
@@ -463,10 +591,8 @@ namespace
         for (std::size_t k = 0; k < 3; ++k) {
           if (k < fp[i].size()) {
             auto const b = static_cast<unsigned char>(fp[i][k]);
-            for (unsigned char v : { b, m_needles[i].nocase ? lower(b) : b, m_needles[i].nocase ? upper(b) : b }) {
-              m_tables.lo[k][v & 15u] |= bit;
-              m_tables.hi[k][v >> 4] |= bit;
-            }
+            m_tables.lo[k][b & 15u] |= bit;
+            m_tables.hi[k][b >> 4] |= bit;
           } else {  // a string shorter than 3 bytes: any byte matches here
             for (int n = 0; n < 16; ++n) {
               m_tables.lo[k][n] |= bit;
@@ -684,21 +810,14 @@ namespace
                         alf::detail::AhoCorasick const& ac, std::vector<Needle> const& needles, bool keep_others,
                         bool use_found, std::size_t words, std::size_t min_lane_bytes, Spans& out)
   {
-    // A DFA match is a real one unless the DFA folded case for a case-sensitive string, or the
-    // string is w'...' and the match is part of a longer word.
-    bool fold = false;
-    for (Needle const& n : needles) {
-      fold |= n.nocase;
-    }
-    // the string `i` ending at `at`, within the line [ls, e)
+    // A DFA match of needle `i` ending at `at` (within the line [ls, e)) is a real occurrence of
+    // its string unless the string is i'...' or w'...' and confirm() says otherwise.
     auto const real = [&](std::uint32_t i, char const* at, char const* ls, char const* e) {
       if constexpr (!Check) {
         return true;
       }
       Needle const& n = needles[i];
-      char const* start = at + 1 - n.text.size();
-      return (!fold or n.nocase or std::memcmp(start, n.text.data(), n.text.size()) == 0) and
-             (!n.word or whole_word(start, n.text.size(), ls, e));
+      return confirm(n, at + 1 - n.text.size(), ls, e);
     };
     constexpr unsigned LANES = 4;
     alf::simd::Backend const& simd = alf::simd::active();
@@ -751,7 +870,7 @@ namespace
         f.clear();
         for (std::uint32_t i : ac.ending(state[k])) {
           if (real(i, p[k], ls, e)) {
-            f.set(i);
+            f.set(needles[i].literal);
           }
         }
         std::uint32_t st = state[k];
@@ -762,7 +881,7 @@ namespace
             bool changed = false;
             for (std::uint32_t i : ac.ending(st)) {
               if (real(i, c, ls, e)) {
-                changed |= f.set(i);
+                changed |= f.set(needles[i].literal);
               }
             }
             if (changed) {
@@ -1225,7 +1344,8 @@ void alf::filter(std::string_view data, Program const& program, unsigned threads
     keep_others = *without;
     all_literals = true;
   }
-  std::vector<Needle> needles = make_needles(search_for, sample);
+  Needles all_needles = make_needles(search_for, sample);
+  std::vector<Needle>& needles = all_needles.list;
   // Evaluating a hit line from the strings the scanner found needs every string, and none that
   // could match across a line break (or include the "\r" a line is matched without).
   bool const use_found = all_literals and
@@ -1251,12 +1371,10 @@ void alf::filter(std::string_view data, Program const& program, unsigned threads
     std::string_view const forced = force ? force : "";
     if (forced == "aho" or forced == "aho-lanes" or (forced != "teddy" and scanner.teddy_cost() > AHO_ABOVE_COST)) {
       std::vector<std::string_view> texts;
-      bool fold = false;
       for (Needle const& n : needles) {
         texts.push_back(n.text);
-        fold |= n.nocase;
       }
-      aho.emplace(texts, fold);
+      aho.emplace(texts);
       if (forced == "aho-lanes") {
         aho_lane_bytes = 1;
       }
@@ -1266,11 +1384,11 @@ void alf::filter(std::string_view data, Program const& program, unsigned threads
     if (needles.empty()) {
       filter_range(first, last, program, out);
     } else {
-      // the needles are the program's literals in order when use_found; otherwise they are
-      // required strings (possibly regex prefixes) and `found` is only a hit marker
-      std::size_t const words = std::max(program.found_words(), (needles.size() + 63) / 64);
+      // one bit per string searched for (needles report their string's index): the program's
+      // literals when use_found, otherwise the required strings, and then `found` only marks a hit
+      std::size_t const words = std::max(program.found_words(), (search_for.size() + 63) / 64);
       if (aho) {
-        bool const check = std::any_of(needles.begin(), needles.end(), [](Needle const& n) { return n.nocase or n.word; });
+        bool const check = std::any_of(needles.begin(), needles.end(), [](Needle const& n) { return n.folded or n.word; });
         auto const go = [&]<typename Found, bool Check>() {
           filter_range_aho<Found, Check>(first, last, program, *aho, needles, keep_others, use_found, words, aho_lane_bytes, out);
         };

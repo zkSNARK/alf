@@ -414,7 +414,9 @@ namespace
     static char const* const pieces[] = { "foo", "FOO", "Foo", "bar", "BaR", "foobar", "barfoo", "foo_bar", "foo1", "1foo",
                                           "x", "X", "ab", "AB", "aB", " ", " ", "-", ".", "_", "9",
                                           "\xc3\xa9", "\xd0\xb4", "\xce\xbb", "\xe4\xb8\xad", "\xcc\x81",  // é д λ 中, combining acute
-                                          "\xe2\x80\x94", "\xc2\xa0", "\xff", "\x80", "\xe4\xb8" };     // — nbsp, invalid bytes
+                                          "\xe2\x80\x94", "\xc2\xa0", "\xff", "\x80", "\xe4\xb8",      // — nbsp, invalid bytes
+                                          "\xd0\x94", "\xd0\xb4", "\xe2\x84\xaa", "\xc5\xbf", "k", "K", "s",  // Д д, Kelvin, long s
+                                          "\xcf\x83", "\xcf\x82", "\xce\xa3", "\xc3\x89" };                  // σ ς Σ É
     std::string text;
     for (std::size_t i = 0; i < lines; ++i) {
       std::size_t const n = rng() % 9;
@@ -429,7 +431,8 @@ namespace
   auto flagged_string(std::mt19937& rng) -> std::string
   {
     static char const* const words[] = { "foo", "FOO", "bar", "Bar", "ab", "x", "o_b", "oo", "1", "foo1", "b",
-                                         "\xd0\xb4", "\xce\xbb", "\xc3\xa9", "foo\xc3\xa9" };  // д λ é
+                                         "\xd0\xb4", "\xce\xbb", "\xc3\xa9", "foo\xc3\xa9",  // д λ é
+                                         "\xd0\x94\xd0\xb4", "k", "sk", "\xe2\x84\xaa", "\xcf\x83", "o\xc5\xbf" };  // Дд, Kelvin, σ, oſ
     static char const* const prefixes[] = { "", "", "i", "w", "iw", "wi" };
     return std::string(prefixes[rng() % 6]) + "'" + words[rng() % (sizeof words / sizeof words[0])] + "'";
   }
@@ -487,8 +490,22 @@ namespace
     EXPECT_TRUE(keeps("iw'foo'", "x FOO y"));
     EXPECT_FALSE(keeps("iw'foo'", "FOOBAR"));
     EXPECT_TRUE(keeps("!w'foo'", "foobar"));
-    EXPECT_TRUE(keeps("i'\xc3\xa9'", "\xc3\xa9"));        // non-ASCII bytes match only themselves
-    EXPECT_FALSE(keeps("i'\xc3\xa9'", "\xc3\x89"));
+    // Unicode simple case folding
+    EXPECT_TRUE(keeps("i'\xc3\xa9'", "\xc3\x89"));         // é, É
+    EXPECT_TRUE(keeps("i'шерлок'", "мистер ШЕРЛОК"));
+    EXPECT_TRUE(keeps("iw'холмс'", "Холмс."));
+    EXPECT_FALSE(keeps("iw'холмс'", "Холмсу"));
+    EXPECT_TRUE(keeps("i'kelvin'", "\xe2\x84\xaa" "ELVIN"));  // the Kelvin sign: 3 bytes for a 1-byte k
+    EXPECT_TRUE(keeps("i'\xe2\x84\xaa'", "k"));             // and the other way round
+    EXPECT_TRUE(keeps("i'mass'", "MA\xc5\xbfS"));            // long s
+    EXPECT_TRUE(keeps("i'\xcf\x83'", "\xcf\x82"));          // σ, final ς
+    EXPECT_TRUE(keeps("i'\xcf\x83'", "\xce\xa3"));          // σ, Σ
+    EXPECT_TRUE(keeps("i'stra\xc3\x9f" "e'", "STRA\xe1\xba\x9e" "E"));  // ß and capital ẞ fold alike
+    EXPECT_FALSE(keeps("i'stra\xc3\x9f" "e'", "STRASSE"));   // simple folding: ß is not ss
+    EXPECT_TRUE(keeps("iw'kelvin'", "x \xe2\x84\xaa" "elvin y"));
+    EXPECT_FALSE(keeps("iw'kelvin'", "x \xe2\x84\xaa" "elvinx"));
+    EXPECT_TRUE(keeps("i'a\xff" "b'", "A\xff" "B"));               // a byte that isn't UTF-8 matches itself
+    EXPECT_FALSE(keeps("i'a\xff" "b'", "A\xfe" "B"));
   }
 
   TEST(Program, required_literals)

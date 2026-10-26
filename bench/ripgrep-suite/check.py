@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Before timing: alf must print byte for byte what rg and GNU grep print on each benchmark.
 
-Whole words (w'...') follow Unicode, like rg -w and GNU grep -w in a UTF-8 locale.  Case-insensitive
-strings (i'...') fold ASCII letters only for now, so their reference is GNU grep with LC_ALL=C;
-ripgrep's Unicode -i answer is shown next to it."""
+Case-insensitive (i'...') and whole-word (w'...') strings follow Unicode (simple case folding,
+Unicode word characters), like rg -i / -w and GNU grep -i / -w in a UTF-8 locale.  GNU grep's
+ASCII answer (LC_ALL=C) is shown next to them for comparison."""
 import hashlib, os, subprocess, sys
 
 data = sys.argv[1]
@@ -26,10 +26,14 @@ cases = {
     "subtitles_en_alternate": (en, alt(NAMES_EN), [["rg", "|".join(NAMES_EN), en], ["grep", "-E", "|".join(NAMES_EN), en]], []),
     "subtitles_ru_literal": (ru, alt(NAMES_RU[:1]), [["rg", NAMES_RU[0], ru], ["grep", NAMES_RU[0], ru]], []),
     "subtitles_ru_alternate": (ru, alt(NAMES_RU), [["rg", "|".join(NAMES_RU), ru], ["grep", "-E", "|".join(NAMES_RU), ru]], []),
-    "subtitles_en_literal_casei": (en, alt(NAMES_EN[:1], "i"), [["grep", "-i", NAMES_EN[0], en], ["rg", "-i", "(?-u)" + NAMES_EN[0], en]],
-                                   [["rg", "-i", NAMES_EN[0], en]]),
-    "subtitles_en_alternate_casei": (en, alt(NAMES_EN, "i"), [["grep", "-E", "-i", "|".join(NAMES_EN), en]],
-                                     [["rg", "-i", "|".join(NAMES_EN), en]]),
+    "subtitles_en_literal_casei": (en, alt(NAMES_EN[:1], "i"), [["rg", "-i", NAMES_EN[0], en], UTF8 + ["grep", "-i", NAMES_EN[0], en]],
+                                   [["grep", "-i", NAMES_EN[0], en]]),
+    "subtitles_en_alternate_casei": (en, alt(NAMES_EN, "i"), [["rg", "-i", "|".join(NAMES_EN), en], UTF8 + ["grep", "-E", "-i", "|".join(NAMES_EN), en]],
+                                     [["grep", "-E", "-i", "|".join(NAMES_EN), en]]),
+    "subtitles_ru_literal_casei": (ru, alt(NAMES_RU[:1], "i"), [["rg", "-i", NAMES_RU[0], ru], UTF8 + ["grep", "-i", NAMES_RU[0], ru]],
+                                   [["grep", "-i", NAMES_RU[0], ru]]),
+    "subtitles_ru_alternate_casei": (ru, alt(NAMES_RU, "i"), [["rg", "-i", "|".join(NAMES_RU), ru], UTF8 + ["grep", "-E", "-i", "|".join(NAMES_RU), ru]],
+                                     [["grep", "-E", "-i", "|".join(NAMES_RU), ru]]),
     "subtitles_en_literal_word": (en, alt(NAMES_EN[:1], "w"), [["rg", "-w", NAMES_EN[0], en], UTF8 + ["grep", "-w", NAMES_EN[0], en]],
                                   [["grep", "-w", NAMES_EN[0], en]]),
     "subtitles_ru_literal_word": (ru, alt(NAMES_RU[:1], "w"), [["rg", "-w", NAMES_RU[0], ru], UTF8 + ["grep", "-w", NAMES_RU[0], ru]],
