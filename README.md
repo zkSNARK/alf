@@ -143,8 +143,10 @@ without copying long runs, and splits large inputs across every performance core
 to change that). On a 142 MB log on an Apple M4 Max it finds one string in 7 ms (ripgrep 21,
 GNU grep 33), answers a nested and/or/not query in 9 ms (GNU grep 238) and drops eight kinds of
 noise in 21 ms (ripgrep 119). Pinned to one core it still beats grep and ripgrep on every
-string task, and on exclude lists of every length measured (1 to 32 strings) on macOS and
-Linux. Regexes without fixed text are where ripgrep is still faster.
+string task, and on exclude lists of up to 64 strings on macOS and Linux. Where ripgrep is still
+faster on one core: regexes without fixed text, and lists of more than about 100 strings (at
+256, 272 ms against 146), where ripgrep switches to Aho-Corasick and alf keeps using Teddy
+([#10](https://github.com/zkSNARK/alf/issues/10)).
 
 ### ripgrep's own benchmarks
 
