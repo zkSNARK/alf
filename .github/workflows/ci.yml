@@ -47,11 +47,14 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      # The runner's Ubuntu mirror is sometimes very slow (a 30 MB package taking minutes): retry
+      # stalled downloads instead of hanging, skip recommended packages, and allow 20 minutes.
       - name: Cross compiler and QEMU
-        timeout-minutes: 10
+        timeout-minutes: 20
         run: |
-          sudo apt-get update
-          sudo apt-get install -y g++-14-${{ matrix.target }} qemu-user
+          APT="-o Acquire::Retries=3 -o Acquire::http::Timeout=30"
+          sudo apt-get $APT update
+          sudo apt-get $APT install -y --no-install-recommends g++-14-${{ matrix.target }} qemu-user
           sudo ln -sf /usr/bin/${{ matrix.target }}-g++-14 /usr/bin/${{ matrix.target }}-g++
           sudo ln -sf /usr/bin/${{ matrix.target }}-gcc-14 /usr/bin/${{ matrix.target }}-gcc
       - name: Configure
