@@ -348,6 +348,49 @@ namespace
     }
   }
 
+  // Set (or, with nullptr, remove) an environment variable; MSVC has no setenv.
+  void set_env(char const* name, char const* value)
+  {
+#if defined(_WIN32)
+    _putenv_s(name, value ? value : "");
+#else
+    if (value) {
+      setenv(name, value, 1);
+    } else {
+      unsetenv(name);
+    }
+#endif
+  }
+
+  TEST(Program, aho_corasick_lanes_on_a_large_input)
+  {
+    // big enough for the DFA's four lanes without forcing them: their cuts, their output order and
+    // the lines next to each cut must all come out as the reference has them
+    std::mt19937 rng(7);
+    std::string text;
+    while (text.size() < 270'000) {  // just over the 4 x 64 KB at which the lanes start
+      int const n = static_cast<int>(rng() % 7);
+      for (int k = 0; k < n; ++k) {
+        text += "w" + std::to_string(rng() % 300) + " ";
+      }
+      text += "\n";
+    }
+    std::string e;
+    for (int t = 0; t < 30; ++t) {
+      e += (t ? " & " : "") + std::string("(!'w") + std::to_string(rng() % 300) + " ' | 'w" + std::to_string(rng() % 300) + " ')";
+    }
+    auto tokens = postfix(e);
+    alf::Program const p{ tokens };
+    std::string const want = naive(text, tokens);
+    char const* was = std::getenv("ALF_MULTI");
+    std::string const saved = was ? was : "";
+    set_env("ALF_MULTI", "aho");
+    for (unsigned threads : { 1u, 2u }) {
+      EXPECT_EQ(run(text, p, threads), want) << "threads " << threads;
+    }
+    set_env("ALF_MULTI", was ? saved.c_str() : nullptr);
+  }
+
   TEST(Program, settled_and_matches_found_with_several_words)
   {
     std::string e;

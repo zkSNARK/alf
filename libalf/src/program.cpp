@@ -582,69 +582,159 @@ namespace
   }
 
   // Teddy's cost on the sample (stops plus strings compared, per byte) above which the DFA is
-  // faster.  The DFA costs the same per byte for any list (one core, 142 MB benchmark log: about
-  // 141 ms from 32 to 256 strings); Teddy grows with its measured cost: 0.51 at 64 strings took
-  // 105 ms, 1.95 at 128 took 162.  They cross at about 1.4.
-  constexpr double AHO_ABOVE_COST = 1.4;
+  // faster.  The DFA (four lanes) costs about the same per byte for any list: one core, 142 MB
+  // benchmark log, 100-110 ms from 24 to 1,024 strings.  Teddy grows with its measured cost: 0.23
+  // at 40 strings took 97 ms, 0.36 at 48 took 110.  They cross at about 0.27.
+  constexpr double AHO_ABOVE_COST = 0.27;
 
   // filter_range_search with an Aho-Corasick DFA instead of the scanner: every byte is one table
   // step, whatever the number of strings.  None of the strings contains '\n', so every match lies
   // within one line and the DFA can restart at each line.  Lines without a match get
   // `keep_others`; a line with one is decided as in filter_range_search (from the strings found
   // when `use_found`, reading on only until the answer is settled).
+  //
+  // A step can't start before the previous one's table load has finished, so one DFA runs at the
+  // latency of a load: about 1.1 ns a byte on an M4 Max, however few instructions the loop has.
+  // So the range is cut at line breaks into LANES pieces, and one loop steps a DFA through each
+  // of them: the loads are independent and overlap (measured on a bare loop over 142 MB: one
+  // chain 159 ms, two 80, four 42, eight 35).  Lane 0 writes to `out` as it goes; the others
+  // collect their pieces and are appended in order at the end.
   template <typename Found>
   void filter_range_aho(char const* first, char const* last, alf::Program const& program,
-                        alf::detail::AhoCorasick const& ac, bool keep_others, bool use_found, std::size_t words, Spans& out)
+                        alf::detail::AhoCorasick const& ac, bool keep_others, bool use_found, std::size_t words,
+                        std::size_t min_lane_bytes, Spans& out)
   {
+    constexpr unsigned LANES = 4;
     alf::simd::Backend const& simd = alf::simd::active();
-    Found found{ words };
-    char const* cursor = first;  // start of the first line not yet handled
-    std::uint32_t state = alf::detail::AhoCorasick::start;
-    for (char const* p = first; p < last; ++p) {
-      state = ac.step(state, static_cast<unsigned char>(*p));
-      if (!ac.matches(state)) {
-        continue;
+    unsigned const lanes = static_cast<std::size_t>(last - first) >= LANES * min_lane_bytes ? LANES : 1;
+
+    char const* p[LANES];       // next byte to step
+    char const* end[LANES];     // end of the lane
+    char const* cursor[LANES];  // start of the lane's first line not yet handled
+    std::uint32_t state[LANES];
+    std::array<Spans, LANES - 1> later;  // lanes 1.. collect here
+    Spans* sink[LANES];
+    std::vector<Found> found;
+    char const* cut = first;
+    for (unsigned k = 0; k < lanes; ++k) {
+      char const* e = k + 1 == lanes ? last : first + static_cast<std::size_t>(last - first) * (k + 1) / lanes;
+      if (e < last) {
+        e = std::max(e, cut);
+        e = line_end(e, last);
+        e = e < last ? e + 1 : last;
       }
-      char const* ls = simd.line_start(p, cursor);
-      char const* e = line_end(p, last);
+      p[k] = cursor[k] = cut;
+      end[k] = e;
+      state[k] = alf::detail::AhoCorasick::start;
+      sink[k] = k == 0 ? &out : &later[k - 1];
+      found.emplace_back(words);
+      cut = e;
+    }
+
+    // the line containing a match that ends at p[k]: decide it, then move lane k past it
+    auto const handle = [&](unsigned k) {
+      char const* ls = simd.line_start(p[k], cursor[k]);
+      char const* e = line_end(p[k], end[k]);
       char const* text_end = (e > ls and e[-1] == '\r') ? e - 1 : e;
-      char const* next = e < last ? e + 1 : e;
+      char const* next = e < end[k] ? e + 1 : e;
       std::string_view const line(ls, static_cast<std::size_t>(text_end - ls));
       bool keep;
       if (use_found) {
-        found.clear();
-        for (std::uint32_t i : ac.ending(state)) {
-          found.set(i);
+        Found& f = found[k];
+        f.clear();
+        for (std::uint32_t i : ac.ending(state[k])) {
+          f.set(i);
         }
-        std::optional<bool> answer = program.settled(line, found.words());
-        for (char const* c = p + 1; !answer and c < e; ++c) {
-          state = ac.step(state, static_cast<unsigned char>(*c));
-          if (ac.matches(state)) {
+        std::uint32_t st = state[k];
+        std::optional<bool> answer = program.settled(line, f.words());
+        for (char const* c = p[k] + 1; !answer and c < e; ++c) {
+          st = ac.step(st, static_cast<unsigned char>(*c));
+          if (ac.matches(st)) {
             bool changed = false;
-            for (std::uint32_t i : ac.ending(state)) {
-              changed |= found.set(i);
+            for (std::uint32_t i : ac.ending(st)) {
+              changed |= f.set(i);
             }
             if (changed) {
-              answer = program.settled(line, found.words());
+              answer = program.settled(line, f.words());
             }
           }
         }
-        keep = answer ? *answer : program.matches_found(line, found.words());
+        keep = answer ? *answer : program.matches_found(line, f.words());
       } else {
         keep = program.matches(line);
       }
       if (keep_others) {
-        out.add(cursor, ls);
+        sink[k]->add(cursor[k], ls);
       }
       if (keep) {
-        out.add(ls, next);
+        sink[k]->add(ls, next);
       }
-      cursor = next;
-      p = next - 1;  // the loop's ++p moves to the next line
-      state = alf::detail::AhoCorasick::start;
+      cursor[k] = p[k] = next;
+      state[k] = alf::detail::AhoCorasick::start;
+    };
+
+    // all lanes together while each has bytes left.  The states and positions are plain locals
+    // here (copied back only when a lane matches): kept in the arrays, which `handle` sees, a
+    // compiler may store and reload them on every byte, and that round trip lands right on the
+    // chain of dependent loads the lanes are there to overlap.
+    if (lanes == LANES) {
+      static_assert(LANES == 4);
+      for (;;) {
+        std::size_t steps = static_cast<std::size_t>(end[0] - p[0]);
+        for (unsigned k = 1; k < LANES; ++k) {
+          steps = std::min(steps, static_cast<std::size_t>(end[k] - p[k]));
+        }
+        if (steps == 0) {
+          break;
+        }
+        char const *q0 = p[0], *q1 = p[1], *q2 = p[2], *q3 = p[3];
+        std::uint32_t s0 = state[0], s1 = state[1], s2 = state[2], s3 = state[3];
+        char const* const stop = q0 + steps;
+        bool hit = false;
+        while (q0 < stop) {
+          s0 = ac.step(s0, static_cast<unsigned char>(*q0));
+          s1 = ac.step(s1, static_cast<unsigned char>(*q1));
+          s2 = ac.step(s2, static_cast<unsigned char>(*q2));
+          s3 = ac.step(s3, static_cast<unsigned char>(*q3));
+          // match states are numbered last, so some lane matched exactly when the largest state did
+          if (ac.matches(std::max(std::max(s0, s1), std::max(s2, s3)))) {
+            hit = true;
+            break;
+          }
+          ++q0, ++q1, ++q2, ++q3;
+        }
+        p[0] = q0, p[1] = q1, p[2] = q2, p[3] = q3;
+        state[0] = s0, state[1] = s1, state[2] = s2, state[3] = s3;
+        if (!hit) {
+          continue;  // `steps` used up: some lane is at its end
+        }
+        for (unsigned k = 0; k < LANES; ++k) {  // the byte at p[k] has been stepped in every lane
+          if (ac.matches(state[k])) {
+            handle(k);
+          } else {
+            ++p[k];
+          }
+        }
+      }
     }
-    if (keep_others) {
-      out.add(cursor, last);
+    // then each lane's rest on its own
+    for (unsigned k = 0; k < lanes; ++k) {
+      while (p[k] < end[k]) {
+        state[k] = ac.step(state[k], static_cast<unsigned char>(*p[k]));
+        if (ac.matches(state[k])) {
+          handle(k);
+        } else {
+          ++p[k];
+        }
+      }
+      if (keep_others) {
+        sink[k]->add(cursor[k], end[k]);
+      }
+    }
+    for (unsigned k = 1; k < lanes; ++k) {
+      for (std::string_view v : later[k - 1].list()) {
+        out.add(v.data(), v.data() + v.size());
+      }
     }
   }
 
@@ -1039,17 +1129,21 @@ void alf::filter(std::string_view data, Program const& program, unsigned threads
   // A long list: a DFA instead of Teddy once Teddy's measured cost on the sample says it's slower
   // (ALF_MULTI=aho / teddy forces the choice, for tests and measurement).
   std::optional<alf::detail::AhoCorasick> aho;
+  std::size_t aho_lane_bytes = 64 << 10;  // smaller ranges use one lane; ALF_MULTI=aho-lanes: always four (tests)
   if (!needles.empty() and std::none_of(needles.begin(), needles.end(), [](Needle const& n) {
         return n.text.find('\n') != std::string_view::npos;
       })) {
     char const* force = std::getenv("ALF_MULTI");
     std::string_view const forced = force ? force : "";
-    if (forced == "aho" or (forced != "teddy" and scanner.teddy_cost() > AHO_ABOVE_COST)) {
+    if (forced == "aho" or forced == "aho-lanes" or (forced != "teddy" and scanner.teddy_cost() > AHO_ABOVE_COST)) {
       std::vector<std::string_view> texts;
       for (Needle const& n : needles) {
         texts.push_back(n.text);
       }
       aho.emplace(texts);
+      if (forced == "aho-lanes") {
+        aho_lane_bytes = 1;
+      }
     }
   }
   auto const run = [&](char const* first, char const* last, Spans& out) {
@@ -1060,9 +1154,9 @@ void alf::filter(std::string_view data, Program const& program, unsigned threads
       // required strings (possibly regex prefixes) and `found` is only a hit marker
       std::size_t const words = std::max(program.found_words(), (needles.size() + 63) / 64);
       if (aho and words <= 1) {
-        filter_range_aho<OneWord>(first, last, program, *aho, keep_others, use_found, words, out);
+        filter_range_aho<OneWord>(first, last, program, *aho, keep_others, use_found, words, aho_lane_bytes, out);
       } else if (aho) {
-        filter_range_aho<ManyWords>(first, last, program, *aho, keep_others, use_found, words, out);
+        filter_range_aho<ManyWords>(first, last, program, *aho, keep_others, use_found, words, aho_lane_bytes, out);
       } else if (words <= 1) {
         filter_range_search<OneWord>(first, last, program, scanner, keep_others, use_found, words, out);
       } else {

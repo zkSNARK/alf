@@ -37,8 +37,9 @@ foreach (backend scalar sse2 ssse3 avx2 avx512 neon sve rvv vsx wasm)
 endforeach ()
 
 # And once with each multi-string search forced (ALF_MULTI), so the Aho-Corasick DFA and Teddy
-# both see every test, whatever the number of strings.
-foreach (multi aho teddy)
+# both see every test, whatever the number of strings (aho-lanes: the DFA's four interleaved
+# lanes even on inputs far too small to get them otherwise).
+foreach (multi aho aho-lanes teddy)
   add_test(NAME TestProgram_${multi} COMMAND TestProgram WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
   set_tests_properties(TestProgram_${multi} PROPERTIES ENVIRONMENT "ALF_MULTI=${multi}")
 endforeach ()
