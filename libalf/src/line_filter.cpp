@@ -3,6 +3,7 @@
 //
 
 #include "line_filter.h"
+#include "unicode/unicode_tables.h"
 
 #include <regex>
 #include <stack>
@@ -53,9 +54,73 @@ namespace
   // position, byte by byte): the fast paths in program.cpp are tested against these.
   auto ascii_lower(char c) -> char { return (c >= 'A' and c <= 'Z') ? static_cast<char>(c - 'A' + 'a') : c; }
 
-  auto is_word_byte(char c) -> bool
+  // Word characters as Unicode defines them, looked up the slow way (every range in turn).
+  auto is_word_char(char32_t c) -> bool
   {
+    for (auto const& r : alf::unicode::word_ranges) {
+      if (c >= r.lo and c <= r.hi) {
+        return true;
+      }
+    }
     return (c >= 'a' and c <= 'z') or (c >= 'A' and c <= 'Z') or (c >= '0' and c <= '9') or c == '_';
+  }
+
+  // The line as characters: each one's first byte, its length, and its code point, or 0xFFFFFFFF
+  // for a byte that doesn't start a well-formed UTF-8 character (taken one byte at a time).
+  struct Char
+  {
+    std::size_t at, len;
+    char32_t c;
+  };
+
+  auto characters(std::string const& s) -> std::vector<Char>
+  {
+    std::vector<Char> out;
+    for (std::size_t i = 0; i < s.size();) {
+      auto const b = static_cast<unsigned char>(s[i]);
+      std::size_t const n = b < 0x80 ? 1 : (b >> 5) == 6 ? 2 : (b >> 4) == 14 ? 3 : (b >> 3) == 30 ? 4 : 0;
+      char32_t c = 0xFFFFFFFF;
+      if (n == 1) {
+        c = b;
+      } else if (n > 1 and i + n <= s.size()) {
+        char32_t v = b & (0xFF >> (n + 1));
+        bool ok = true;
+        for (std::size_t k = 1; k < n; ++k) {
+          auto const x = static_cast<unsigned char>(s[i + k]);
+          ok = ok and (x >> 6) == 2;
+          v = (v << 6) | (x & 0x3F);
+        }
+        char32_t const min = n == 2 ? 0x80 : n == 3 ? 0x800 : 0x10000;
+        if (ok and v >= min and v <= 0x10FFFF and !(v >= 0xD800 and v <= 0xDFFF)) {
+          c = v;
+        }
+      }
+      std::size_t const len = c == 0xFFFFFFFF ? 1 : n;
+      out.push_back({ i, len, c });
+      i += len;
+    }
+    return out;
+  }
+
+  // Is there a word character ending exactly at byte `pos` (before) / starting exactly there (after)?
+  auto word_ends_at(std::vector<Char> const& cs, std::size_t pos) -> bool
+  {
+    for (auto const& ch : cs) {
+      if (ch.at + ch.len == pos) {
+        return ch.c != 0xFFFFFFFF and is_word_char(ch.c);
+      }
+    }
+    return false;
+  }
+
+  auto word_starts_at(std::vector<Char> const& cs, std::size_t pos) -> bool
+  {
+    for (auto const& ch : cs) {
+      if (ch.at == pos) {
+        return ch.c != 0xFFFFFFFF and is_word_char(ch.c);
+      }
+    }
+    return false;
   }
 
   auto contains(std::string const& line, alf::types::TokenBase const& t) -> bool
@@ -64,13 +129,14 @@ namespace
     if (s.size() > line.size()) {
       return false;
     }
+    std::vector<Char> const cs = t.word ? characters(line) : std::vector<Char>{};
     for (std::size_t at = 0; at + s.size() <= line.size(); ++at) {
       bool same = true;
       for (std::size_t k = 0; k < s.size() and same; ++k) {
         same = t.nocase ? ascii_lower(line[at + k]) == ascii_lower(s[k]) : line[at + k] == s[k];
       }
       if (same and t.word) {
-        same = (at == 0 or !is_word_byte(line[at - 1])) and (at + s.size() == line.size() or !is_word_byte(line[at + s.size()]));
+        same = !word_ends_at(cs, at) and !word_starts_at(cs, at + s.size());
       }
       if (same) {
         return true;

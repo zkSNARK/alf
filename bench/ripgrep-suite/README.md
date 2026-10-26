@@ -21,12 +21,23 @@ means. The patch adds the setting to the inherited environment instead. On Linux
 | --- | --- | --- |
 | `subtitles_en_literal` | `Sherlock Holmes` | `'Sherlock Holmes'` |
 | `subtitles_en_alternate` | five names joined by `\|` | `'Sherlock Holmes' \| 'John Watson' \| …` |
+| `subtitles_en_literal_casei` | `Sherlock Holmes`, `-i` | `i'Sherlock Holmes'` |
+| `subtitles_en_alternate_casei` | five names, `-i` | `i'Sherlock Holmes' \| …` |
+| `subtitles_en_literal_word` | `Sherlock Holmes`, `-w` | `w'Sherlock Holmes'` |
 | `subtitles_ru_literal` | `Шерлок Холмс` | `'Шерлок Холмс'` |
 | `subtitles_ru_alternate` | five Russian names joined by `\|` | `'Шерлок Холмс' \| …` |
+| `subtitles_ru_literal_word` | `Шерлок Холмс`, `-w` | `w'Шерлок Холмс'` |
 
-The rest of the suite needs features alf doesn't have: case-insensitive strings ([#9](https://github.com/zkSNARK/alf/issues/9)), whole
-words ([#12](https://github.com/zkSNARK/alf/issues/12)), real regexes (`std::regex` would be measured, and replacing it is planned), or
-searching a directory tree ([#7](https://github.com/zkSNARK/alf/issues/7)).
+alf's `i'...'` and `w'...'` follow ASCII rules, so on the case-insensitive and whole-word
+benchmarks its answer is the one the suite's "(ASCII)" commands give. On the English corpus that
+is also ripgrep's Unicode answer. On the Russian whole-word benchmark it isn't: ripgrep counts
+Cyrillic letters as word characters and finds 579 lines, alf and ASCII grep 583 (four lines have
+the name right next to a Cyrillic letter). The Russian case-insensitive benchmarks are left out:
+alf doesn't fold Cyrillic letters, so it would be answering a different question.
+
+The rest of the suite needs features alf doesn't have: real regexes (`std::regex` would be
+measured, and replacing it is planned) or searching a directory tree
+([#7](https://github.com/zkSNARK/alf/issues/7)).
 
 Before anything is timed, `check.py` requires alf (both ways), `rg` and GNU `grep` to print
 exactly the same bytes for each benchmark.

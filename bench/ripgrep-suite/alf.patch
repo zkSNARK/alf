@@ -11,7 +11,27 @@
          Command('rg', ['rg', pat, en]),
          Command('rg (no mmap)', ['rg', '--no-mmap', pat, en]),
          Command('grep', ['grep', pat, en], env=GREP_ASCII),
-@@ -453,6 +457,10 @@
+@@ -409,6 +413,9 @@
+     pat = 'Sherlock Holmes'
+ 
+     return Benchmark(pattern=pat, commands=[
++        # alf: i'...' is case-insensitive; ASCII rules, so it gives the (ASCII) tools' lines
++        Command('alf', ['alf', '-i', en, '-a', "i'%s'" % pat]),
++        Command('alf (1 thread)', ['alf', '--threads', '1', '-i', en, '-a', "i'%s'" % pat]),
+         Command('rg', ['rg', '-i', pat, en]),
+         Command('grep', ['grep', '-i', pat, en], env=GREP_UNICODE),
+         Command('grep (ASCII)', ['grep', '-E', '-i', pat, en], env=GREP_ASCII),
+@@ -427,6 +434,9 @@
+     pat = 'Sherlock Holmes'
+ 
+     return Benchmark(pattern=pat, commands=[
++        # alf: w'...' matches whole words; ASCII rules, so it gives the (ASCII) tools' lines
++        Command('alf', ['alf', '-i', en, '-a', "w'%s'" % pat]),
++        Command('alf (1 thread)', ['alf', '--threads', '1', '-i', en, '-a', "w'%s'" % pat]),
+         Command('rg (ASCII)', [
+             'rg', '-n', r'(?-u:\b)' + pat + r'(?-u:\b)', en,
+         ]),
+@@ -453,6 +463,10 @@
      ])
  
      return Benchmark(pattern=pat, commands=[
@@ -22,7 +42,17 @@
          Command('rg (lines)', ['rg', '-n', pat, en]),
          Command('ag (lines)', ['ag', '-s', pat, en]),
          Command('grep (lines)', ['grep', '-E', '-n', pat, en], env=GREP_ASCII),
-@@ -538,6 +546,10 @@
+@@ -477,6 +491,9 @@
+     ])
+ 
+     return Benchmark(pattern=pat, commands=[
++        # alf: i'...' is case-insensitive; ASCII rules, so it gives the (ASCII) tools' lines
++        Command('alf', ['alf', '-i', en, '-a', ' | '.join("i'%s'" % p for p in pat.split('|'))]),
++        Command('alf (1 thread)', ['alf', '--threads', '1', '-i', en, '-a', ' | '.join("i'%s'" % p for p in pat.split('|'))]),
+         Command('ag (ASCII)', ['ag', '-s', '-i', pat, en]),
+         Command('grep (ASCII)', [
+             'grep', '-E', '-ni', pat, en,
+@@ -538,6 +555,10 @@
      pat = 'Шерлок Холмс'  # Sherlock Holmes
  
      return Benchmark(pattern=pat, commands=[
@@ -33,7 +63,17 @@
          Command('rg', ['rg', pat, ru]),
          Command('rg (no mmap)', ['rg', '--no-mmap', pat, ru]),
          Command('grep', ['grep', pat, ru], env=GREP_ASCII),
-@@ -613,6 +625,10 @@
+@@ -580,6 +601,9 @@
+     pat = 'Шерлок Холмс'  # Sherlock Holmes
+ 
+     return Benchmark(pattern=pat, commands=[
++        # alf: w'...' matches whole words; ASCII rules, so it gives the (ASCII) tools' lines
++        Command('alf', ['alf', '-i', ru, '-a', "w'%s'" % pat]),
++        Command('alf (1 thread)', ['alf', '--threads', '1', '-i', ru, '-a', "w'%s'" % pat]),
+         Command('rg (ASCII)', [
+             # You might think we'd use \b here for word boundaries, but both
+             # GNU grep and ripgrep implement -w with the formulation below.
+@@ -613,6 +637,10 @@
      ])
  
      return Benchmark(pattern=pat, commands=[
@@ -44,7 +84,7 @@
          Command('rg (lines)', ['rg', '-n', pat, ru]),
          Command('ag (lines)', ['ag', '-s', pat, ru]),
          Command('grep (lines)', ['grep', '-E', '-n', pat, ru], env=GREP_ASCII),
-@@ -982,6 +998,11 @@
+@@ -982,6 +1010,11 @@
          self.cmd = cmd
          self.args = args
          self.kwargs = kwargs

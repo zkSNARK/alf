@@ -412,7 +412,9 @@ namespace
   auto flagged_text(std::mt19937& rng, std::size_t lines) -> std::string
   {
     static char const* const pieces[] = { "foo", "FOO", "Foo", "bar", "BaR", "foobar", "barfoo", "foo_bar", "foo1", "1foo",
-                                          "x", "X", "ab", "AB", "aB", " ", " ", "-", ".", "\xc3\xa9", "_", "9" };
+                                          "x", "X", "ab", "AB", "aB", " ", " ", "-", ".", "_", "9",
+                                          "\xc3\xa9", "\xd0\xb4", "\xce\xbb", "\xe4\xb8\xad", "\xcc\x81",  // é д λ 中, combining acute
+                                          "\xe2\x80\x94", "\xc2\xa0", "\xff", "\x80", "\xe4\xb8" };     // — nbsp, invalid bytes
     std::string text;
     for (std::size_t i = 0; i < lines; ++i) {
       std::size_t const n = rng() % 9;
@@ -426,7 +428,8 @@ namespace
 
   auto flagged_string(std::mt19937& rng) -> std::string
   {
-    static char const* const words[] = { "foo", "FOO", "bar", "Bar", "ab", "x", "o_b", "oo", "1", "foo1", "b" };
+    static char const* const words[] = { "foo", "FOO", "bar", "Bar", "ab", "x", "o_b", "oo", "1", "foo1", "b",
+                                         "\xd0\xb4", "\xce\xbb", "\xc3\xa9", "foo\xc3\xa9" };  // д λ é
     static char const* const prefixes[] = { "", "", "i", "w", "iw", "wi" };
     return std::string(prefixes[rng() % 6]) + "'" + words[rng() % (sizeof words / sizeof words[0])] + "'";
   }
@@ -472,7 +475,12 @@ namespace
     EXPECT_TRUE(keeps("w'foo'", "foobar foo"));        // the second occurrence stands alone
     EXPECT_FALSE(keeps("w'foo'", "foobar barfoo foo_x"));
     EXPECT_TRUE(keeps("w'foo'", "(foo)"));
-    EXPECT_TRUE(keeps("w'foo'", "\xc3\xa9" "foo"));      // a non-ASCII byte isn't a word byte
+    EXPECT_FALSE(keeps("w'foo'", "\xc3\xa9" "foo"));     // é is a letter: part of the word
+    EXPECT_TRUE(keeps("w'foo'", "\xe2\x80\x94" "foo"));  // an em dash isn't
+    EXPECT_TRUE(keeps("w'foo'", "\xff" "foo"));          // nor is a byte that isn't UTF-8
+    EXPECT_FALSE(keeps("w'Холмс'", "Холмсу"));             // Cyrillic letters are word characters
+    EXPECT_TRUE(keeps("w'Холмс'", "мистер Холмс, да"));
+    EXPECT_FALSE(keeps("w'e'", "e\xcc\x81"));            // a combining accent belongs to the word
     EXPECT_FALSE(keeps("w'foo'", "foo1"));
     EXPECT_TRUE(keeps("i'FoO'", "a foo b"));
     EXPECT_FALSE(keeps("'FoO'", "a foo b"));

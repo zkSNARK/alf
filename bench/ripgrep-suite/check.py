@@ -1,31 +1,54 @@
 #!/usr/bin/env python3
-"""Before timing: alf must print byte for byte what rg and GNU grep print on each benchmark."""
+"""Before timing: alf must print byte for byte what rg and GNU grep print on each benchmark.
+
+Whole words (w'...') follow Unicode, like rg -w and GNU grep -w in a UTF-8 locale.  Case-insensitive
+strings (i'...') fold ASCII letters only for now, so their reference is GNU grep with LC_ALL=C;
+ripgrep's Unicode -i answer is shown next to it."""
 import hashlib, os, subprocess, sys
 
 data = sys.argv[1]
 en = os.path.join(data, "subtitles", "en.sample.txt")
 ru = os.path.join(data, "subtitles", "ru.txt")
+NAMES_EN = ["Sherlock Holmes", "John Watson", "Irene Adler", "Inspector Lestrade", "Professor Moriarty"]
+NAMES_RU = ["Шерлок Холмс", "Джон Уотсон", "Ирен Адлер", "инспектор Лестрейд", "профессор Мориарти"]
+
+
+UTF8 = ["env", "LC_ALL=en_US.UTF-8"]  # GNU grep with Unicode word characters
+
+
+def alt(names, prefix=""):
+    return " | ".join("%s'%s'" % (prefix, n) for n in names)
+
+
+# name: (corpus, alf expression, commands that must print the same bytes, commands only reported)
 cases = {
-    "subtitles_en_literal": (en, ["Sherlock Holmes"]),
-    "subtitles_en_alternate": (en, ["Sherlock Holmes", "John Watson", "Irene Adler", "Inspector Lestrade", "Professor Moriarty"]),
-    "subtitles_ru_literal": (ru, ["Шерлок Холмс"]),
-    "subtitles_ru_alternate": (ru, ["Шерлок Холмс", "Джон Уотсон", "Ирен Адлер", "инспектор Лестрейд", "профессор Мориарти"]),
+    "subtitles_en_literal": (en, alt(NAMES_EN[:1]), [["rg", NAMES_EN[0], en], ["grep", NAMES_EN[0], en]], []),
+    "subtitles_en_alternate": (en, alt(NAMES_EN), [["rg", "|".join(NAMES_EN), en], ["grep", "-E", "|".join(NAMES_EN), en]], []),
+    "subtitles_ru_literal": (ru, alt(NAMES_RU[:1]), [["rg", NAMES_RU[0], ru], ["grep", NAMES_RU[0], ru]], []),
+    "subtitles_ru_alternate": (ru, alt(NAMES_RU), [["rg", "|".join(NAMES_RU), ru], ["grep", "-E", "|".join(NAMES_RU), ru]], []),
+    "subtitles_en_literal_casei": (en, alt(NAMES_EN[:1], "i"), [["grep", "-i", NAMES_EN[0], en], ["rg", "-i", "(?-u)" + NAMES_EN[0], en]],
+                                   [["rg", "-i", NAMES_EN[0], en]]),
+    "subtitles_en_alternate_casei": (en, alt(NAMES_EN, "i"), [["grep", "-E", "-i", "|".join(NAMES_EN), en]],
+                                     [["rg", "-i", "|".join(NAMES_EN), en]]),
+    "subtitles_en_literal_word": (en, alt(NAMES_EN[:1], "w"), [["rg", "-w", NAMES_EN[0], en], UTF8 + ["grep", "-w", NAMES_EN[0], en]],
+                                  [["grep", "-w", NAMES_EN[0], en]]),
+    "subtitles_ru_literal_word": (ru, alt(NAMES_RU[:1], "w"), [["rg", "-w", NAMES_RU[0], ru], UTF8 + ["grep", "-w", NAMES_RU[0], ru]],
+                                  [["grep", "-w", NAMES_RU[0], ru]]),
 }
 env = dict(os.environ, LC_ALL="C")
+
+
+def digest(cmd):
+    out = subprocess.run(cmd, env=env, capture_output=True, check=False).stdout
+    return hashlib.sha256(out).hexdigest(), out.count(b"\n")
+
+
 failed = False
-for name, (corpus, strings) in cases.items():
-    expr = " | ".join("'%s'" % s for s in strings)
-    runs = {
-        "alf": ["alf", "-i", corpus, "-a", expr],
-        "alf (1 thread)": ["alf", "--threads", "1", "-i", corpus, "-a", expr],
-        "rg": ["rg", "|".join(strings), corpus],
-        "grep": ["grep", "-E", "|".join(strings), corpus],
-    }
-    digests = {}
-    for tool, cmd in runs.items():
-        out = subprocess.run(cmd, env=env, capture_output=True, check=False).stdout
-        digests[tool] = (hashlib.sha256(out).hexdigest(), out.count(b"\n"))
-    same = len({d for d, _ in digests.values()}) == 1
-    failed |= not same
-    print("%-24s %s  %d lines" % (name, "same output" if same else "DIFFERENT: %s" % digests, digests["rg"][1]))
+for name, (corpus, expr, same, report) in cases.items():
+    mine = [digest(["alf", "-i", corpus, "-a", expr]), digest(["alf", "--threads", "1", "-i", corpus, "-a", expr])]
+    refs = [digest(c) for c in same]
+    ok = len({d for d, _ in mine + refs}) == 1
+    failed |= not ok
+    extra = "".join("; %s (LC_ALL=C): %d lines" % (" ".join(c[:2]), digest(c)[1]) if c[0] == "grep" else "; %s: %d lines" % (" ".join(c[:2]), digest(c)[1]) for c in report)
+    print("%-30s %s  %d lines%s" % (name, "same output" if ok else "DIFFERENT %s %s" % (mine, refs), refs[0][1], extra))
 sys.exit(1 if failed else 0)

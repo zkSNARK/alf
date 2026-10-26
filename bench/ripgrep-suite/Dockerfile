@@ -8,8 +8,11 @@ FROM debian:trixie-slim
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       build-essential cmake python3 curl ca-certificates patch gzip \
-      ripgrep grep silversearcher-ag ugrep \
- && rm -rf /var/lib/apt/lists/*
+      ripgrep grep silversearcher-ag ugrep locales \
+ && rm -rf /var/lib/apt/lists/* \
+ && sed -i 's/^# *en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen && locale-gen >/dev/null
+# (the suite runs "grep" with LC_ALL=en_US.UTF-8 for Unicode; without the locale installed,
+# grep silently falls back to ASCII rules)
 WORKDIR /alf
 COPY CMakeLists.txt Config.h.in ./
 COPY libalf libalf

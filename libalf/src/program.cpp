@@ -5,6 +5,7 @@
 #include "program.h"
 
 #include "aho_corasick.h"
+#include "unicode/unicode.h"
 #include "simd.h"
 
 #include <algorithm>
@@ -43,17 +44,13 @@ namespace
   inline auto lower(char c) -> unsigned char { return lower(static_cast<unsigned char>(c)); }
   inline auto upper(unsigned char b) -> unsigned char { return (b >= 'a' and b <= 'z') ? static_cast<unsigned char>(b - 'a' + 'A') : b; }
 
-  inline auto word_byte(char c) -> bool
-  {
-    auto const b = static_cast<unsigned char>(c);
-    return (b >= 'a' and b <= 'z') or (b >= 'A' and b <= 'Z') or (b >= '0' and b <= '9') or b == '_';
-  }
-
-  // Do the `len` bytes at `start` stand alone as a word?  `first` and `last` bound the line (or a
-  // stretch that starts and ends at line breaks): nothing before `first` or from `last` on counts.
+  // Do the `len` bytes at `start` stand alone as a word: is neither the character before them nor
+  // the one after them a word character (Unicode, decoded as UTF-8; see unicode/unicode.h)?
+  // `first` and `last` bound the line (or a stretch that starts and ends at line breaks): nothing
+  // before `first` or from `last` on counts.
   inline auto whole_word(char const* start, std::size_t len, char const* first, char const* last) -> bool
   {
-    return (start == first or !word_byte(start[-1])) and (start + len == last or !word_byte(start[len]));
+    return !alf::unicode::word_before(start, first) and !alf::unicode::word_after(start + len, last);
   }
 
   inline auto same_text(char const* p, std::string_view s, bool nocase) -> bool

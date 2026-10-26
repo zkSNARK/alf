@@ -28,5 +28,5 @@ python3 "$here/check.py" "$data"  # alf prints exactly the lines rg and grep pri
 
 { uname -srm; alf --simd-info | grep "in use"; rg --version | head -1; grep -V | head -1; ag --version | head -1; ugrep --version | head -1; } > "$out.versions"
 python3 "$work/benchsuite" --dir "$data" --warmup-iter 3 --bench-iter 10 --force --raw "$out.csv" \
-  '^subtitles_(en|ru)_(literal|alternate)$' | tee "$out.summary"
+  '^subtitles_(en_(literal|alternate)(_casei)?|en_literal_word|ru_(literal|alternate|literal_word))$' | tee "$out.summary"
 rm -rf "$work"
