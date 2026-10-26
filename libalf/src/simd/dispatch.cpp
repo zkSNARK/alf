@@ -113,29 +113,29 @@ namespace alf::simd
     // Best first.  "preferred" is what automatic selection uses; any backend that runs here can
     // still be forced with ALF_SIMD.
 #if defined(ALF_SIMD_AVX512)
-    Backend const avx512{ "avx512", has_avx512, no, find_any_avx512, teddy_avx512, line_start_avx512, true };
+    Backend const avx512{ "avx512", has_avx512, no, find_any_avx512, teddy_avx512, line_start_avx512, true, find_pair_avx2 };
 #endif
 #if defined(ALF_SIMD_X86)
-    Backend const avx2{ "avx2", has_avx2, has_avx2, find_any_avx2, teddy_avx2, line_start_avx2, true };
-    Backend const ssse3{ "ssse3", has_ssse3, has_ssse3, find_any_sse2, teddy_ssse3, line_start_sse2, true };
-    Backend const sse2{ "sse2", has_sse2, has_sse2, find_any_sse2, teddy_scalar, line_start_sse2, false };
+    Backend const avx2{ "avx2", has_avx2, has_avx2, find_any_avx2, teddy_avx2, line_start_avx2, true, find_pair_avx2 };
+    Backend const ssse3{ "ssse3", has_ssse3, has_ssse3, find_any_sse2, teddy_ssse3, line_start_sse2, true, find_pair_sse2 };
+    Backend const sse2{ "sse2", has_sse2, has_sse2, find_any_sse2, teddy_scalar, line_start_sse2, false, find_pair_sse2 };
 #endif
 #if defined(ALF_SIMD_WASM)
-    Backend const wasm{ "wasm", yes, yes, find_any_wasm, teddy_wasm, line_start_wasm, true };
+    Backend const wasm{ "wasm", yes, yes, find_any_wasm, teddy_wasm, line_start_wasm, true, find_pair_wasm };
 #endif
 #if defined(ALF_SIMD_RVV)
-    Backend const rvv{ "rvv", has_rvv, has_rvv, find_any_rvv, teddy_rvv, line_start_rvv, true };
+    Backend const rvv{ "rvv", has_rvv, has_rvv, find_any_rvv, teddy_rvv, line_start_rvv, true, find_pair_rvv };
 #endif
 #if defined(ALF_SIMD_VSX)
-    Backend const vsx{ "vsx", has_vsx, has_vsx, find_any_vsx, teddy_vsx, line_start_vsx, true };
+    Backend const vsx{ "vsx", has_vsx, has_vsx, find_any_vsx, teddy_vsx, line_start_vsx, true, find_pair_vsx };
 #endif
 #if defined(ALF_SIMD_SVE)
-    Backend const sve{ "sve", has_sve, sve_wider, find_any_sve, teddy_sve, line_start_neon, true };
+    Backend const sve{ "sve", has_sve, sve_wider, find_any_sve, teddy_sve, line_start_neon, true, find_pair_neon };
 #endif
 #if defined(ALF_SIMD_NEON)
-    Backend const neon{ "neon", yes, yes, find_any_neon, teddy_neon, line_start_neon, true };
+    Backend const neon{ "neon", yes, yes, find_any_neon, teddy_neon, line_start_neon, true, find_pair_neon };
 #endif
-    Backend const scalar{ "scalar", yes, yes, find_any_scalar, teddy_scalar, line_start_scalar, false };
+    Backend const scalar{ "scalar", yes, yes, find_any_scalar, teddy_scalar, line_start_scalar, false, find_pair_scalar };
 
     Backend const* const all[] = {
 #if defined(ALF_SIMD_AVX512)

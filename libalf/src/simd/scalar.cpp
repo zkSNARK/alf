@@ -33,6 +33,16 @@ namespace alf::simd
     return last;
   }
 
+  auto find_pair_scalar(BytePair const& pair, char const* p, char const* last, char const* limit) noexcept -> char const*
+  {
+    for (; p < last and limit - p > static_cast<std::ptrdiff_t>(pair.offset); ++p) {
+      if (static_cast<unsigned char>(p[0]) == pair.a and static_cast<unsigned char>(p[pair.offset]) == pair.b) {
+        return p;
+      }
+    }
+    return last;
+  }
+
   auto line_start_scalar(char const* p, char const* floor) noexcept -> char const*
   {
     while (p > floor and p[-1] != '\n') {

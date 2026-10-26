@@ -51,6 +51,18 @@ namespace alf::simd
     alignas(64) unsigned char hi[3][16];
   };
 
+  /**
+   * Two bytes at a fixed distance: `a`, and `b` exactly `offset` (>= 1) bytes after it.  For one
+   * string, its two rarest bytes: a position with both in place is almost always a real match,
+   * so the scan rarely stops for nothing (memchr's "packed pair", used by ripgrep).
+   */
+  struct BytePair
+  {
+    unsigned char a;
+    unsigned char b;
+    unsigned offset;
+  };
+
   // ---- kernels ----------------------------------------------------------------------------
   // All take a range [p, last) to report positions in, and a `limit` (>= last, in the same
   // buffer) up to which bytes may be read: reading past `last` lets a short range still be
@@ -66,6 +78,12 @@ namespace alf::simd
    */
   using TeddyFn = char const* (*)(TeddyTables const& t, char const* p, char const* last, char const* limit) noexcept;
 
+  /**
+   * First position q in [p, last) with q[0] == a and q[offset] == b, or `last`.  A position whose
+   * second byte would be at or past `limit` never matches.
+   */
+  using FindPairFn = char const* (*)(BytePair const& pair, char const* p, char const* last, char const* limit) noexcept;
+
   /** Just after the last '\n' in [floor, p), or `floor` if there is none. */
   using LineStartFn = char const* (*)(char const* p, char const* floor) noexcept;
 
@@ -78,6 +96,7 @@ namespace alf::simd
     TeddyFn teddy;
     LineStartFn line_start;
     bool fast_teddy;               // false: `teddy` is the scalar fallback (no byte shuffle here)
+    FindPairFn find_pair;
   };
 
   /** The backend in use: ALF_SIMD=<name> if set and it runs here, otherwise the best one. */
@@ -97,4 +116,5 @@ namespace alf::simd
   auto find_any_scalar(ByteSet const& set, char const* p, char const* last, char const* limit) noexcept -> char const*;
   auto teddy_scalar(TeddyTables const& t, char const* p, char const* last, char const* limit) noexcept -> char const*;
   auto line_start_scalar(char const* p, char const* floor) noexcept -> char const*;
+  auto find_pair_scalar(BytePair const& pair, char const* p, char const* last, char const* limit) noexcept -> char const*;
 }

@@ -78,4 +78,25 @@ namespace alf::simd
     }
     return line_start_scalar(p, floor);
   }
+
+  auto find_pair_wasm(BytePair const& pair, char const* p, char const* last, char const* limit) noexcept -> char const*
+  {
+    v128_t const a = wasm_i8x16_splat(static_cast<signed char>(pair.a)), b = wasm_i8x16_splat(static_cast<signed char>(pair.b));
+    std::ptrdiff_t const off = pair.offset;
+    auto const hits = [&](char const* x) { return wasm_v128_and(wasm_i8x16_eq(load(x), a), wasm_i8x16_eq(load(x + off), b)); };
+    while (last - p >= 64 and limit - p - off >= 64) {  // 64 bytes per step while nothing is found
+      if (wasm_v128_any_true(wasm_v128_or(wasm_v128_or(hits(p), hits(p + 16)), wasm_v128_or(hits(p + 32), hits(p + 48))))) {
+        break;
+      }
+      p += 64;
+    }
+    while (p < last and limit - p - off >= 16) {
+      if (unsigned const h = wasm_i8x16_bitmask(hits(p)); h != 0) {
+        char const* q = p + bits::lowest32(h);
+        return q < last ? q : last;
+      }
+      p += 16;
+    }
+    return find_pair_scalar(pair, p, last, limit);
+  }
 }

@@ -95,4 +95,26 @@ namespace alf::simd
     }
     return line_start_scalar(p, floor);
   }
+
+  auto find_pair_neon(BytePair const& pair, char const* p, char const* last, char const* limit) noexcept -> char const*
+  {
+    uint8x16_t const a = vdupq_n_u8(pair.a), b = vdupq_n_u8(pair.b);
+    std::ptrdiff_t const off = pair.offset;
+    auto const hits = [&](char const* x) { return vandq_u8(vceqq_u8(load(x), a), vceqq_u8(load(x + off), b)); };
+    while (last - p >= 64 and limit - p - off >= 64) {  // 64 bytes per step while nothing is found
+      if (vmaxvq_u8(vorrq_u8(vorrq_u8(hits(p), hits(p + 16)), vorrq_u8(hits(p + 32), hits(p + 48)))) != 0) {
+        break;
+      }
+      p += 64;
+    }
+    while (p < last and limit - p - off >= 16) {
+      uint8x16_t const m = vandq_u8(vceqq_u8(load(p), a), vceqq_u8(load(p + off), b));
+      if (std::uint64_t const f = lane_flags(m); f != 0) {
+        char const* q = p + (bits::lowest64(f) >> 2);
+        return q < last ? q : last;
+      }
+      p += 16;
+    }
+    return find_pair_scalar(pair, p, last, limit);
+  }
 }

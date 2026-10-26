@@ -83,4 +83,28 @@ namespace alf::simd
     }
     return line_start_scalar(p, floor);
   }
+
+  auto find_pair_vsx(BytePair const& pair, char const* p, char const* last, char const* limit) noexcept -> char const*
+  {
+    V const a = vec_splats(pair.a), b = vec_splats(pair.b);
+    V const zero = vec_splats(static_cast<unsigned char>(0));
+    std::ptrdiff_t const off = pair.offset;
+    auto const hits = [&](char const* x) { return vec_and(reinterpret_cast<V>(vec_cmpeq(load(x), a)), reinterpret_cast<V>(vec_cmpeq(load(x + off), b))); };
+    while (last - p >= 64 and limit - p - off >= 64) {  // 64 bytes per step while nothing is found
+      if (vec_any_ne(vec_or(vec_or(hits(p), hits(p + 16)), vec_or(hits(p + 32), hits(p + 48))), zero)) {
+        break;
+      }
+      p += 64;
+    }
+    while (p < last and limit - p - off >= 16) {
+      V const m = hits(p);
+      if (vec_any_ne(m, zero)) {
+        char const* e = least(p + 16, last);
+        char const* q = find_pair_scalar(pair, p, e, limit);
+        return q == e ? last : q;
+      }
+      p += 16;
+    }
+    return find_pair_scalar(pair, p, last, limit);
+  }
 }

@@ -100,6 +100,27 @@ namespace
     }
   }
 
+  TEST(Simd, find_pair_matches_scalar)
+  {
+    std::mt19937 rng(4);
+    for (int round = 0; round < 4000; ++round) {
+      std::string const text = make_text(rng, rng() % 700, 1 + rng() % 400);
+      alf::simd::BytePair pair{};
+      pair.a = static_cast<unsigned char>("abc\n"[rng() % 4]);
+      pair.b = static_cast<unsigned char>("abc\n"[rng() % 4]);
+      pair.offset = 1 + rng() % 40;
+      std::size_t const from = text.empty() ? 0 : rng() % (text.size() + 1);
+      std::size_t const to = from + (text.size() > from ? rng() % (text.size() - from + 1) : 0);
+      std::size_t const limit = to + (text.size() > to ? rng() % (text.size() - to + 1) : 0);  // reading stops anywhere past `last`
+      char const* base = text.data();
+      for (Backend const* b : runnable()) {
+        ASSERT_EQ(b->find_pair(pair, base + from, base + to, base + limit),
+                  scalar().find_pair(pair, base + from, base + to, base + limit))
+          << b->name << " round " << round << " offset " << pair.offset;
+      }
+    }
+  }
+
   TEST(Simd, line_start_matches_scalar)
   {
     std::mt19937 rng(3);

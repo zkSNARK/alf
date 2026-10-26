@@ -85,4 +85,27 @@ namespace alf::simd
     }
     return line_start_scalar(p, floor);
   }
+
+  auto find_pair_avx2(BytePair const& pair, char const* p, char const* last, char const* limit) noexcept -> char const*
+  {
+    __m256i const a = _mm256_set1_epi8(static_cast<char>(pair.a)), b = _mm256_set1_epi8(static_cast<char>(pair.b));
+    std::ptrdiff_t const off = pair.offset;
+    auto const hits = [&](char const* x) {
+      return static_cast<unsigned>(_mm256_movemask_epi8(_mm256_and_si256(_mm256_cmpeq_epi8(load(x), a), _mm256_cmpeq_epi8(load(x + off), b))));
+    };
+    while (last - p >= 128 and limit - p - off >= 128) {  // 128 bytes per step while nothing is found
+      if ((hits(p) | hits(p + 32) | hits(p + 64) | hits(p + 96)) != 0) {
+        break;
+      }
+      p += 128;
+    }
+    while (p < last and limit - p - off >= 32) {
+      if (unsigned const h = hits(p); h != 0) {
+        char const* q = p + bits::lowest32(h);
+        return q < last ? q : last;
+      }
+      p += 32;
+    }
+    return find_pair_scalar(pair, p, last, limit);
+  }
 }

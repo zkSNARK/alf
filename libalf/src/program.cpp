@@ -103,7 +103,8 @@ namespace
   }
 
   // Finds every occurrence of several strings in one pass over the buffer, three ways:
-  //  - one string: memchr for its rare byte (the C library already vectorizes memchr);
+  //  - one string: memchr for its rare byte (the C library already vectorizes memchr), or, when
+  //    that byte isn't rare enough, its two rarest bytes at once (simd find_pair);
   //  - a few strings whose rare bytes really are rare: any of those bytes (simd find_any), then
   //    the strings that use the byte found;
   //  - otherwise, where the CPU has a byte shuffle: Teddy (simd teddy).  Every string gets a
@@ -127,6 +128,10 @@ namespace
         build_teddy(sample);
         return;
       }
+      if (needles.size() == 1 and needles[0].text.size() >= 2 and rare_byte_stop_interval(needles, sample) < PAIR_BELOW_INTERVAL) {
+        build_pair(sample);
+        return;
+      }
       m_set.count = 0;
       for (bool& b : m_set.member) {
         b = false;
@@ -148,6 +153,9 @@ namespace
     {
       if (m_teddy) {
         return m_simd.teddy(m_tables, p, last, limit);
+      }
+      if (m_use_pair) {
+        return m_simd.find_pair(m_pair, p, last, limit);
       }
       if (m_set.count == 1) {
         auto q = static_cast<char const*>(std::memchr(p, m_set.bytes[0], static_cast<std::size_t>(last - p)));
@@ -185,6 +193,10 @@ namespace
         }
         return;
       }
+      if (m_use_pair) {
+        check(0, m_pair_first);
+        return;
+      }
       for (std::uint16_t i : m_by_key[static_cast<unsigned char>(*q)]) {
         check(i, m_needles[i].rare);
       }
@@ -197,6 +209,40 @@ namespace
     // favoured the rare-byte scanner (33 vs 37 ms), every 105 bytes or less favoured Teddy (49
     // vs 67 ms for two strings, 113 vs 213 for sixteen).
     static constexpr double TEDDY_BELOW_INTERVAL = 128;
+
+    // One string: memchr on a single byte runs at about twice the speed of a two-byte scan while
+    // it rarely stops, but each stop costs about 10 ns; the two-byte scan costs the same whatever
+    // the bytes.  Measured on 1.6 GB of subtitles (M4 Max, one core): a byte every 6,100 bytes
+    // took 30 ms with memchr and 59 with the pair; a byte every 300 bytes, 83 and 56.  They
+    // break even at a stop every 500-600 bytes.
+    static constexpr double PAIR_BELOW_INTERVAL = 512;
+
+    // The string's two rarest bytes in the sample (different byte values where it has them).
+    void build_pair(std::string_view sample)
+    {
+      std::size_t freq[256] = {};
+      for (unsigned char c : sample) {
+        ++freq[c];
+      }
+      std::string_view const t = m_needles[0].text;
+      auto const f = [&](std::size_t i) { return freq[static_cast<unsigned char>(t[i])]; };
+      std::size_t const r1 = m_needles[0].rare;
+      std::size_t r2 = r1 == 0 ? 1 : 0;
+      for (std::size_t i = 0; i < t.size(); ++i) {
+        if (i == r1) {
+          continue;
+        }
+        bool const differs = t[i] != t[r1], best_differs = t[r2] != t[r1];
+        if ((differs and !best_differs) or (differs == best_differs and f(i) < f(r2))) {
+          r2 = i;
+        }
+      }
+      m_use_pair = true;
+      m_pair_first = std::min(r1, r2);
+      std::size_t const second = std::max(r1, r2);
+      m_pair = { static_cast<unsigned char>(t[m_pair_first]), static_cast<unsigned char>(t[second]),
+                 static_cast<unsigned>(second - m_pair_first) };
+    }
 
     // Average bytes between stops of the rare-byte scanner, estimated from the sample.
     static auto rare_byte_stop_interval(std::vector<Needle> const& needles, std::string_view sample) -> double
@@ -354,6 +400,10 @@ namespace
     // rare-byte mode
     alf::simd::ByteSet m_set{};
     std::array<std::vector<std::uint16_t>, 256> m_by_key;
+    // pair mode (one string)
+    bool m_use_pair{ false };
+    alf::simd::BytePair m_pair{};
+    std::size_t m_pair_first{ 0 };  // offset of the pair's first byte within the string
     // Teddy mode
     bool m_teddy{ false };
     alf::simd::TeddyTables m_tables{};

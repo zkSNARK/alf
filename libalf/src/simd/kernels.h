@@ -13,10 +13,12 @@ namespace alf::simd
 #if defined(ALF_SIMD_X86)
   auto find_any_sse2(ByteSet const&, char const*, char const*, char const*) noexcept -> char const*;
   auto line_start_sse2(char const*, char const*) noexcept -> char const*;
+  auto find_pair_sse2(BytePair const&, char const*, char const*, char const*) noexcept -> char const*;
   auto teddy_ssse3(TeddyTables const&, char const*, char const*, char const*) noexcept -> char const*;
   auto find_any_avx2(ByteSet const&, char const*, char const*, char const*) noexcept -> char const*;
   auto teddy_avx2(TeddyTables const&, char const*, char const*, char const*) noexcept -> char const*;
   auto line_start_avx2(char const*, char const*) noexcept -> char const*;
+  auto find_pair_avx2(BytePair const&, char const*, char const*, char const*) noexcept -> char const*;
 #endif
 #if defined(ALF_SIMD_AVX512)
   auto find_any_avx512(ByteSet const&, char const*, char const*, char const*) noexcept -> char const*;
@@ -27,21 +29,25 @@ namespace alf::simd
   auto find_any_neon(ByteSet const&, char const*, char const*, char const*) noexcept -> char const*;
   auto teddy_neon(TeddyTables const&, char const*, char const*, char const*) noexcept -> char const*;
   auto line_start_neon(char const*, char const*) noexcept -> char const*;
+  auto find_pair_neon(BytePair const&, char const*, char const*, char const*) noexcept -> char const*;
 #endif
 #if defined(ALF_SIMD_RVV)
   auto find_any_rvv(ByteSet const&, char const*, char const*, char const*) noexcept -> char const*;
   auto teddy_rvv(TeddyTables const&, char const*, char const*, char const*) noexcept -> char const*;
   auto line_start_rvv(char const*, char const*) noexcept -> char const*;
+  auto find_pair_rvv(BytePair const&, char const*, char const*, char const*) noexcept -> char const*;
 #endif
 #if defined(ALF_SIMD_VSX)
   auto find_any_vsx(ByteSet const&, char const*, char const*, char const*) noexcept -> char const*;
   auto teddy_vsx(TeddyTables const&, char const*, char const*, char const*) noexcept -> char const*;
   auto line_start_vsx(char const*, char const*) noexcept -> char const*;
+  auto find_pair_vsx(BytePair const&, char const*, char const*, char const*) noexcept -> char const*;
 #endif
 #if defined(ALF_SIMD_WASM)
   auto find_any_wasm(ByteSet const&, char const*, char const*, char const*) noexcept -> char const*;
   auto teddy_wasm(TeddyTables const&, char const*, char const*, char const*) noexcept -> char const*;
   auto line_start_wasm(char const*, char const*) noexcept -> char const*;
+  auto find_pair_wasm(BytePair const&, char const*, char const*, char const*) noexcept -> char const*;
 #endif
 #if defined(ALF_SIMD_SVE)
   auto find_any_sve(ByteSet const&, char const*, char const*, char const*) noexcept -> char const*;

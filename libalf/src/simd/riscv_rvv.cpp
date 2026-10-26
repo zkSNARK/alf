@@ -89,4 +89,25 @@ namespace alf::simd
     }
     return floor;
   }
+
+  auto find_pair_rvv(BytePair const& pair, char const* p, char const* last, char const* limit) noexcept -> char const*
+  {
+    // positions whose second byte is readable; past them nothing can match
+    std::ptrdiff_t full = limit - p - static_cast<std::ptrdiff_t>(pair.offset);
+    if (full > last - p) {
+      full = last - p;
+    }
+    auto const* u = reinterpret_cast<std::uint8_t const*>(p);
+    std::size_t const n = full > 0 ? static_cast<std::size_t>(full) : 0;
+    for (std::size_t i = 0; i < n;) {
+      std::size_t const vl = __riscv_vsetvl_e8m1(n - i);
+      vbool8_t const m = __riscv_vmand_mm_b8(__riscv_vmseq_vx_u8m1_b8(__riscv_vle8_v_u8m1(u + i, vl), pair.a, vl),
+                                             __riscv_vmseq_vx_u8m1_b8(__riscv_vle8_v_u8m1(u + i + pair.offset, vl), pair.b, vl), vl);
+      if (long const first = __riscv_vfirst_m_b8(m, vl); first >= 0) {
+        return p + i + static_cast<std::size_t>(first);
+      }
+      i += vl;
+    }
+    return last;
+  }
 }
