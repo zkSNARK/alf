@@ -38,17 +38,72 @@ namespace
     return nl ? nl : end;
   }
 
+  // i'...' and w'...': ASCII case folding and word bytes, the same rules as passes_filters.
+  inline auto lower(unsigned char b) -> unsigned char { return (b >= 'A' and b <= 'Z') ? static_cast<unsigned char>(b - 'A' + 'a') : b; }
+  inline auto lower(char c) -> unsigned char { return lower(static_cast<unsigned char>(c)); }
+  inline auto upper(unsigned char b) -> unsigned char { return (b >= 'a' and b <= 'z') ? static_cast<unsigned char>(b - 'a' + 'A') : b; }
+
+  inline auto word_byte(char c) -> bool
+  {
+    auto const b = static_cast<unsigned char>(c);
+    return (b >= 'a' and b <= 'z') or (b >= 'A' and b <= 'Z') or (b >= '0' and b <= '9') or b == '_';
+  }
+
+  // Do the `len` bytes at `start` stand alone as a word?  `first` and `last` bound the line (or a
+  // stretch that starts and ends at line breaks): nothing before `first` or from `last` on counts.
+  inline auto whole_word(char const* start, std::size_t len, char const* first, char const* last) -> bool
+  {
+    return (start == first or !word_byte(start[-1])) and (start + len == last or !word_byte(start[len]));
+  }
+
+  inline auto same_text(char const* p, std::string_view s, bool nocase) -> bool
+  {
+    if (!nocase) {
+      return std::memcmp(p, s.data(), s.size()) == 0;
+    }
+    for (std::size_t k = 0; k < s.size(); ++k) {
+      if (lower(p[k]) != lower(s[k])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Does `line` contain `s` (with i'...' / w'...' rules)?  Every occurrence is tried: in
+  // "foobar foo", w'foo' fails at the first and matches at the second.
+  auto contains(std::string_view line, std::string_view s, bool nocase, bool word) -> bool
+  {
+    if (!nocase and !word) {
+      return line.find(s) != std::string_view::npos;
+    }
+    char const* const b = line.data();
+    char const* const e = b + line.size();
+    auto const eq = [nocase](char x, char y) { return nocase ? lower(x) == lower(y) : x == y; };
+    for (char const* at = b; static_cast<std::size_t>(e - at) >= s.size(); ++at) {
+      at = std::search(at, e, s.begin(), s.end(), eq);
+      if (at == e) {
+        return false;
+      }
+      if (!word or whole_word(at, s.size(), b, e)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   // A string to search for, and which of its bytes is rarest in the input: memchr finds that
   // byte (it checks many bytes per instruction), then memcmp checks the rest of the string.
   // This is the same trick grep uses, and on this kind of data it is several times faster than
-  // memmem or Boyer-Moore-Horspool.
+  // memmem or Boyer-Moore-Horspool.  For an i'...' string a letter's frequency is both cases'.
   struct Needle
   {
     std::string_view text;
     std::size_t rare;
+    bool nocase{ false };
+    bool word{ false };
   };
 
-  auto make_needles(std::vector<std::string> const& literals, std::string_view sample) -> std::vector<Needle>
+  auto make_needles(std::vector<alf::Literal> const& literals, std::string_view sample) -> std::vector<Needle>
   {
     std::size_t freq[256] = {};
     for (unsigned char c : sample) {
@@ -56,13 +111,17 @@ namespace
     }
     std::vector<Needle> needles;
     for (auto const& lit : literals) {
+      auto const f = [&](char c) {
+        auto const b = static_cast<unsigned char>(c);
+        return lit.nocase and lower(b) != upper(b) ? freq[lower(b)] + freq[upper(b)] : freq[b];
+      };
       std::size_t rare = 0;
-      for (std::size_t i = 1; i < lit.size(); ++i) {
-        if (freq[static_cast<unsigned char>(lit[i])] < freq[static_cast<unsigned char>(lit[rare])]) {
+      for (std::size_t i = 1; i < lit.text.size(); ++i) {
+        if (f(lit.text[i]) < f(lit.text[rare])) {
           rare = i;
         }
       }
-      needles.push_back({ lit, rare });
+      needles.push_back({ lit.text, rare, lit.nocase, lit.word });
     }
     return needles;
   }
@@ -77,12 +136,21 @@ namespace
     char const* q = p + n.rare;
     char const* const q_end = last - (n.text.size() - n.rare - 1);  // a hit must fit before `last`
     while (q < q_end) {
-      q = static_cast<char const*>(std::memchr(q, key, static_cast<std::size_t>(q_end - q)));
-      if (q == nullptr) {
+      if (n.nocase) {  // (only for the 64 KB sample estimate: a plain loop is fine)
+        while (q < q_end and lower(*q) != lower(key)) {
+          ++q;
+        }
+      } else {
+        q = static_cast<char const*>(std::memchr(q, key, static_cast<std::size_t>(q_end - q)));
+        if (q == nullptr) {
+          return last;
+        }
+      }
+      if (q >= q_end) {
         return last;
       }
       char const* start = q - n.rare;
-      if (std::memcmp(start, n.text.data(), n.text.size()) == 0) {
+      if (same_text(start, n.text, n.nocase) and (!n.word or whole_word(start, n.text.size(), p, last))) {
         return start;
       }
       ++q;
@@ -130,7 +198,8 @@ namespace
         build_teddy(sample);
         return;
       }
-      if (needles.size() == 1 and needles[0].text.size() >= 2 and rare_byte_stop_interval(needles, sample) < PAIR_BELOW_INTERVAL) {
+      if (needles.size() == 1 and !needles[0].nocase and needles[0].text.size() >= 2 and
+          rare_byte_stop_interval(needles, sample) < PAIR_BELOW_INTERVAL) {
         build_pair(sample);
         return;
       }
@@ -139,12 +208,18 @@ namespace
         b = false;
       }
       for (std::size_t i = 0; i < needles.size(); ++i) {
-        auto const key = static_cast<unsigned char>(needles[i].text[needles[i].rare]);
-        if (!m_set.member[key]) {
-          m_set.member[key] = true;
-          m_set.bytes[m_set.count++] = key;
+        auto const b = static_cast<unsigned char>(needles[i].text[needles[i].rare]);
+        unsigned char const keys[2] = { needles[i].nocase ? lower(b) : b, needles[i].nocase ? upper(b) : b };
+        for (unsigned char key : keys) {
+          if (!m_set.member[key]) {
+            m_set.member[key] = true;
+            m_set.bytes[m_set.count++] = key;
+            m_by_key[key].push_back(static_cast<std::uint16_t>(i));
+          }
+          else if (m_by_key[key].empty() or m_by_key[key].back() != i) {
+            m_by_key[key].push_back(static_cast<std::uint16_t>(i));
+          }
         }
-        m_by_key[key].push_back(static_cast<std::uint16_t>(i));
       }
     }
 
@@ -184,14 +259,15 @@ namespace
         Needle const& n = m_needles[i];
         char const* start = q - offset;
         if (start >= first and static_cast<std::size_t>(last - start) >= n.text.size() and
-            std::memcmp(start, n.text.data(), n.text.size()) == 0) {
+            same_text(start, n.text, n.nocase) and (!n.word or whole_word(start, n.text.size(), first, last))) {
           on_hit(i);
         }
       };
       if (m_teddy) {
         for (unsigned g = groups_at(q, last); g != 0; g &= g - 1) {
           for (std::uint16_t i : m_groups[static_cast<std::size_t>(std::countr_zero(g))]) {
-            if (*q == m_needles[i].text[m_window[i]]) {  // a group passes many near misses
+            Needle const& n = m_needles[i];
+            if (n.nocase ? lower(*q) == lower(n.text[m_window[i]]) : *q == n.text[m_window[i]]) {  // a group passes many near misses
               check(i, m_window[i]);
             }
           }
@@ -291,9 +367,12 @@ namespace
         std::string_view const t = m_needles[i].text;
         std::size_t best = 0;
         double best_cost = -1;
+        auto const fq = [&](char ch) {
+          auto const b = static_cast<unsigned char>(ch);
+          return m_needles[i].nocase and lower(b) != upper(b) ? freq[lower(b)] + freq[upper(b)] - 1 : freq[b];
+        };
         for (std::size_t o = 0; o + 3 <= t.size(); ++o) {
-          double const c = freq[static_cast<unsigned char>(t[o])] * freq[static_cast<unsigned char>(t[o + 1])] *
-                           freq[static_cast<unsigned char>(t[o + 2])];
+          double const c = fq(t[o]) * fq(t[o + 1]) * fq(t[o + 2]);
           if (best_cost < 0 or c < best_cost) {
             best_cost = c;
             best = o;
@@ -387,8 +466,10 @@ namespace
         for (std::size_t k = 0; k < 3; ++k) {
           if (k < fp[i].size()) {
             auto const b = static_cast<unsigned char>(fp[i][k]);
-            m_tables.lo[k][b & 15u] |= bit;
-            m_tables.hi[k][b >> 4] |= bit;
+            for (unsigned char v : { b, m_needles[i].nocase ? lower(b) : b, m_needles[i].nocase ? upper(b) : b }) {
+              m_tables.lo[k][v & 15u] |= bit;
+              m_tables.hi[k][v >> 4] |= bit;
+            }
           } else {  // a string shorter than 3 bytes: any byte matches here
             for (int n = 0; n < 16; ++n) {
               m_tables.lo[k][n] |= bit;
@@ -599,11 +680,29 @@ namespace
   // of them: the loads are independent and overlap (measured on a bare loop over 142 MB: one
   // chain 159 ms, two 80, four 42, eight 35).  Lane 0 writes to `out` as it goes; the others
   // collect their pieces and are appended in order at the end.
-  template <typename Found>
+  // `Check`: some string needs its matches checked (see `real` below); when none does, the
+  // check is compiled out, so plain strings cost exactly what they did before i'...' and w'...'.
+  template <typename Found, bool Check>
   void filter_range_aho(char const* first, char const* last, alf::Program const& program,
-                        alf::detail::AhoCorasick const& ac, bool keep_others, bool use_found, std::size_t words,
-                        std::size_t min_lane_bytes, Spans& out)
+                        alf::detail::AhoCorasick const& ac, std::vector<Needle> const& needles, bool keep_others,
+                        bool use_found, std::size_t words, std::size_t min_lane_bytes, Spans& out)
   {
+    // A DFA match is a real one unless the DFA folded case for a case-sensitive string, or the
+    // string is w'...' and the match is part of a longer word.
+    bool fold = false;
+    for (Needle const& n : needles) {
+      fold |= n.nocase;
+    }
+    // the string `i` ending at `at`, within the line [ls, e)
+    auto const real = [&](std::uint32_t i, char const* at, char const* ls, char const* e) {
+      if constexpr (!Check) {
+        return true;
+      }
+      Needle const& n = needles[i];
+      char const* start = at + 1 - n.text.size();
+      return (!fold or n.nocase or std::memcmp(start, n.text.data(), n.text.size()) == 0) and
+             (!n.word or whole_word(start, n.text.size(), ls, e));
+    };
     constexpr unsigned LANES = 4;
     alf::simd::Backend const& simd = alf::simd::active();
     unsigned const lanes = static_cast<std::size_t>(last - first) >= LANES * min_lane_bytes ? LANES : 1;
@@ -631,10 +730,21 @@ namespace
       cut = e;
     }
 
-    // the line containing a match that ends at p[k]: decide it, then move lane k past it
-    auto const handle = [&](unsigned k) {
+    // the line containing a match that ends at p[k]: decide it and move lane k past it; or, if
+    // none of the strings ending there is a real match (see `real`), return false and leave the
+    // lane as it is, to step on from the next byte
+    auto const handle = [&](unsigned k) -> bool {
       char const* ls = simd.line_start(p[k], cursor[k]);
       char const* e = line_end(p[k], end[k]);
+      if constexpr (Check) {
+        bool any = false;
+        for (std::uint32_t i : ac.ending(state[k])) {
+          any = any or real(i, p[k], ls, e);
+        }
+        if (!any) {
+          return false;
+        }
+      }
       char const* text_end = (e > ls and e[-1] == '\r') ? e - 1 : e;
       char const* next = e < end[k] ? e + 1 : e;
       std::string_view const line(ls, static_cast<std::size_t>(text_end - ls));
@@ -643,7 +753,9 @@ namespace
         Found& f = found[k];
         f.clear();
         for (std::uint32_t i : ac.ending(state[k])) {
-          f.set(i);
+          if (real(i, p[k], ls, e)) {
+            f.set(i);
+          }
         }
         std::uint32_t st = state[k];
         std::optional<bool> answer = program.settled(line, f.words());
@@ -652,7 +764,9 @@ namespace
           if (ac.matches(st)) {
             bool changed = false;
             for (std::uint32_t i : ac.ending(st)) {
-              changed |= f.set(i);
+              if (real(i, c, ls, e)) {
+                changed |= f.set(i);
+              }
             }
             if (changed) {
               answer = program.settled(line, f.words());
@@ -671,6 +785,7 @@ namespace
       }
       cursor[k] = p[k] = next;
       state[k] = alf::detail::AhoCorasick::start;
+      return true;
     };
 
     // all lanes together while each has bytes left.  The states and positions are plain locals
@@ -709,9 +824,7 @@ namespace
           continue;  // `steps` used up: some lane is at its end
         }
         for (unsigned k = 0; k < LANES; ++k) {  // the byte at p[k] has been stepped in every lane
-          if (ac.matches(state[k])) {
-            handle(k);
-          } else {
+          if (!ac.matches(state[k]) or !handle(k)) {
             ++p[k];
           }
         }
@@ -721,9 +834,7 @@ namespace
     for (unsigned k = 0; k < lanes; ++k) {
       while (p[k] < end[k]) {
         state[k] = ac.step(state[k], static_cast<unsigned char>(*p[k]));
-        if (ac.matches(state[k])) {
-          handle(k);
-        } else {
+        if (!ac.matches(state[k]) or !handle(k)) {
           ++p[k];
         }
       }
@@ -781,6 +892,8 @@ alf::Program::Program(std::vector<types::TokenBase> const& postfix)
     }
     m_depth = std::max(m_depth, depth);
     m_ops.push_back({ t.type, t.required, t.value, t.regex });
+    m_ops.back().nocase = t.nocase;
+    m_ops.back().word = t.word;
   }
   if (!postfix.empty() and depth != 1) {
     throw std::runtime_error("malformed expression: operands without an operator between them");
@@ -808,13 +921,17 @@ alf::Program::Program(std::vector<types::TokenBase> const& postfix)
     if (op.type == types::TYPE_TOKEN::REGEX or (op.type == types::TYPE_TOKEN::SUBSTR and op.literal.empty())) {
       searchable = false;
     }
-    if (op.type == types::TYPE_TOKEN::SUBSTR and std::find(m_literals.begin(), m_literals.end(), op.literal) == m_literals.end()) {
-      m_literals.push_back(op.literal);
+    if (op.type == types::TYPE_TOKEN::SUBSTR) {
+      Literal const lit{ op.literal, op.nocase, op.word };
+      if (std::find(m_literals.begin(), m_literals.end(), lit) == m_literals.end()) {
+        m_literals.push_back(lit);
+      }
     }
   }
   for (auto& op : m_ops) {
     if (op.type == types::TYPE_TOKEN::SUBSTR) {
-      op.literal_index = static_cast<std::size_t>(std::find(m_literals.begin(), m_literals.end(), op.literal) - m_literals.begin());
+      Literal const lit{ op.literal, op.nocase, op.word };
+      op.literal_index = static_cast<std::size_t>(std::find(m_literals.begin(), m_literals.end(), lit) - m_literals.begin());
     }
   }
   if (searchable) {
@@ -860,7 +977,7 @@ auto alf::Program::eval(std::size_t node, std::string_view line) const -> bool
   switch (n.type) {
     case types::TYPE_TOKEN::SUBSTR: {
       Op const& op = m_ops[n.op];
-      return (line.find(op.literal) != std::string_view::npos) == op.required;
+      return contains(line, op.literal, op.nocase, op.word) == op.required;
     }
     case types::TYPE_TOKEN::REGEX: {
       Op const& op = m_ops[n.op];
@@ -1003,13 +1120,13 @@ auto alf::Program::eval_settled(std::size_t node, std::string_view line, std::ui
 
 
 auto alf::Program::required_literals(std::function<double(std::string_view)> const& cost) const
-  -> std::optional<std::vector<std::string>>
+  -> std::optional<std::vector<Literal>>
 {
-  using Set = std::optional<std::vector<std::string>>;
-  auto const total = [&](std::vector<std::string> const& v) {
+  using Set = std::optional<std::vector<Literal>>;
+  auto const total = [&](std::vector<Literal> const& v) {
     double c = 0;
     for (auto const& s : v) {
-      c += cost(s);
+      c += cost(s.text);
     }
     return c;
   };
@@ -1017,11 +1134,11 @@ auto alf::Program::required_literals(std::function<double(std::string_view)> con
   for (auto const& op : m_ops) {
     switch (op.type) {
       case types::TYPE_TOKEN::SUBSTR:
-        stk.push_back(op.required and !op.literal.empty() ? Set{ { op.literal } } : std::nullopt);
+        stk.push_back(op.required and !op.literal.empty() ? Set{ { Literal{ op.literal, op.nocase, op.word } } } : std::nullopt);
         break;
       case types::TYPE_TOKEN::REGEX: {
         std::string prefix = op.required ? regex_required_prefix(op.literal) : std::string{};
-        stk.push_back(prefix.empty() ? std::nullopt : Set{ { prefix } });
+        stk.push_back(prefix.empty() ? std::nullopt : Set{ { Literal{ prefix } } });
         break;
       }
       case types::TYPE_TOKEN::OPERATOR_NOT:
@@ -1101,7 +1218,7 @@ void alf::filter(std::string_view data, Program const& program, unsigned threads
     }
     return n;
   };
-  std::vector<std::string> search_for;  // owns the text the needles point into
+  std::vector<Literal> search_for;  // owns the text the needles point into
   bool keep_others = false;
   bool all_literals = false;
   if (auto required = program.required_literals(cost)) {
@@ -1115,8 +1232,8 @@ void alf::filter(std::string_view data, Program const& program, unsigned threads
   // Evaluating a hit line from the strings the scanner found needs every string, and none that
   // could match across a line break (or include the "\r" a line is matched without).
   bool const use_found = all_literals and
-    std::none_of(search_for.begin(), search_for.end(), [](std::string const& t) {
-      return t.find_first_of("\r\n") != std::string::npos;
+    std::none_of(search_for.begin(), search_for.end(), [](Literal const& t) {
+      return t.text.find_first_of("\r\n") != std::string::npos;
     });
   // Searching for a few required strings pays when most lines don't have them.  Searching for all
   // of the strings while recording which ones each hit line has pays even when most lines are
@@ -1137,10 +1254,12 @@ void alf::filter(std::string_view data, Program const& program, unsigned threads
     std::string_view const forced = force ? force : "";
     if (forced == "aho" or forced == "aho-lanes" or (forced != "teddy" and scanner.teddy_cost() > AHO_ABOVE_COST)) {
       std::vector<std::string_view> texts;
+      bool fold = false;
       for (Needle const& n : needles) {
         texts.push_back(n.text);
+        fold |= n.nocase;
       }
-      aho.emplace(texts);
+      aho.emplace(texts, fold);
       if (forced == "aho-lanes") {
         aho_lane_bytes = 1;
       }
@@ -1153,10 +1272,16 @@ void alf::filter(std::string_view data, Program const& program, unsigned threads
       // the needles are the program's literals in order when use_found; otherwise they are
       // required strings (possibly regex prefixes) and `found` is only a hit marker
       std::size_t const words = std::max(program.found_words(), (needles.size() + 63) / 64);
-      if (aho and words <= 1) {
-        filter_range_aho<OneWord>(first, last, program, *aho, keep_others, use_found, words, aho_lane_bytes, out);
-      } else if (aho) {
-        filter_range_aho<ManyWords>(first, last, program, *aho, keep_others, use_found, words, aho_lane_bytes, out);
+      if (aho) {
+        bool const check = std::any_of(needles.begin(), needles.end(), [](Needle const& n) { return n.nocase or n.word; });
+        auto const go = [&]<typename Found, bool Check>() {
+          filter_range_aho<Found, Check>(first, last, program, *aho, needles, keep_others, use_found, words, aho_lane_bytes, out);
+        };
+        if (words <= 1) {
+          check ? go.template operator()<OneWord, true>() : go.template operator()<OneWord, false>();
+        } else {
+          check ? go.template operator()<ManyWords, true>() : go.template operator()<ManyWords, false>();
+        }
       } else if (words <= 1) {
         filter_range_search<OneWord>(first, last, program, scanner, keep_others, use_found, words, out);
       } else {

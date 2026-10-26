@@ -812,4 +812,31 @@ namespace
 #endif
     ASSERT_THAT(result, testing::ElementsAreArray(expected));
   }
+
+  TEST(TestAlgParserPrefixes, case_insensitive_and_whole_word)
+  {
+    auto const toks = alf::parser::parse_algebraic("i'Ab' w\"cd\" iw'e f' wi'g' -i'h' r'x' 'y'");
+    ASSERT_EQ(toks.size(), 7u);
+    auto const is = [](TokenBase const& t, std::string const& v, bool req, bool nocase, bool word) {
+      return t.type == TYPE_TOKEN::SUBSTR and t.value == v and t.required == req and t.nocase == nocase and t.word == word;
+    };
+    EXPECT_TRUE(is(toks[0], "Ab", true, true, false));
+    EXPECT_TRUE(is(toks[1], "cd", true, false, true));
+    EXPECT_TRUE(is(toks[2], "e f", true, true, true));
+    EXPECT_TRUE(is(toks[3], "g", true, true, true));
+    EXPECT_TRUE(is(toks[4], "h", false, true, false));
+    EXPECT_EQ(toks[5].type, TYPE_TOKEN::REGEX);
+    EXPECT_TRUE(is(toks[6], "y", true, false, false));
+  }
+
+  TEST(TestAlgParserPrefixes, other_letters_before_a_quote_are_a_string_of_their_own)
+  {
+    // only r, i, w, iw and wi are prefixes: q'a' is still the string q, then the string a
+    auto const toks = alf::parser::parse_algebraic("q'a' ii'b'");
+    ASSERT_EQ(toks.size(), 4u);
+    EXPECT_EQ(toks[0].value, "q");
+    EXPECT_FALSE(toks[1].nocase);
+    EXPECT_EQ(toks[2].value, "ii");
+    EXPECT_FALSE(toks[3].nocase);
+  }
 }  // anon test namespace

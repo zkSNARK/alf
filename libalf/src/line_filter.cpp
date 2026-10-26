@@ -47,6 +47,40 @@ auto alf::handle_operator(std::stack<bool>& stk, types::TYPE_TOKEN tt) -> void
 
 
 
+namespace
+{
+  // The reference rules for i'...' and w'...', written as plainly as possible (every start
+  // position, byte by byte): the fast paths in program.cpp are tested against these.
+  auto ascii_lower(char c) -> char { return (c >= 'A' and c <= 'Z') ? static_cast<char>(c - 'A' + 'a') : c; }
+
+  auto is_word_byte(char c) -> bool
+  {
+    return (c >= 'a' and c <= 'z') or (c >= 'A' and c <= 'Z') or (c >= '0' and c <= '9') or c == '_';
+  }
+
+  auto contains(std::string const& line, alf::types::TokenBase const& t) -> bool
+  {
+    std::string const& s = t.value;
+    if (s.size() > line.size()) {
+      return false;
+    }
+    for (std::size_t at = 0; at + s.size() <= line.size(); ++at) {
+      bool same = true;
+      for (std::size_t k = 0; k < s.size() and same; ++k) {
+        same = t.nocase ? ascii_lower(line[at + k]) == ascii_lower(s[k]) : line[at + k] == s[k];
+      }
+      if (same and t.word) {
+        same = (at == 0 or !is_word_byte(line[at - 1])) and (at + s.size() == line.size() or !is_word_byte(line[at + s.size()]));
+      }
+      if (same) {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+
 auto alf::passes_filters(std::vector<alf::types::TokenBase> const& filters, const std::string& line) -> bool
 {
   using alf::types::TokenBase;
@@ -59,12 +93,8 @@ auto alf::passes_filters(std::vector<alf::types::TokenBase> const& filters, cons
 
   for (auto & e : filters) {
     if (e.type == types::TYPE_TOKEN::SUBSTR) {
-      std::size_t found = line.find(e.value);
-      if(e.required) {
-        stk.push(found != std::string::npos);
-      } else {
-        stk.push(found == std::string::npos);
-      }
+      bool const found = (e.nocase or e.word) ? contains(line, e) : line.find(e.value) != std::string::npos;
+      stk.push(found == e.required);
       continue;
     }
     if (e.type == types::TYPE_TOKEN::REGEX) {

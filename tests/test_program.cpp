@@ -263,7 +263,7 @@ namespace
           std::string line;
           for (std::size_t i = 0; i < lits.size(); ++i) {
             if ((present >> i) & 1u) {
-              line += lits[i] + " ";
+              line += lits[i].text + " ";
             }
           }
           ASSERT_EQ(alf::passes_filters(tokens, line), *answer) << e << " found " << found << " line '" << line << "'";
@@ -406,14 +406,94 @@ namespace
     EXPECT_FALSE(p.matches_found("", last_one));
   }
 
+  // Random text and expressions for i'...' and w'...': mixed case, word bytes (letters, digits,
+  // '_') next to non-word ones (space, '-', '.', a non-ASCII byte), and strings that occur inside
+  // longer words as often as on their own.
+  auto flagged_text(std::mt19937& rng, std::size_t lines) -> std::string
+  {
+    static char const* const pieces[] = { "foo", "FOO", "Foo", "bar", "BaR", "foobar", "barfoo", "foo_bar", "foo1", "1foo",
+                                          "x", "X", "ab", "AB", "aB", " ", " ", "-", ".", "\xc3\xa9", "_", "9" };
+    std::string text;
+    for (std::size_t i = 0; i < lines; ++i) {
+      std::size_t const n = rng() % 9;
+      for (std::size_t k = 0; k < n; ++k) {
+        text += pieces[rng() % (sizeof pieces / sizeof pieces[0])];
+      }
+      text += (rng() % 8 == 0) ? "\r\n" : "\n";
+    }
+    return text;
+  }
+
+  auto flagged_string(std::mt19937& rng) -> std::string
+  {
+    static char const* const words[] = { "foo", "FOO", "bar", "Bar", "ab", "x", "o_b", "oo", "1", "foo1", "b" };
+    static char const* const prefixes[] = { "", "", "i", "w", "iw", "wi" };
+    return std::string(prefixes[rng() % 6]) + "'" + words[rng() % (sizeof words / sizeof words[0])] + "'";
+  }
+
+  TEST(Program, case_insensitive_and_whole_word_strings_agree_with_the_reference)
+  {
+    // Every search path (Teddy, the DFA, four DFA lanes, single strings, line by line) on one and
+    // several threads must give the reference's lines.
+    std::mt19937 rng(123);
+    char const* was = std::getenv("ALF_MULTI");
+    std::string const saved = was ? was : "";
+    for (int round = 0; round < 300; ++round) {
+      std::string e;
+      int const terms = 1 + static_cast<int>(rng() % 8);
+      for (int t = 0; t < terms; ++t) {
+        if (t) {
+          e += (rng() % 3 == 0) ? " | " : (rng() % 4 == 0 ? " ^ " : " & ");
+        }
+        e += (rng() % 3 == 0 ? "!" : "") + flagged_string(rng);
+      }
+      auto tokens = postfix(e);
+      alf::Program const p{ tokens };
+      std::string const text = flagged_text(rng, 150 + rng() % 150);
+      std::string const want = naive(text, tokens);
+      for (char const* multi : { "teddy", "aho", "aho-lanes" }) {
+        set_env("ALF_MULTI", multi);
+        for (unsigned threads : { 1u, 3u }) {
+          for (double fraction : { 2.0, -1.0, 0.25 }) {
+            ASSERT_EQ(run(text, p, threads, fraction), want) << e << " multi " << multi << " threads " << threads << " fraction " << fraction;
+          }
+        }
+      }
+    }
+    set_env("ALF_MULTI", was ? saved.c_str() : nullptr);
+  }
+
+  TEST(Program, whole_words_and_case_by_example)
+  {
+    auto keeps = [](std::string const& e, std::string const& line) {
+      alf::Program const p{ postfix(e) };
+      return p.matches(line);
+    };
+    EXPECT_TRUE(keeps("w'foo'", "foobar foo"));        // the second occurrence stands alone
+    EXPECT_FALSE(keeps("w'foo'", "foobar barfoo foo_x"));
+    EXPECT_TRUE(keeps("w'foo'", "(foo)"));
+    EXPECT_TRUE(keeps("w'foo'", "\xc3\xa9" "foo"));      // a non-ASCII byte isn't a word byte
+    EXPECT_FALSE(keeps("w'foo'", "foo1"));
+    EXPECT_TRUE(keeps("i'FoO'", "a foo b"));
+    EXPECT_FALSE(keeps("'FoO'", "a foo b"));
+    EXPECT_TRUE(keeps("iw'foo'", "x FOO y"));
+    EXPECT_FALSE(keeps("iw'foo'", "FOOBAR"));
+    EXPECT_TRUE(keeps("!w'foo'", "foobar"));
+    EXPECT_TRUE(keeps("i'\xc3\xa9'", "\xc3\xa9"));        // non-ASCII bytes match only themselves
+    EXPECT_FALSE(keeps("i'\xc3\xa9'", "\xc3\x89"));
+  }
+
   TEST(Program, required_literals)
   {
     auto const len = [](std::string_view s) { return static_cast<double>(s.size()); };
-    using V = std::vector<std::string>;
-    EXPECT_EQ(alf::Program{ postfix("'aa' & 'b' & 'ccc'") }.required_literals(len), V{ "b" });  // cheapest side of &
-    EXPECT_EQ(alf::Program{ postfix("'a' | 'b'") }.required_literals(len), (V{ "a", "b" }));    // both sides of |
-    EXPECT_EQ(alf::Program{ postfix("('a' & !'x') | ('b' & 'yy')") }.required_literals(len), (V{ "a", "b" }));
-    EXPECT_EQ(alf::Program{ postfix("r'code=5\\d\\d' & r'latency=\\d'") }.required_literals(len), V{ "code=5" });
+    using V = std::vector<alf::Literal>;
+    EXPECT_EQ(alf::Program{ postfix("'aa' & 'b' & 'ccc'") }.required_literals(len), V{ { "b" } });  // cheapest side of &
+    EXPECT_EQ(alf::Program{ postfix("'a' | 'b'") }.required_literals(len), (V{ { "a" }, { "b" } }));    // both sides of |
+    EXPECT_EQ(alf::Program{ postfix("('a' & !'x') | ('b' & 'yy')") }.required_literals(len), (V{ { "a" }, { "b" } }));
+    EXPECT_EQ(alf::Program{ postfix("r'code=5\\d\\d' & r'latency=\\d'") }.required_literals(len), V{ { "code=5" } });
+    // flags travel with the string: i'A' and 'a' are different strings to search for
+    EXPECT_EQ(alf::Program{ postfix("i'Ab' | w'cd' | 'Ab'") }.required_literals(len),
+              (V{ { "Ab", true, false }, { "cd", false, true }, { "Ab" } }));
     EXPECT_FALSE(alf::Program{ postfix("!'a'") }.required_literals(len).has_value());
     EXPECT_FALSE(alf::Program{ postfix("'a' | !'b'") }.required_literals(len).has_value());
     EXPECT_FALSE(alf::Program{ postfix("!('a' & 'b')") }.required_literals(len).has_value());

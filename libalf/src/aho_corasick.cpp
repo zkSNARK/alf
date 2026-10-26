@@ -13,8 +13,12 @@
 #include <cstddef>
 #include <stdexcept>
 
-alf::detail::AhoCorasick::AhoCorasick(std::vector<std::string_view> const& strings)
+alf::detail::AhoCorasick::AhoCorasick(std::vector<std::string_view> const& strings, bool fold)
 {
+  auto const key = [fold](char c) -> unsigned char {
+    auto const b = static_cast<unsigned char>(c);
+    return (fold and b >= 'A' and b <= 'Z') ? static_cast<unsigned char>(b - 'A' + 'a') : b;
+  };
   if (strings.empty()) {
     throw std::invalid_argument("AhoCorasick: no strings");
   }
@@ -25,10 +29,15 @@ alf::detail::AhoCorasick::AhoCorasick(std::vector<std::string_view> const& strin
       throw std::invalid_argument("AhoCorasick: empty string");
     }
     for (char c : s) {
-      auto const b = static_cast<unsigned char>(c);
+      auto const b = key(c);
       if (m_class[b] == 0) {
         m_class[b] = m_classes++;
       }
+    }
+  }
+  if (fold) {  // an upper-case letter in the text steps like its lower-case one
+    for (unsigned char b = 'A'; b <= 'Z'; ++b) {
+      m_class[b] = m_class[b - 'A' + 'a'];
     }
   }
   std::size_t const k = m_classes;
@@ -39,7 +48,7 @@ alf::detail::AhoCorasick::AhoCorasick(std::vector<std::string_view> const& strin
   for (std::uint32_t i = 0; i < strings.size(); ++i) {
     std::uint32_t node = 0;
     for (char c : strings[i]) {
-      std::uint32_t const cls = m_class[static_cast<unsigned char>(c)];
+      std::uint32_t const cls = m_class[key(c)];
       if (child[node * k + cls] == 0) {
         child[node * k + cls] = static_cast<std::uint32_t>(own.size());
         child.resize(child.size() + k, 0);

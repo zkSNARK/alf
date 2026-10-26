@@ -28,8 +28,12 @@ namespace alf::detail
   class AhoCorasick
   {
   public:
-    /** `strings` must be non-empty and none of them empty.  String i is reported as index i. */
-    explicit AhoCorasick(std::vector<std::string_view> const& strings);
+    /**
+     * `strings` must be non-empty and none of them empty.  String i is reported as index i.
+     * With `fold`, ASCII letters are matched in either case (every string, so a caller with
+     * case-sensitive strings among them checks those matches itself).
+     */
+    explicit AhoCorasick(std::vector<std::string_view> const& strings, bool fold = false);
 
     static constexpr std::uint32_t start = 0;
 

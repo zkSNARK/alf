@@ -95,6 +95,8 @@ namespace alf::types
     bool required;
     TYPE_TOKEN type;
     std::shared_ptr<std::regex const> regex;  // REGEX only: compiled once, shared by copies
+    bool nocase{ false };  // SUBSTR, i'...': ASCII letters match either case
+    bool word{ false };    // SUBSTR, w'...': only where it isn't part of a longer word
 
     TokenBase(TYPE_TOKEN type, std::string value, bool require)
       : value(std::move(value)),
@@ -103,7 +105,8 @@ namespace alf::types
 
     auto operator==(const TokenBase& other) const
     {
-      return type == other.type && value == other.value && required == other.required;
+      return type == other.type && value == other.value && required == other.required && nocase == other.nocase &&
+             word == other.word;
     }
   };
 
@@ -118,6 +121,18 @@ namespace alf::types
 
     explicit SubStr(std::string_view value, bool require)
       : TokenBase(TYPE_TOKEN::SUBSTR, std::string(value), require) { }
+
+    /**
+     * i'text' (nocase): ASCII letters match in either case, as grep -i does with LC_ALL=C.
+     * w'text' (word): only occurrences with no word byte ([A-Za-z0-9_]) right before or after
+     * them, as grep -w.  iw'text' is both.
+     */
+    SubStr(std::string value, bool require, bool nocase_, bool word_)
+      : TokenBase(TYPE_TOKEN::SUBSTR, std::move(value), require)
+    {
+      nocase = nocase_;
+      word = word_;
+    }
   };
 
   /**

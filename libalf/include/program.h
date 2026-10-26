@@ -23,6 +23,15 @@
 
 namespace alf
 {
+  /** A string the expression searches for, and how it matches: i'...' (nocase), w'...' (word). */
+  struct Literal
+  {
+    std::string text;
+    bool nocase{ false };
+    bool word{ false };
+    auto operator==(Literal const&) const -> bool = default;
+  };
+
   class Program
   {
   public:
@@ -57,7 +66,7 @@ namespace alf
     [[nodiscard]] auto settled(std::string_view line, std::uint64_t found) const -> std::optional<bool>;
 
     /** The distinct strings the expression looks for (regexes excluded). */
-    [[nodiscard]] auto literals() const -> std::vector<std::string> const& { return m_literals; }
+    [[nodiscard]] auto literals() const -> std::vector<Literal> const& { return m_literals; }
 
     /**
      * The answer for a line that contains none of literals(), which is the same for every such
@@ -73,7 +82,7 @@ namespace alf
      * A regex contributes the fixed text it starts with: r'code=5\d\d' requires "code=5".
      */
     [[nodiscard]] auto required_literals(std::function<double(std::string_view)> const& cost) const
-      -> std::optional<std::vector<std::string>>;
+      -> std::optional<std::vector<Literal>>;
 
   private:
     struct Op
@@ -83,6 +92,8 @@ namespace alf
       std::string literal;
       std::shared_ptr<std::regex const> regex;
       std::size_t literal_index{ 0 };  // SUBSTR: position of `literal` in m_literals
+      bool nocase{ false };            // SUBSTR: i'...'
+      bool word{ false };              // SUBSTR: w'...'
     };
 
     // The postfix ops as a tree, so evaluation can stop early: in 'a' & 'b', a line without 'a'
@@ -102,7 +113,7 @@ namespace alf
     std::vector<Op> m_ops;
     std::vector<Node> m_nodes;  // the root is the last node
     std::size_t m_depth{ 0 };   // deepest the evaluation stack gets
-    std::vector<std::string> m_literals;
+    std::vector<Literal> m_literals;
     std::optional<bool> m_without_literals;
     // Strings that settle a line on their own (bit i: m_literals[i]): in !'a' & !'b', finding
     // either drops the line whatever else is there.  Only set when settled() doesn't depend on

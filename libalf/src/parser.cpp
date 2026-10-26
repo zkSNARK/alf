@@ -109,11 +109,13 @@ namespace
 
   /**
    * `second` points at an opening quote.  Reads up to the matching quote and emits a SubStr, or
-   * a Regex when the quote was prefixed with r (as in r'^\\d+').  There are no escapes: to use
-   * one kind of quote inside a string or pattern, delimit it with the other kind.
+   * a Regex when the quote was prefixed with r (as in r'^\\d+').  `prefix` is what was written
+   * right against the quote: "", "r", or i / w / iw / wi for a case-insensitive and/or whole-word
+   * string.  There are no escapes: to use one kind of quote inside a string or pattern, delimit it
+   * with the other kind.
    */
   auto handle_quote(char const*& first, char const*& second, char const*& last,
-                    std::vector<alf::types::TokenBase>& tokens, bool& is_pos_req, bool is_regex)
+                    std::vector<alf::types::TokenBase>& tokens, bool& is_pos_req, std::string_view prefix)
   {
     char const quote = *second;
     first = second + 1;
@@ -123,10 +125,11 @@ namespace
     }
 
     std::string value(first, second - first);
-    if (is_regex) {
+    if (prefix == "r") {
       tokens.emplace_back(alf::types::Regex{ std::move(value), is_pos_req });
     } else {
-      tokens.emplace_back(alf::types::SubStr{ std::move(value), is_pos_req });
+      bool const nocase = prefix.find('i') != std::string_view::npos, word = prefix.find('w') != std::string_view::npos;
+      tokens.emplace_back(alf::types::SubStr{ std::move(value), is_pos_req, nocase, word });
     }
     is_pos_req = true;
   }
@@ -218,16 +221,19 @@ namespace alf::parser
          second != last && first != last; first = second + 1) {
       second = std::find_first_of(first, last, std::cbegin(delims), std::cend(delims));
 
-      // an r written right against a quote marks a regex: r'pattern'
-      bool const is_regex = second != last and is_quote(*second) and std::string_view(first, second - first) == "r";
-      if (first != second and !is_regex) {
+      // letters written right against a quote are a prefix: r'pattern' is a regex, i'text' a
+      // case-insensitive string, w'text' a whole word, iw'text' (or wi) both
+      std::string_view const before(first, static_cast<std::size_t>(second - first));
+      bool const prefixed = second != last and is_quote(*second) and
+                            (before == "r" or before == "i" or before == "w" or before == "iw" or before == "wi");
+      if (first != second and !prefixed) {
         make_token(std::string_view(first, second - first), is_positive_req, tokens);
       }
       if (second == last) {
         break;
       }
       if (is_quote(*second)) {
-        handle_quote(first, second, last, tokens, is_positive_req, is_regex);
+        handle_quote(first, second, last, tokens, is_positive_req, prefixed ? before : std::string_view{});
       } else if (*second != ' ') {
         make_token(std::string_view{ second, 1 }, is_positive_req, tokens);
       }
