@@ -484,9 +484,44 @@ namespace
   // one piece.  With `use_found`, the scanner is looking for all of the expression's strings, so
   // it records which ones a hit line contains and the line is evaluated from that, without
   // searching it again.
-  void filter_range_search(char const* first, char const* last, alf::Program const& program,
-                           MultiScanner const& scan, bool keep_others, bool use_found, Spans& out)
+  // Which strings a line contains, one bit each.  Up to 64 strings that's one word, kept in a
+  // register; more need an array.
+  struct OneWord
   {
+    std::uint64_t bits{ 0 };
+    explicit OneWord(std::size_t) { }
+    void clear() { bits = 0; }
+    auto set(std::size_t i) -> bool  // true if the bit was new
+    {
+      std::uint64_t const b = std::uint64_t{ 1 } << i;
+      bool const was = (bits & b) != 0;
+      bits |= b;
+      return !was;
+    }
+    [[nodiscard]] auto words() const -> std::span<std::uint64_t const> { return { &bits, 1 }; }
+  };
+
+  struct ManyWords
+  {
+    std::vector<std::uint64_t> bits;
+    explicit ManyWords(std::size_t words) : bits(words, 0) { }
+    void clear() { std::fill(bits.begin(), bits.end(), 0); }
+    auto set(std::size_t i) -> bool
+    {
+      std::uint64_t const b = std::uint64_t{ 1 } << (i % 64);
+      bool const was = (bits[i / 64] & b) != 0;
+      bits[i / 64] |= b;
+      return !was;
+    }
+    [[nodiscard]] auto words() const -> std::span<std::uint64_t const> { return bits; }
+  };
+
+  // `words`: enough for every string the scanner reports (one bit per needle).
+  template <typename Found>
+  void filter_range_search(char const* first, char const* last, alf::Program const& program,
+                           MultiScanner const& scan, bool keep_others, bool use_found, std::size_t words, Spans& out)
+  {
+    Found found{ words };
     char const* cursor = first;  // start of the first line not yet handled
     char const* p = first;       // where the scan continues
     for (;;) {
@@ -497,11 +532,11 @@ namespace
         }
         return;
       }
-      std::uint64_t found = 0;
+      found.clear();
       bool hit = false;
       scan.verify(q, cursor, last, [&](std::size_t i) {
         hit = true;
-        found |= std::uint64_t{ 1 } << i;
+        found.set(i);
       });
       if (!hit) {
         p = q + 1;
@@ -516,15 +551,15 @@ namespace
       if (use_found) {
         // Scan the rest of the line only while its answer could still change: in an exclude
         // list the first unwanted string found already settles it.
-        std::optional<bool> answer = program.settled(line, found);
+        std::optional<bool> answer = program.settled(line, found.words());
         for (char const* c = q + 1; !answer and (c = scan.next_candidate(c, e, last)) < e; ++c) {
-          std::uint64_t const before = found;
-          scan.verify(c, ls, e, [&](std::size_t i) { found |= std::uint64_t{ 1 } << i; });
-          if (found != before) {
-            answer = program.settled(line, found);
+          bool changed = false;
+          scan.verify(c, ls, e, [&](std::size_t i) { changed |= found.set(i); });
+          if (changed) {
+            answer = program.settled(line, found.words());
           }
         }
-        keep = answer ? *answer : program.matches_found(line, found);
+        keep = answer ? *answer : program.matches_found(line, found.words());
       } else {
         keep = program.matches(line);
       }
@@ -634,11 +669,16 @@ alf::Program::Program(std::vector<types::TokenBase> const& postfix)
     m_without_literals = stk.back() != 0;
     // Three-valued evaluation only gains certainty as more strings are found, so a string whose
     // presence alone settles the answer settles it in every line that contains it.
-    for (std::size_t i = 0; i < m_literals.size() and i < 64; ++i) {
-      std::uint64_t const bit = std::uint64_t{ 1 } << i;
-      if (auto const r = eval_settled(m_nodes.size() - 1, {}, bit)) {
-        (*r ? m_keeps_alone : m_drops_alone) |= bit;
+    m_drops_alone.assign(found_words(), 0);
+    m_keeps_alone.assign(found_words(), 0);
+    std::vector<std::uint64_t> only(found_words(), 0);
+    for (std::size_t i = 0; i < m_literals.size(); ++i) {
+      std::uint64_t const bit = std::uint64_t{ 1 } << (i % 64);
+      only[i / 64] = bit;
+      if (auto const r = eval_settled(m_nodes.size() - 1, {}, only.data())) {
+        (*r ? m_keeps_alone : m_drops_alone)[i / 64] |= bit;
       }
+      only[i / 64] = 0;
     }
   }
 }
@@ -676,19 +716,31 @@ auto alf::Program::eval(std::size_t node, std::string_view line) const -> bool
 }
 
 
-auto alf::Program::matches_found(std::string_view line, std::uint64_t found) const -> bool
+auto alf::Program::matches_found(std::string_view line, std::span<std::uint64_t const> found) const -> bool
 {
-  return m_nodes.empty() or eval_found(m_nodes.size() - 1, line, found);
+  return m_nodes.empty() or eval_found(m_nodes.size() - 1, line, found.data());
 }
 
 
-auto alf::Program::eval_found(std::size_t node, std::string_view line, std::uint64_t found) const -> bool
+auto alf::Program::matches_found(std::string_view line, std::uint64_t found) const -> bool
+{
+  return matches_found(line, std::span<std::uint64_t const>(&found, 1));
+}
+
+
+namespace
+{
+  inline auto has(std::uint64_t const* found, std::size_t i) -> bool { return ((found[i / 64] >> (i % 64)) & 1u) != 0; }
+}
+
+
+auto alf::Program::eval_found(std::size_t node, std::string_view line, std::uint64_t const* found) const -> bool
 {
   Node const& n = m_nodes[node];
   switch (n.type) {
     case types::TYPE_TOKEN::SUBSTR: {
       Op const& op = m_ops[n.op];
-      return (((found >> op.literal_index) & 1u) != 0) == op.required;
+      return has(found, op.literal_index) == op.required;
     }
     case types::TYPE_TOKEN::REGEX: {
       Op const& op = m_ops[n.op];
@@ -708,31 +760,39 @@ auto alf::Program::eval_found(std::size_t node, std::string_view line, std::uint
 }
 
 
-auto alf::Program::settled(std::string_view line, std::uint64_t found) const -> std::optional<bool>
+auto alf::Program::settled(std::string_view line, std::span<std::uint64_t const> found) const -> std::optional<bool>
 {
   if (m_nodes.empty()) {
     return true;
   }
-  if ((found & m_drops_alone) != 0) {
-    return false;
+  for (std::size_t w = 0; w < m_drops_alone.size(); ++w) {
+    if ((found[w] & m_drops_alone[w]) != 0) {
+      return false;
+    }
+    if ((found[w] & m_keeps_alone[w]) != 0) {
+      return true;
+    }
   }
-  if ((found & m_keeps_alone) != 0) {
-    return true;
-  }
-  return eval_settled(m_nodes.size() - 1, line, found);
+  return eval_settled(m_nodes.size() - 1, line, found.data());
+}
+
+
+auto alf::Program::settled(std::string_view line, std::uint64_t found) const -> std::optional<bool>
+{
+  return settled(line, std::span<std::uint64_t const>(&found, 1));
 }
 
 
 // Three-valued (true / false / not yet known) evaluation: a string already found is known to be
 // present; one not found yet might still turn up later in the line, so it is unknown.
-auto alf::Program::eval_settled(std::size_t node, std::string_view line, std::uint64_t found) const
+auto alf::Program::eval_settled(std::size_t node, std::string_view line, std::uint64_t const* found) const
   -> std::optional<bool>
 {
   Node const& n = m_nodes[node];
   switch (n.type) {
     case types::TYPE_TOKEN::SUBSTR: {
       Op const& op = m_ops[n.op];
-      if (((found >> op.literal_index) & 1u) != 0) {
+      if (has(found, op.literal_index)) {
         return op.required;
       }
       return std::nullopt;
@@ -888,10 +948,9 @@ void alf::filter(std::string_view data, Program const& program, unsigned threads
     all_literals = true;
   }
   std::vector<Needle> needles = make_needles(search_for, sample);
-  // Evaluating a hit line from the strings the scanner found needs every string, at most 64 of
-  // them, and none that could match across a line break (or include the "\r" a line is matched
-  // without).
-  bool const use_found = all_literals and needles.size() <= 64 and
+  // Evaluating a hit line from the strings the scanner found needs every string, and none that
+  // could match across a line break (or include the "\r" a line is matched without).
+  bool const use_found = all_literals and
     std::none_of(search_for.begin(), search_for.end(), [](std::string const& t) {
       return t.find_first_of("\r\n") != std::string::npos;
     });
@@ -907,7 +966,14 @@ void alf::filter(std::string_view data, Program const& program, unsigned threads
     if (needles.empty()) {
       filter_range(first, last, program, out);
     } else {
-      filter_range_search(first, last, program, scanner, keep_others, use_found, out);
+      // the needles are the program's literals in order when use_found; otherwise they are
+      // required strings (possibly regex prefixes) and `found` is only a hit marker
+      std::size_t const words = std::max(program.found_words(), (needles.size() + 63) / 64);
+      if (words <= 1) {
+        filter_range_search<OneWord>(first, last, program, scanner, keep_others, use_found, words, out);
+      } else {
+        filter_range_search<ManyWords>(first, last, program, scanner, keep_others, use_found, words, out);
+      }
     }
   };
   threads = std::max(1u, std::min<unsigned>(threads, static_cast<unsigned>(data.size() / MIN_BYTES_PER_THREAD)));

@@ -16,6 +16,7 @@
 #include <memory>
 #include <optional>
 #include <regex>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -36,16 +37,23 @@ namespace alf
 
     /**
      * matches(), when it is already known which of literals() occur in `line`: bit i of `found`
-     * says whether literals()[i] does (so at most 64 literals).  Strings aren't searched for
-     * again; regexes still run on `line`.
+     * (bit i % 64 of word i / 64) says whether literals()[i] does.  `found` has found_words()
+     * words.  Strings aren't searched for again; regexes still run on `line`.
      */
+    [[nodiscard]] auto matches_found(std::string_view line, std::span<std::uint64_t const> found) const -> bool;
+    /** The same with at most 64 literals, as one word. */
     [[nodiscard]] auto matches_found(std::string_view line, std::uint64_t found) const -> bool;
+
+    /** Words needed for a found set: one bit per literal. */
+    [[nodiscard]] auto found_words() const -> std::size_t { return (m_literals.size() + 63) / 64; }
 
     /**
      * The answer for `line` if it is already settled by the strings found so far (bit i of
      * `found`), whatever the rest of the line contains; empty if a string not yet seen could
      * still change it.  In !'a' & !'b', finding 'a' settles the line: it is dropped.
      */
+    [[nodiscard]] auto settled(std::string_view line, std::span<std::uint64_t const> found) const -> std::optional<bool>;
+    /** The same with at most 64 literals, as one word. */
     [[nodiscard]] auto settled(std::string_view line, std::uint64_t found) const -> std::optional<bool>;
 
     /** The distinct strings the expression looks for (regexes excluded). */
@@ -88,8 +96,8 @@ namespace alf
     };
 
     [[nodiscard]] auto eval(std::size_t node, std::string_view line) const -> bool;
-    [[nodiscard]] auto eval_found(std::size_t node, std::string_view line, std::uint64_t found) const -> bool;
-    [[nodiscard]] auto eval_settled(std::size_t node, std::string_view line, std::uint64_t found) const -> std::optional<bool>;
+    [[nodiscard]] auto eval_found(std::size_t node, std::string_view line, std::uint64_t const* found) const -> bool;
+    [[nodiscard]] auto eval_settled(std::size_t node, std::string_view line, std::uint64_t const* found) const -> std::optional<bool>;
 
     std::vector<Op> m_ops;
     std::vector<Node> m_nodes;  // the root is the last node
@@ -99,8 +107,8 @@ namespace alf
     // Strings that settle a line on their own (bit i: m_literals[i]): in !'a' & !'b', finding
     // either drops the line whatever else is there.  Only set when settled() doesn't depend on
     // the line itself (no regexes).
-    std::uint64_t m_drops_alone{ 0 };
-    std::uint64_t m_keeps_alone{ 0 };
+    std::vector<std::uint64_t> m_drops_alone;  // found_words() words, or empty
+    std::vector<std::uint64_t> m_keeps_alone;
   };
 
   /** Where filter() sends the kept text. */

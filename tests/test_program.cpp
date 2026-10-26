@@ -313,6 +313,56 @@ namespace
     }
   }
 
+  TEST(Program, more_than_64_strings_use_the_search_path_and_agree)
+  {
+    // Past 64 strings the found set takes several words; every answer must still match the
+    // reference.  Strings share prefixes (so Teddy groups fill up and fingerprints repeat), and
+    // some lines contain strings with bit positions in different words.
+    std::mt19937 rng(91);
+    std::string text;
+    for (int line = 0; line < 1500; ++line) {
+      int const n = static_cast<int>(rng() % 6);
+      for (int k = 0; k < n; ++k) {
+        text += "k" + std::to_string(rng() % 400) + (rng() % 3 ? " " : "=");
+      }
+      text += (rng() % 11 == 0) ? "\r\n" : "\n";
+    }
+    for (int round = 0; round < 12; ++round) {
+      // (!'kA' | 'kB') & (!'kC' | 'kD') & ...: no string is required (an empty line passes), so
+      // lines are decided from the found set, and the answer depends on exactly which strings a
+      // line has: a bit recorded for the wrong string shows.  (An exclude list wouldn't show it,
+      // since any string found drops the line.)
+      std::size_t const pairs = 40 + rng() % 60;  // 80 .. 200 strings
+      std::string e;
+      for (std::size_t t = 0; t < pairs; ++t) {
+        e += (t ? " & " : "") + std::string("(!'k") + std::to_string(rng() % 400) + "' | 'k" + std::to_string(rng() % 400) + "')";
+      }
+      auto tokens = postfix(e);
+      alf::Program const p{ tokens };
+      ASSERT_GT(p.found_words(), 1u) << e.substr(0, 60);
+      ASSERT_FALSE(p.required_literals([](std::string_view) { return 1.0; }).has_value());
+      std::string const want = naive(text, tokens);
+      for (unsigned threads : { 1u, 3u }) {
+        ASSERT_EQ(run(text, p, threads), want) << "round " << round << " threads " << threads;
+      }
+    }
+  }
+
+  TEST(Program, settled_and_matches_found_with_several_words)
+  {
+    std::string e;
+    for (int i = 0; i < 70; ++i) {
+      e += "!'s" + std::to_string(i) + "' ";
+    }
+    alf::Program const p{ postfix(e) };
+    ASSERT_EQ(p.found_words(), 2u);
+    std::uint64_t none[2] = { 0, 0 }, last_one[2] = { 0, std::uint64_t{ 1 } << 5 };  // literal 69
+    EXPECT_FALSE(p.settled("", none).has_value());
+    EXPECT_EQ(p.settled("", last_one), false);
+    EXPECT_TRUE(p.matches_found("", none));
+    EXPECT_FALSE(p.matches_found("", last_one));
+  }
+
   TEST(Program, required_literals)
   {
     auto const len = [](std::string_view s) { return static_cast<double>(s.size()); };
